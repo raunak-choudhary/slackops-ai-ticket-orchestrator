@@ -1,4 +1,4 @@
-"""Gmail implementation of the email_api.Client protocol."""
+"""Gmail implementation of the email_api.Client protocol with flexible auth."""
 
 import base64
 import contextlib
@@ -10,6 +10,7 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
+from dotenv import load_dotenv
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -20,15 +21,25 @@ from email_api import Client, Email, EmailAddress
 
 HTTP_UNAUTHORIZED, HTTP_FORBIDDEN = 401, 403
 
+load_dotenv()  # Load .env once at import
+
 
 class GmailClient(Client):
     """Concrete Gmail client using the Gmail REST API (readonly)."""
 
     SCOPES: ClassVar[list[str]] = ["https://www.googleapis.com/auth/gmail.readonly"]
 
-    def __init__(self, credentials_file: str | None = None, token_file: str | None = None) -> None:
-        self._credentials_file = credentials_file or os.getenv("GMAIL_CREDENTIALS_PATH") or "credentials.json"
+    def __init__(
+        self,
+        credentials_file: str | None = None,
+        token_file: str | None = None,
+        interactive: bool = False,
+    ) -> None:
+        self._credentials_file = (
+            credentials_file or os.getenv("GMAIL_CREDENTIALS_PATH") or "credentials.json"
+        )
         self._token_file = token_file or os.getenv("GMAIL_TOKEN_PATH") or "token.json"
+        self._interactive = interactive
         self._service: Any = None
 
     # ------------------------------------------------------------------ #
@@ -38,6 +49,7 @@ class GmailClient(Client):
         token_path = Path(self._token_file)
         creds: Credentials | None = None
 
+        # 1️⃣ Try token.json
         if token_path.exists():
             try:
                 creds = Credentials.from_authorized_user_file(str(token_path), self.SCOPES)
@@ -45,17 +57,40 @@ class GmailClient(Client):
                 with contextlib.suppress(OSError):
                     token_path.unlink()
 
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                cred_path = Path(self._credentials_file)
-                if not cred_path.exists():
-                    raise FileNotFoundError(f"Credentials file not found: {cred_path}")
-                flow = InstalledAppFlow.from_client_secrets_file(str(cred_path), self.SCOPES)
-                creds = flow.run_local_server(port=0)
+        # 2️⃣ Try .env environment variables
+        if (not creds or not creds.valid) and os.getenv("CLIENT_ID"):
+            try:
+                creds = Credentials(
+                    token=None,
+                    refresh_token=os.getenv("REFRESH_TOKEN"),
+                    token_uri=os.getenv("TOKEN_URI", "https://oauth2.googleapis.com/token"),
+                    client_id=os.getenv("CLIENT_ID"),
+                    client_secret=os.getenv("CLIENT_SECRET"),
+                    scopes=self.SCOPES,
+                )
+                if creds and creds.expired and creds.refresh_token:
+                    creds.refresh(Request())
+            except Exception as e:
+                print(f"[⚠️  Warning] Failed to use .env credentials: {e}")
+
+        # 3️⃣ Interactive OAuth flow (only if explicitly allowed)
+        if (not creds or not creds.valid) and self._interactive:
+            cred_path = Path(self._credentials_file)
+            if not cred_path.exists():
+                raise FileNotFoundError(f"Credentials file not found: {cred_path}")
+            flow = InstalledAppFlow.from_client_secrets_file(str(cred_path), self.SCOPES)
+            creds = flow.run_local_server(port=0)
             with contextlib.suppress(OSError):
                 token_path.write_text(creds.to_json())
+
+        # Refresh if needed
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+
+        if not creds:
+            raise RuntimeError(
+                "No valid credentials found. Run interactively once to create token.json."
+            )
 
         return creds
 
@@ -63,12 +98,10 @@ class GmailClient(Client):
         return build("gmail", "v1", credentials=creds)
 
     def _ensure_connected(self) -> None:
-        """Ensure Gmail API client is authenticated and service is ready."""
         if self._service is None:
             creds = self._authenticate()
             self._service = self._build_service(creds)
             try:
-                # Light connectivity check
                 self._service.users().getProfile(userId="me").execute()
             except Exception as e:
                 self._handle_api_error(e, "checking Gmail connection")
@@ -105,12 +138,11 @@ class GmailClient(Client):
                             userId="me", id=msg["id"], format="full"
                         ).execute()
                         email_obj = self._parse_message(data)
-                        # skip malformed emails (missing id or body)
                         if email_obj.id:
                             yield email_obj
                             messages_yielded += 1
                     except Exception:
-                        continue  # skip malformed messages
+                        continue
 
                 page_token = results.get("nextPageToken")
                 if not page_token:
@@ -119,23 +151,47 @@ class GmailClient(Client):
             except Exception as e:
                 self._handle_api_error(e, "retrieving messages")
 
+    def get_message(self, message_id: str) -> dict[str, Any]:
+        """Return a single Gmail message by ID."""
+        self._ensure_connected()
+        try:
+            data = self._service.users().messages().get(
+                userId="me", id=message_id, format="full"
+            ).execute()
+            email_obj = self._parse_message(data)
+            return email_obj.__dict__
+        except Exception as e:
+            self._handle_api_error(e, f"retrieving message {message_id}")
+
+    def mark_as_read(self, message_id: str) -> dict[str, Any]:
+        """Mark a message as read."""
+        self._ensure_connected()
+        try:
+            self._service.users().messages().modify(
+                userId="me", id=message_id, body={"removeLabelIds": ["UNREAD"]}
+            ).execute()
+            return {"message": "Marked as read", "id": message_id}
+        except Exception as e:
+            self._handle_api_error(e, f"marking message {message_id} as read")
+
+    def delete_message(self, message_id: str) -> dict[str, Any]:
+        """Move a message to trash."""
+        self._ensure_connected()
+        try:
+            self._service.users().messages().trash(userId="me", id=message_id).execute()
+            return {"message": "Moved to trash", "id": message_id}
+        except Exception as e:
+            self._handle_api_error(e, f"deleting message {message_id}")
+
     # ------------------------------------------------------------------ #
     # Parsing helpers
     # ------------------------------------------------------------------ #
     def _parse_message(self, message: dict[str, Any]) -> Email:
-        """Safely parse a Gmail message dictionary into an Email object."""
         try:
             msg_id = message.get("id", "")
-            if not msg_id:
-                raise KeyError("Missing 'id'")
-
             payload = message.get("payload", {})
             headers = payload.get("headers", [])
-
-            subject = ""
-            sender_email, sender_name = "unknown@unknown.com", None
-            recipients: list[EmailAddress] = []
-            date_str = ""
+            subject, sender_email, sender_name, recipients, date_str = "", "", None, [], ""
 
             for h in headers:
                 name, val = h.get("name", "").lower(), h.get("value", "")
@@ -164,7 +220,6 @@ class GmailClient(Client):
             )
 
         except Exception:
-            # Malformed or missing data → skip gracefully instead of failing
             return Email(
                 id="",
                 subject="",
@@ -181,8 +236,6 @@ class GmailClient(Client):
         result: list[EmailAddress] = []
         for part in raw.split(","):
             addr = part.strip()
-            if not addr:
-                continue
             if "<" in addr and ">" in addr:
                 name_part, email_part = addr.rsplit("<", 1)
                 name = name_part.strip().strip('"').strip("'")
@@ -243,16 +296,11 @@ class GmailClient(Client):
             text = text.replace(pat, repl)
         return re.sub(r"\s+", " ", text).strip()
 
-    # ------------------------------------------------------------------ #
-    # Error handling
-    # ------------------------------------------------------------------ #
     def _handle_api_error(self, e: Exception, op: str = "executing Gmail API call") -> None:
-        """Normalize Gmail API exceptions to expected test-friendly errors."""
         if isinstance(e, HttpError):
             code = getattr(e.resp, "status", None)
             if code in (HTTP_UNAUTHORIZED, HTTP_FORBIDDEN):
                 raise RuntimeError(f"Gmail authorization error ({code}) while {op}") from e
             elif code in (404, 500):
                 raise ConnectionError(f"Gmail service error ({code}) while {op}") from e
-
         raise ConnectionError(f"Network error while {op}: {e}") from e

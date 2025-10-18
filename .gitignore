@@ -287,3 +287,6 @@ oauth_*.json
 .env.*
 *.key
 *.pem
+
+.env
+token.json
