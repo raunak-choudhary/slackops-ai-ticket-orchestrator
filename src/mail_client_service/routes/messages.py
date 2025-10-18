@@ -43,28 +43,31 @@ def list_messages() -> list[dict[str, Any]]:
         else:
             result = _require_method(client, "get_messages")(limit=50)
 
-        # Safely convert to list
-        if not isinstance(result, list):
-            if isinstance(result, Iterable):
-                result = list(result)
-            else:
-                result = [result]
+        # Explicitly cast to Iterable[Any] for type checker
+        if isinstance(result, list):
+            items: list[Any] = result
+        elif isinstance(result, Iterable):
+            items = list(result)
+        else:
+            # Handle unexpected single object
+            items = [result]
 
         # Convert Email objects → JSON-safe dicts
-        safe_messages: list[dict[str, Any]] = []
-        for msg in result:
+        serialized: list[dict[str, Any]] = []
+        for msg in items:
             try:
                 if hasattr(msg, "model_dump"):
-                    safe_messages.append(msg.model_dump())
+                    serialized.append(msg.model_dump())
                 elif hasattr(msg, "dict"):
-                    safe_messages.append(msg.dict())
+                    serialized.append(msg.dict())
                 elif hasattr(msg, "__dict__"):
-                    safe_messages.append(msg.__dict__)
+                    serialized.append(msg.__dict__)
                 else:
-                    safe_messages.append({"message": str(msg)})
+                    serialized.append({"message": str(msg)})
             except Exception as e:
-                safe_messages.append({"error": f"Serialization failed: {e}"})
-        return safe_messages
+                serialized.append({"error": f"Serialization failed: {e}"})
+
+        return serialized
 
     except Exception as e:
         import traceback
