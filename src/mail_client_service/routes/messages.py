@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
-
+from typing import TYPE_CHECKING, Any, Iterable, cast
 from fastapi import APIRouter, HTTPException
-
 import email_api
 from email_api import Client
 
@@ -38,7 +36,6 @@ def _require_method(client: Client, name: str) -> Callable[..., object]:
 def list_messages() -> list[dict[str, Any]]:
     """Return a list of message summaries."""
     client = _client()
-
     try:
         # Try list_messages() or fallback to get_messages()
         if hasattr(client, "list_messages"):
@@ -46,12 +43,15 @@ def list_messages() -> list[dict[str, Any]]:
         else:
             result = _require_method(client, "get_messages")(limit=50)
 
-        # Convert generator → list
+        # Safely convert to list
         if not isinstance(result, list):
-            result = list(result)
+            if isinstance(result, Iterable):
+                result = list(result)
+            else:
+                result = [result]
 
         # Convert Email objects → JSON-safe dicts
-        safe_messages = []
+        safe_messages: list[dict[str, Any]] = []
         for msg in result:
             try:
                 if hasattr(msg, "model_dump"):
@@ -61,10 +61,9 @@ def list_messages() -> list[dict[str, Any]]:
                 elif hasattr(msg, "__dict__"):
                     safe_messages.append(msg.__dict__)
                 else:
-                    safe_messages.append(str(msg))
+                    safe_messages.append({"message": str(msg)})
             except Exception as e:
                 safe_messages.append({"error": f"Serialization failed: {e}"})
-
         return safe_messages
 
     except Exception as e:
