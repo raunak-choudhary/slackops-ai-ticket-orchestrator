@@ -7,7 +7,7 @@ jobs:
       - image: cimg/python:3.12
     steps:
       - checkout
-      
+
       # Install uv
       - run:
           name: Install uv
@@ -15,34 +15,34 @@ jobs:
             curl -LsSf https://astral.sh/uv/install.sh | sh
             echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
             source $BASH_ENV
-      
+
       # Cache uv dependencies
       - restore_cache:
           keys:
             - v1-lint-deps-{{ checksum "uv.lock" }}
             - v1-lint-deps-
-      
+
       # Install dependencies
       - run:
           name: Install dependencies
           command: |
             source $BASH_ENV
             uv sync --extra dev --extra email --extra gmail
-      
+
       # Save cache
       - save_cache:
           paths:
             - .venv
             - ~/.cache/uv
           key: v1-lint-deps-{{ checksum "uv.lock" }}
-      
+
       # Run ruff linting
       - run:
           name: Run ruff
           command: |
             source $BASH_ENV
             uv run ruff check .
-      
+
       # Run mypy type checking
       - run:
           name: Run mypy
@@ -55,7 +55,7 @@ jobs:
       - image: cimg/python:3.12
     steps:
       - checkout
-      
+
       # Install uv
       - run:
           name: Install uv
@@ -63,27 +63,27 @@ jobs:
             curl -LsSf https://astral.sh/uv/install.sh | sh
             echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
             source $BASH_ENV
-      
+
       # Cache uv dependencies
       - restore_cache:
           keys:
             - v1-test-deps-{{ checksum "uv.lock" }}
             - v1-test-deps-
-      
+
       # Install dependencies
       - run:
           name: Install dependencies
           command: |
             source $BASH_ENV
             uv sync --extra dev --extra email --extra gmail
-      
+
       # Save cache
       - save_cache:
           paths:
             - .venv
             - ~/.cache/uv
           key: v1-test-deps-{{ checksum "uv.lock" }}
-      
+
       # Run unit tests with verbose output
       - run:
           name: Run unit tests (verbose)
@@ -98,7 +98,21 @@ jobs:
               --cov-fail-under=80 \
               --junit-xml=test-results/junit.xml \
               --disable-warnings --tb=short
-      
+
+      # Always show summary
+      - run:
+          name: Show pytest summary
+          command: |
+            echo "==================== PYTEST SUMMARY ===================="
+            if [ -f test-results/junit.xml ]; then
+              grep "<testcase" test-results/junit.xml | wc -l | xargs echo "Total tests run:"
+              grep "<failure" test-results/junit.xml | wc -l | xargs echo "Failures:"
+              grep "<skipped" test-results/junit.xml | wc -l | xargs echo "Skipped:"
+              echo "========================================================"
+            else
+              echo "⚠️  No junit.xml found — pytest may have exited early."
+            fi
+
       # Store test results and coverage artifacts
       - store_test_results:
           path: test-results
@@ -114,7 +128,7 @@ jobs:
       - image: cimg/python:3.12
     steps:
       - checkout
-      
+
       # Install uv
       - run:
           name: Install uv
@@ -122,27 +136,27 @@ jobs:
             curl -LsSf https://astral.sh/uv/install.sh | sh
             echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
             source $BASH_ENV
-      
+
       # Cache uv dependencies
       - restore_cache:
           keys:
             - v1-integration-deps-{{ checksum "uv.lock" }}
             - v1-integration-deps-
-      
+
       # Install dependencies
       - run:
           name: Install dependencies
           command: |
             source $BASH_ENV
             uv sync --extra dev --extra email --extra gmail
-      
+
       # Save cache
       - save_cache:
           paths:
             - .venv
             - ~/.cache/uv
           key: v1-integration-deps-{{ checksum "uv.lock" }}
-      
+
       # Setup Gmail credentials from environment variables
       - run:
           name: Setup Gmail credentials
@@ -151,8 +165,8 @@ jobs:
             if [ ! -z "$GMAIL_CI_TOKEN_JSON" ]; then
               echo "$GMAIL_CI_TOKEN_JSON" > ci_token.json
             fi
-      
-      # Run integration tests (verbose)
+
+      # Run integration tests
       - run:
           name: Run integration tests (verbose)
           command: |
@@ -160,11 +174,25 @@ jobs:
             mkdir -p test-results
             export GMAIL_TOKEN_FILE=${GMAIL_CI_TOKEN_JSON:+ci_token.json}
             export GMAIL_TOKEN_FILE=${GMAIL_TOKEN_FILE:-test_token.json}
-            
+
             uv run pytest tests/integration/ \
               --junit-xml=test-results/integration-junit.xml \
               -v --disable-warnings --tb=short
-      
+
+      # Always show summary
+      - run:
+          name: Show pytest summary
+          command: |
+            echo "==================== PYTEST SUMMARY ===================="
+            if [ -f test-results/integration-junit.xml ]; then
+              grep "<testcase" test-results/integration-junit.xml | wc -l | xargs echo "Total tests run:"
+              grep "<failure" test-results/integration-junit.xml | wc -l | xargs echo "Failures:"
+              grep "<skipped" test-results/integration-junit.xml | wc -l | xargs echo "Skipped:"
+              echo "========================================================"
+            else
+              echo "⚠️  No junit.xml found — pytest may have exited early."
+            fi
+
       # Store test results
       - store_test_results:
           path: test-results
@@ -177,7 +205,7 @@ jobs:
       - image: cimg/python:3.12
     steps:
       - checkout
-      
+
       # Install uv
       - run:
           name: Install uv
@@ -185,27 +213,27 @@ jobs:
             curl -LsSf https://astral.sh/uv/install.sh | sh
             echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
             source $BASH_ENV
-      
+
       # Cache uv dependencies
       - restore_cache:
           keys:
             - v1-e2e-deps-{{ checksum "uv.lock" }}
             - v1-e2e-deps-
-      
+
       # Install dependencies
       - run:
           name: Install dependencies
           command: |
             source $BASH_ENV
             uv sync --extra dev --extra email --extra gmail
-      
+
       # Save cache
       - save_cache:
           paths:
             - .venv
             - ~/.cache/uv
           key: v1-e2e-deps-{{ checksum "uv.lock" }}
-      
+
       # Setup Gmail credentials from environment variables
       - run:
           name: Setup Gmail credentials
@@ -215,7 +243,7 @@ jobs:
               echo "$GMAIL_CI_TOKEN_JSON" > token.json
             fi
 
-      # Run E2E tests (verbose)
+      # Run E2E tests
       - run:
           name: Run E2E tests (verbose)
           command: |
@@ -224,7 +252,21 @@ jobs:
             uv run pytest tests/e2e/ \
               --junit-xml=test-results/e2e-junit.xml \
               -v --disable-warnings --tb=short
-      
+
+      # Always show summary
+      - run:
+          name: Show pytest summary
+          command: |
+            echo "==================== PYTEST SUMMARY ===================="
+            if [ -f test-results/e2e-junit.xml ]; then
+              grep "<testcase" test-results/e2e-junit.xml | wc -l | xargs echo "Total tests run:"
+              grep "<failure" test-results/e2e-junit.xml | wc -l | xargs echo "Failures:"
+              grep "<skipped" test-results/e2e-junit.xml | wc -l | xargs echo "Skipped:"
+              echo "========================================================"
+            else
+              echo "⚠️  No junit.xml found — pytest may have exited early."
+            fi
+
       # Store test results
       - store_test_results:
           path: test-results
@@ -237,44 +279,32 @@ jobs:
       - image: cimg/python:3.12
     steps:
       - checkout
-
-      # Install uv
       - run:
           name: Install uv
           command: |
             curl -LsSf https://astral.sh/uv/install.sh | sh
             echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
             source $BASH_ENV
-
-      # Cache uv dependencies
       - restore_cache:
           keys:
             - v1-build-deps-{{ checksum "uv.lock" }}
             - v1-build-deps-
-
-      # Install dependencies
       - run:
           name: Install dependencies
           command: |
             source $BASH_ENV
             uv sync --extra dev --extra email --extra gmail
-
-      # Save cache
       - save_cache:
           paths:
             - .venv
             - ~/.cache/uv
           key: v1-build-deps-{{ checksum "uv.lock" }}
-
-      # Build components
       - run:
           name: Build components
           command: |
             source $BASH_ENV
             cd src/email_api && uv build && cd ../..
             cd src/gmail_impl && uv build && cd ../..
-
-      # Store build artifacts
       - store_artifacts:
           path: src/email_api/dist/
           destination: email-api-build
@@ -287,44 +317,32 @@ jobs:
       - image: cimg/python:3.12
     steps:
       - checkout
-
-      # Install uv
       - run:
           name: Install uv
           command: |
             curl -LsSf https://astral.sh/uv/install.sh | sh
             echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
             source $BASH_ENV
-
-      # Cache uv dependencies
       - restore_cache:
           keys:
             - v1-docs-deps-{{ checksum "uv.lock" }}
             - v1-docs-deps-
-
-      # Install dependencies
       - run:
           name: Install dependencies
           command: |
             source $BASH_ENV
             uv sync --extra dev --extra email --extra gmail
             uv pip install mkdocs mkdocs-material mkdocstrings[python]
-
-      # Save cache
       - save_cache:
           paths:
             - .venv
             - ~/.cache/uv
           key: v1-docs-deps-{{ checksum "uv.lock" }}
-
-      # Build documentation
       - run:
           name: Build docs
           command: |
             source $BASH_ENV
             uv run mkdocs build --strict
-
-      # Store documentation artifacts
       - store_artifacts:
           path: site/
           destination: documentation
@@ -369,7 +387,6 @@ workflows:
           requires:
             - lint
           filters:
-            branches:
               only:
                 - main
                 - develop
