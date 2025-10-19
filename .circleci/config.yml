@@ -222,8 +222,7 @@ workflows:
   version: 2
   full-test-suite:
     jobs:
-      - lint:
-          continue-on-error: true
+      - lint
       - test-unit:
           requires:
             - lint
@@ -248,22 +247,7 @@ workflows:
                 - /feat\/.*gmail.*/
   pr-check:
     jobs:
-      - lint:
-          continue-on-error: true
-          filters:
-            branches:
-              ignore:
-                - main
-                - develop
-                - /feature\/.*integration.*/
-                - /feature\/.*e2e.*/
+      - lint
       - test-unit:
           requires:
             - lint
-          filters:
-            branches:
-              ignore:
-                - main
-                - develop
-                - /feature\/.*integration.*/
-                - /feature\/.*e2e.*/
