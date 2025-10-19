@@ -84,19 +84,20 @@ jobs:
             - ~/.cache/uv
           key: v1-test-deps-{{ checksum "uv.lock" }}
       
-      # Run unit tests with coverage
+      # Run unit tests with verbose output
       - run:
-          name: Run unit tests
+          name: Run unit tests (verbose)
           command: |
             source $BASH_ENV
             mkdir -p test-results
-            uv run pytest src/email_api/tests/ src/gmail_impl/tests/ \
+            uv run pytest -v src/email_api/tests/ src/gmail_impl/tests/ \
               --cov=src/email_api/src/email_api \
               --cov=src/gmail_impl/src/gmail_impl \
               --cov-report=term-missing \
               --cov-report=html \
               --cov-fail-under=80 \
-              --junit-xml=test-results/junit.xml
+              --junit-xml=test-results/junit.xml \
+              --disable-warnings --tb=short
       
       # Store test results and coverage artifacts
       - store_test_results:
@@ -146,27 +147,23 @@ jobs:
       - run:
           name: Setup Gmail credentials
           command: |
-            # Create credentials.json from environment variable
             echo "$GMAIL_CREDENTIALS_JSON" > credentials.json
-            
-            # Create CI token file from environment variable if provided
             if [ ! -z "$GMAIL_CI_TOKEN_JSON" ]; then
               echo "$GMAIL_CI_TOKEN_JSON" > ci_token.json
             fi
       
-      # Run integration tests
+      # Run integration tests (verbose)
       - run:
-          name: Run integration tests
+          name: Run integration tests (verbose)
           command: |
             source $BASH_ENV
             mkdir -p test-results
-            # Use CI token file if available, otherwise tests will create new one
             export GMAIL_TOKEN_FILE=${GMAIL_CI_TOKEN_JSON:+ci_token.json}
             export GMAIL_TOKEN_FILE=${GMAIL_TOKEN_FILE:-test_token.json}
             
             uv run pytest tests/integration/ \
               --junit-xml=test-results/integration-junit.xml \
-              -v
+              -v --disable-warnings --tb=short
       
       # Store test results
       - store_test_results:
@@ -213,23 +210,20 @@ jobs:
       - run:
           name: Setup Gmail credentials
           command: |
-            # Create credentials.json from environment variable
             echo "$GMAIL_CREDENTIALS_JSON" > credentials.json
-
-            # Create token.json from environment variable if provided
             if [ ! -z "$GMAIL_CI_TOKEN_JSON" ]; then
               echo "$GMAIL_CI_TOKEN_JSON" > token.json
             fi
 
-      # Run E2E tests
+      # Run E2E tests (verbose)
       - run:
-          name: Run E2E tests
+          name: Run E2E tests (verbose)
           command: |
             source $BASH_ENV
             mkdir -p test-results
             uv run pytest tests/e2e/ \
               --junit-xml=test-results/e2e-junit.xml \
-              -v
+              -v --disable-warnings --tb=short
       
       # Store test results
       - store_test_results:
@@ -277,15 +271,8 @@ jobs:
           name: Build components
           command: |
             source $BASH_ENV
-            # Build email-api component
-            cd src/email_api
-            uv build
-            cd ../..
-
-            # Build gmail-impl component
-            cd src/gmail_impl
-            uv build
-            cd ../..
+            cd src/email_api && uv build && cd ../..
+            cd src/gmail_impl && uv build && cd ../..
 
       # Store build artifacts
       - store_artifacts:
@@ -354,7 +341,6 @@ workflows:
       - test-integration:
           requires:
             - test-unit
-          # Only run integration tests on main/develop branches or when explicitly triggered
           filters:
             branches:
               only:
@@ -365,7 +351,6 @@ workflows:
       - test-e2e:
           requires:
             - test-integration
-          # Only run E2E tests on main branch or when explicitly triggered
           filters:
             branches:
               only:
@@ -389,13 +374,12 @@ workflows:
                 - main
                 - develop
 
-  # Quick PR check workflow (no Gmail tests)
   pr-check:
     jobs:
       - lint:
           filters:
             branches:
-              ignore: 
+              ignore:
                 - main
                 - develop
                 - /feature\/.*integration.*/
@@ -405,8 +389,8 @@ workflows:
             - lint
           filters:
             branches:
-              ignore: 
+              ignore:
                 - main
                 - develop
                 - /feature\/.*integration.*/
-                - /feature\/.*e2e.*/ 
+                - /feature\/.*e2e.*/
