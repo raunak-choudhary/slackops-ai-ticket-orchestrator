@@ -204,19 +204,18 @@ jobs:
           name: Show pytest summary
           command: |
             echo "==================== PYTEST SUMMARY ===================="
-            if [ -f test-results/e2e-junit.xml ]; then
-              grep "<testcase" test-results/e2e-junit.xml | wc -l | xargs echo "Total tests run:"
-              grep "<failure" test-results/e2e-junit.xml | wc -l | xargs echo "Failures:"
-              grep "<skipped" test-results/e2e-junit.xml | wc -l | xargs echo "Skipped:"
-              echo "========================================================"
+            if [ -f test-results/junit.xml ]; then
+              total=$(grep "<testcase" test-results/junit.xml | wc -l || echo 0)
+              fail=$(grep "<failure" test-results/junit.xml | wc -l || echo 0)
+              skip=$(grep "<skipped" test-results/junit.xml | wc -l || echo 0)
+              echo "Total tests run: $total"
+              echo "Failures: $fail"
+              echo "Skipped: $skip"
             else
               echo "⚠️  No junit.xml found — pytest may have exited early."
             fi
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: test-results
-          destination: e2e-test-results
+            # Prevent CircleCI from failing here
+            exit 02e-test-results
 
 workflows:
   version: 2
