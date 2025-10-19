@@ -1,9 +1,9 @@
 # src/mail_client_adapter/tests/test_adapter_unit.py
-import sys, os
+import sys
+import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 
-import pytest
-from src.mail_client_adapter.src.mail_client_adapter.adapter import ServiceBackedClient, ServiceAdapter
+from mail_client_adapter.adapter import ServiceBackedClient, ServiceAdapter
 
 
 def test_service_adapter_exists():

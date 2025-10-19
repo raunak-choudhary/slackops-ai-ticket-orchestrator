@@ -123,20 +123,15 @@ ignore_missing_imports = true
 
 # Workspace-level pytest configuration
 [tool.pytest.ini_options]
-minversion = "8.0"
-addopts = [
-    "--strict-markers",
-    "--strict-config",
-    "--cov-report=html",
-    "--cov-report=term-missing",
-    "--import-mode=importlib",
+addopts = "-ra -q"
+testpaths = ["src", "tests"]
+pythonpath = [
+    "src",
+    "clients/python"
 ]
-testpaths = ["src/*/tests", "tests"]
 markers = [
     "unit: marks tests as unit tests",
     "integration: marks tests as integration tests",
     "e2e: marks tests as end-to-end tests",
-]
-filterwarnings = [
-    "ignore:datetime.datetime.utcfromtimestamp\\(\\) is deprecated:DeprecationWarning:google_auth_oauthlib.helpers",
+    "local_credentials: tests that need locally configured credentials"
 ]

@@ -1,6 +1,7 @@
 # src/gmail_impl/tests/test_gmail_client.py
 
-import sys, os
+import sys
+import os
 # Ensure that the 'src' directory is in Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 

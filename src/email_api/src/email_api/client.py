@@ -1,58 +1,57 @@
 """
-Email API client module.
-Defines the Email class and a simple EmailApiClient for testing and integration.
+email_api.client (package source)
+Defines Email and Client used by: `import email_api`
 """
 
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 
 @dataclass
 class Email:
-    """Represents a basic email message."""
+    """
+    Represents an email message with sender, recipient, subject, and body.
+
+    Defaults allow Email() to be instantiated with no arguments.
+    """
     sender: str = ""
     recipient: str = ""
     subject: str = ""
     body: str = ""
 
+    def __str__(self) -> str:
+        return (
+            f"From: {self.sender}\n"
+            f"To: {self.recipient}\n"
+            f"Subject: {self.subject}\n\n"
+            f"{self.body}"
+        )
 
-class EmailApiClient:
-    """A simple simulated email API client."""
+
+class Client:
+    """
+    A lightweight email API client for basic email operations (in-memory).
+    """
 
     def __init__(self) -> None:
-        self._messages: List[Email] = [
-            Email(
-                sender="test_sender@example.com",
-                recipient="test_recipient@example.com",
-                subject="Welcome to OSPSD",
-                body="This is a test email from the Email API.",
-            ),
-            Email(
-                sender="alerts@example.com",
-                recipient="user@example.com",
-                subject="System Alert",
-                body="Your account activity has been updated.",
-            ),
-        ]
+        self._sent_messages: List[Email] = []
 
-    def get_messages(self) -> List[Email]:
-        """Simulate fetching a list of email messages."""
-        return self._messages
+    def send_email(self, email: Email) -> bool:
+        if not email.sender or not email.recipient:
+            raise ValueError("Sender and recipient must be provided.")
+        self._sent_messages.append(email)
+        return True
 
-    def add_message(self, email: Email) -> None:
-        """Add a message to the simulated store."""
-        if not isinstance(email, Email):
-            raise TypeError("Expected an Email instance")
-        self._messages.append(email)
+    def list_emails(self) -> List[Email]:
+        return self._sent_messages
 
-    def clear_messages(self) -> None:
-        """Clear all stored emails."""
-        self._messages.clear()
+    def get_email(self, index: int) -> Optional[Email]:
+        if 0 <= index < len(self._sent_messages):
+            return self._sent_messages[index]
+        return None
 
-
-# Optional standalone run
-if __name__ == "__main__":
-    client = EmailApiClient()
-    print("=== Demo: Email API ===")
-    for msg in client.get_messages():
-        print(f"From: {msg.sender}, Subject: {msg.subject}")
+    def delete_email(self, index: int) -> bool:
+        if 0 <= index < len(self._sent_messages):
+            del self._sent_messages[index]
+            return True
+        return False

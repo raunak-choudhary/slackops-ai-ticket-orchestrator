@@ -290,3 +290,12 @@ oauth_*.json
 
 .env
 token.json
+venv/
+.venv/
+clients/specs/openapi.json
+clients/python/
+venv/
+.venv/
+clients/specs/openapi.json
+clients/python/
+src/mail_client_service_client/

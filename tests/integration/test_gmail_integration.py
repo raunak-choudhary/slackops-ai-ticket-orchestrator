@@ -1,10 +1,10 @@
 # tests/integration/test_gmail_integration.py
 
-import sys, os
+import sys
+import os
 # Add the project root to sys.path so that 'src' can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-import pytest
 from src.email_api.client import Email  # ✅ fixed import path
 
 
