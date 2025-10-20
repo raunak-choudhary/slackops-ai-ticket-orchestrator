@@ -98,7 +98,11 @@ jobs:
           command: |
             source .venv/bin/activate
             uv add types-requests
-            mypy src/ --explicit-package-bases
+            uv run mypy --config-file mypy.ini \
+              -p email_api \
+              -p gmail_impl \
+              -p mail_client_adapter \
+              -p mail_client_service
       - store_test_results:
           path: test-results/unit
       - store_artifacts:
@@ -205,6 +209,7 @@ workflows:
                 - develop
                 - kamen-requierd-fixes
       - circleci_test:
+        # Only run after unit tests, so we don't waste cycles
           requires: [unit_test]
           filters:
             branches:
