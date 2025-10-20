@@ -1,17 +1,31 @@
-"""
-Stub GmailClient class for structural integrity tests.
-This is *not* the production Gmail client.
-"""
+# src/gmail_impl/gmail_client.py
+from __future__ import annotations
+
+from typing import Any
+
+"""Gmail client implementation (lightweight stub)."""
+
 
 class GmailClient:
-    def __init__(self):
-        self._messages = [
-            {"id": "m1", "subject": "Welcome!", "body": "Thanks for joining!"},
-            {"id": "m2", "subject": "Update", "body": "System update notice."},
-        ]
+    def ping(self) -> str:
+        return "ok"
 
-    def send(self, email=None):
-        return "sent"
+    def send(self, email: Any) -> str:
+        """
+        Send an email.
 
-    def fetch(self):
-        return self._messages
+        This is a stub so tests can monkeypatch this method.
+        The body is intentionally trivial.
+        """
+        _ = email
+        return "queued"
+
+    def fetch(self, *, limit: int | None = None) -> list[dict[str, Any]]:
+        """
+        Return a list of message summaries.
+
+        This is a stub to satisfy tests that monkeypatch this method.
+        Real implementation would call Gmail API; tests will override it.
+        """
+        _ = limit  # keep signature & avoid unused warning
+        return []

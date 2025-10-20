@@ -1,2 +1,5 @@
-from .client import Email, Client  # noqa: F401
-__all__ = ["Email", "Client"]
+from __future__ import annotations
+
+from .client import Client, Email
+
+__all__ = ["Client", "Email"]

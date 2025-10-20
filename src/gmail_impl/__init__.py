@@ -1,2 +1,5 @@
-from .gmail_client import GmailClient  # noqa: F401
+from __future__ import annotations
+
+from .gmail_client import GmailClient
+
 __all__ = ["GmailClient"]

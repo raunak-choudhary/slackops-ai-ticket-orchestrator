@@ -4,7 +4,6 @@ Defines Email and Client used by: `import email_api`
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
 
 
 @dataclass
@@ -34,7 +33,7 @@ class Client:
     """
 
     def __init__(self) -> None:
-        self._sent_messages: List[Email] = []
+        self._sent_messages: list[Email] = []
 
     def send_email(self, email: Email) -> bool:
         if not email.sender or not email.recipient:
@@ -42,10 +41,10 @@ class Client:
         self._sent_messages.append(email)
         return True
 
-    def list_emails(self) -> List[Email]:
+    def list_emails(self) -> list[Email]:
         return self._sent_messages
 
-    def get_email(self, index: int) -> Optional[Email]:
+    def get_email(self, index: int) -> Email | None:
         if 0 <= index < len(self._sent_messages):
             return self._sent_messages[index]
         return None

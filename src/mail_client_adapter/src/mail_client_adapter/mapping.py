@@ -1,20 +1,23 @@
+# src/mail_client_adapter/src/mail_client_adapter/mapping.py
+"""
+Mapping utilities for converting service or adapter payloads
+into the canonical Email model defined in email_api.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import Any
-import email_api
+
+from email_api import Email
 
 
-def to_email_model(payload: Any) -> email_api.Email:
-    """Convert service JSON payload to email_api.Email object."""
-    return email_api.Email(
-        id=str(payload["id"]),
-        subject=str(payload.get("subject", "")),
-        sender=email_api.EmailAddress(address=str(payload.get("from", ""))),
-        recipients=[email_api.EmailAddress(address="placeholder@recipient.com")],
-        date_sent=payload.get("date_sent", "1970-01-01T00:00:00Z"),
-        date_received=payload.get("date_received", "1970-01-01T00:00:00Z"),
-        body=str(payload.get("body", "")),
-    )
-
-
-def to_message_id(message_id: str) -> str:
-    """Convert generic ID to service-compatible message ID string."""
-    return str(message_id)
+def to_email(raw: Mapping[str, Any]) -> Email:
+    """
+    Convert a dict-like object returned by the service/adapter
+    into an Email instance. The email_api.Email here requires
+    `sender` and `subject` (both strings).
+    """
+    sender = str(raw.get("sender", ""))
+    subject = str(raw.get("subject", ""))
+    return Email(sender=sender, subject=subject)

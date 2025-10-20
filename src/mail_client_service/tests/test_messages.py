@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Callable
+from typing import Any, cast
 
 from fastapi.testclient import TestClient
 
@@ -32,7 +33,8 @@ class DummyClient:
 
 def setup_function() -> None:
     """Monkeypatch the DI factory to return our dummy instead of Gmail."""
-    email_api.get_client = lambda: DummyClient()  # type: ignore[assignment]
+    # Cast the lambda to the expected callable type so mypy doesn't complain.
+    email_api.get_client = cast(Callable[[], Any], lambda: DummyClient())
 
 
 def test_list_messages() -> None:

@@ -5,7 +5,7 @@ import os
 # Add the project root to sys.path so that 'src' can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from src.email_api.client import Email  # ✅ fixed import path
+from email_api.client import Email  # ✅ fixed import path
 
 
 def test_email_class_exists():

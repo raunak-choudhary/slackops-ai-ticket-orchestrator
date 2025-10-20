@@ -3,15 +3,14 @@ Stub GmailClient class for structural integrity tests.
 This is *not* the production Gmail client.
 """
 
+from __future__ import annotations
+
+
 class GmailClient:
-    def __init__(self):
-        self._messages = [
-            {"id": "m1", "subject": "Welcome!", "body": "Thanks for joining!"},
-            {"id": "m2", "subject": "Update", "body": "System update notice."},
-        ]
+    def __init__(self) -> None:
+        self._sent: list[str] = []
 
-    def send(self, email=None):
+    def send(self, _email=None):
+        # Signature kept for compatibility; argument intentionally unused.
+        self._sent.append("sent")
         return "sent"
-
-    def fetch(self):
-        return self._messages

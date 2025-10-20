@@ -1,10 +1,12 @@
+# src/mail_client_adapter/pyproject.toml
+
 [project]
 name = "mail_client_adapter"
 version = "0.1.0"
 description = "Adapter implementing email_api via the generated OpenAPI client"
 requires-python = ">=3.12"
 dependencies = [
-    "httpx"
+    "httpx",
 ]
 
 [build-system]
@@ -16,5 +18,47 @@ dev-dependencies = [
     "pytest",
     "pytest-cov",
     "mypy",
-    "ruff"
+    "ruff",
 ]
+
+# ---- Strict lint & type ----
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E","F","I","UP","B","C4","PIE","PT","PTH","SIM","TID","RUF","ARG","PL"]
+ignore = ["PLR2004","PLR0913","PLR0912","PLR0915","PLR0917"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-wrap-aliases = true
+known-first-party = ["mail_client_adapter","email_api"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+namespace_packages = true
+explicit_package_bases = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unreachable = true
+warn_return_any = true
+no_implicit_optional = true
+check_untyped_defs = true
+show_error_codes = true
+mypy_path = ["src","clients"]
+
+# Generated client: ignore typing inside it
+[[tool.mypy.overrides]]
+module = [
+  "mail_client_service_client",
+  "mail_client_service_client.*",
+]
+ignore_errors = true
+
+# tests looser
+[[tool.mypy.overrides]]
+module = ["mail_client_adapter.tests", "mail_client_adapter.tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false

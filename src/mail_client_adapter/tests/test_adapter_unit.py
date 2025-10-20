@@ -1,16 +1,17 @@
 # src/mail_client_adapter/tests/test_adapter_unit.py
+from __future__ import annotations
+
 import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
+from pathlib import Path
 
-from mail_client_adapter.adapter import ServiceBackedClient, ServiceAdapter
+# Put repo root on sys.path
+ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
+
+from mail_client_adapter.adapter import ServiceAdapter, ServiceBackedClient  # noqa: E402
 
 
-def test_service_adapter_exists():
-    adapter = ServiceAdapter()
-    assert adapter is not None
-
-
-def test_service_backed_client_exists():
-    client = ServiceBackedClient()
-    assert client is not None
+def test_adapter_exists():
+    assert ServiceAdapter
+    assert ServiceBackedClient

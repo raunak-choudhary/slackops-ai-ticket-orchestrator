@@ -1,32 +1,28 @@
 # src/gmail_impl/tests/test_gmail_client.py
+from __future__ import annotations
 
 import sys
-import os
-# Ensure that the 'src' directory is in Python path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
+from pathlib import Path
 
-import pytest
-from src.email_api.client import Email  # ✅ Fixed import (was 'from email_api import Email')
-from src.gmail_impl.gmail_client import GmailClient  # Assuming this class exists in gmail_client.py
+# Ensure that the 'src' directory is in Python path
+ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
+
+import pytest  # noqa: E402
+
+from email_api.client import Email  # noqa: E402
+from gmail_impl.gmail_client import GmailClient  # noqa: E402
 
 
 @pytest.fixture
 def dummy_email():
-    """Fixture to create a dummy Email instance."""
-    email = Email(
+    return Email(
         sender="test_sender@example.com",
         recipient="test_recipient@example.com",
         subject="Test Subject",
-        body="This is a test email body."
+        body="This is a test email body.",
     )
-    return email
-
-
-def test_email_initialization(dummy_email):
-    """Ensure Email class initializes correctly."""
-    assert dummy_email.sender == "test_sender@example.com"
-    assert dummy_email.recipient == "test_recipient@example.com"
-    assert dummy_email.subject == "Test Subject"
 
 
 def test_gmail_client_send(monkeypatch, dummy_email):

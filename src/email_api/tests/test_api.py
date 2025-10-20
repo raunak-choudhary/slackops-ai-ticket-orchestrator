@@ -1,20 +1,25 @@
 # src/email_api/tests/test_api.py
+from __future__ import annotations
 
 import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
+from pathlib import Path
 
-from src.email_api.client import Client
+# Put repo root on sys.path
+ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
+
+from email_api.client import Client  # noqa: E402
 
 
 class MockClient(Client):
-    """Concrete mock subclass of the abstract Client for testing."""
+    """Concrete mock subclass of Client for testing."""
     def get_messages(self):
         return [{"id": "1", "subject": "Mock message"}]
 
 
 def test_client_initialization():
-    """Test that the abstract Client can be subclassed and instantiated."""
+    """Test that the Client can be subclassed and instantiated."""
     client = MockClient()
     assert client is not None
 

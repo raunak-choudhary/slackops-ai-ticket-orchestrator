@@ -1,14 +1,15 @@
-"""Dependency injection entrypoint for mail_client_adapter.
+# src/mail_client_adapter/src/mail_client_adapter/__init__.py
+"""
+mail_client_adapter package
 
-When imported, this module overrides email_api.get_client()
-so that all calls to get_client() return the service-backed adapter.
+Exports:
+    - AdapterClient: shim implementing email_api.Client interface
+    - ServiceAdapter: concrete adapter around generated service client
+    - ServiceBackedClient: simple façade used in unit tests
 """
 
-import email_api
+from __future__ import annotations
 
-from .adapter import ServiceBackedClient
+from .adapter import AdapterClient, ServiceAdapter, ServiceBackedClient
 
-DEFAULT_BASE_URL = "http://127.0.0.1:8080"
-
-# Override factory
-email_api.get_client = lambda: ServiceBackedClient(base_url=DEFAULT_BASE_URL)
+__all__ = ["AdapterClient", "ServiceAdapter", "ServiceBackedClient"]
