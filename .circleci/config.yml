@@ -1,412 +1,278 @@
 version: 2.1
 
-# Define jobs
 jobs:
-  lint:
-    docker:
-      - image: cimg/python:3.12
-    steps:
-      - checkout
-      
-      # Install uv
-      - run:
-          name: Install uv
-          command: |
-            curl -LsSf https://astral.sh/uv/install.sh | sh
-            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
-            source $BASH_ENV
-      
-      # Cache uv dependencies
-      - restore_cache:
-          keys:
-            - v1-lint-deps-{{ checksum "uv.lock" }}
-            - v1-lint-deps-
-      
-      # Install dependencies
-      - run:
-          name: Install dependencies
-          command: |
-            source $BASH_ENV
-            uv sync --extra dev --extra email --extra gmail
-      
-      # Save cache
-      - save_cache:
-          paths:
-            - .venv
-            - ~/.cache/uv
-          key: v1-lint-deps-{{ checksum "uv.lock" }}
-      
-      # Run ruff linting
-      - run:
-          name: Run ruff
-          command: |
-            source $BASH_ENV
-            uv run ruff check .
-      
-      # Run mypy type checking
-      - run:
-          name: Run mypy
-          command: |
-            source $BASH_ENV
-            uv run mypy src/
-
-  test-unit:
-    docker:
-      - image: cimg/python:3.12
-    steps:
-      - checkout
-      
-      # Install uv
-      - run:
-          name: Install uv
-          command: |
-            curl -LsSf https://astral.sh/uv/install.sh | sh
-            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
-            source $BASH_ENV
-      
-      # Cache uv dependencies
-      - restore_cache:
-          keys:
-            - v1-test-deps-{{ checksum "uv.lock" }}
-            - v1-test-deps-
-      
-      # Install dependencies
-      - run:
-          name: Install dependencies
-          command: |
-            source $BASH_ENV
-            uv sync --extra dev --extra email --extra gmail
-      
-      # Save cache
-      - save_cache:
-          paths:
-            - .venv
-            - ~/.cache/uv
-          key: v1-test-deps-{{ checksum "uv.lock" }}
-      
-      # Run unit tests with coverage
-      - run:
-          name: Run unit tests
-          command: |
-            source $BASH_ENV
-            mkdir -p test-results
-            uv run pytest src/email_api/tests/ src/gmail_impl/tests/ \
-              --cov=src/email_api/src/email_api \
-              --cov=src/gmail_impl/src/gmail_impl \
-              --cov-report=term-missing \
-              --cov-report=html \
-              --cov-fail-under=80 \
-              --junit-xml=test-results/junit.xml
-      
-      # Store test results and coverage artifacts
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: htmlcov
-          destination: coverage-report
-      - store_artifacts:
-          path: test-results
-          destination: test-results
-
-  test-integration:
-    docker:
-      - image: cimg/python:3.12
-    steps:
-      - checkout
-      
-      # Install uv
-      - run:
-          name: Install uv
-          command: |
-            curl -LsSf https://astral.sh/uv/install.sh | sh
-            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
-            source $BASH_ENV
-      
-      # Cache uv dependencies
-      - restore_cache:
-          keys:
-            - v1-integration-deps-{{ checksum "uv.lock" }}
-            - v1-integration-deps-
-      
-      # Install dependencies
-      - run:
-          name: Install dependencies
-          command: |
-            source $BASH_ENV
-            uv sync --extra dev --extra email --extra gmail
-      
-      # Save cache
-      - save_cache:
-          paths:
-            - .venv
-            - ~/.cache/uv
-          key: v1-integration-deps-{{ checksum "uv.lock" }}
-      
-      # Setup Gmail credentials from environment variables
-      - run:
-          name: Setup Gmail credentials
-          command: |
-            # Create credentials.json from environment variable
-            echo "$GMAIL_CREDENTIALS_JSON" > credentials.json
-            
-            # Create CI token file from environment variable if provided
-            if [ ! -z "$GMAIL_CI_TOKEN_JSON" ]; then
-              echo "$GMAIL_CI_TOKEN_JSON" > ci_token.json
-            fi
-      
-      # Run integration tests
-      - run:
-          name: Run integration tests
-          command: |
-            source $BASH_ENV
-            mkdir -p test-results
-            # Use CI token file if available, otherwise tests will create new one
-            export GMAIL_TOKEN_FILE=${GMAIL_CI_TOKEN_JSON:+ci_token.json}
-            export GMAIL_TOKEN_FILE=${GMAIL_TOKEN_FILE:-test_token.json}
-            
-            uv run pytest tests/integration/ \
-              --junit-xml=test-results/integration-junit.xml \
-              -v
-      
-      # Store test results
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: test-results
-          destination: integration-test-results
-
-  test-e2e:
-    docker:
-      - image: cimg/python:3.12
-    steps:
-      - checkout
-      
-      # Install uv
-      - run:
-          name: Install uv
-          command: |
-            curl -LsSf https://astral.sh/uv/install.sh | sh
-            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
-            source $BASH_ENV
-      
-      # Cache uv dependencies
-      - restore_cache:
-          keys:
-            - v1-e2e-deps-{{ checksum "uv.lock" }}
-            - v1-e2e-deps-
-      
-      # Install dependencies
-      - run:
-          name: Install dependencies
-          command: |
-            source $BASH_ENV
-            uv sync --extra dev --extra email --extra gmail
-      
-      # Save cache
-      - save_cache:
-          paths:
-            - .venv
-            - ~/.cache/uv
-          key: v1-e2e-deps-{{ checksum "uv.lock" }}
-      
-      # Setup Gmail credentials from environment variables
-      - run:
-          name: Setup Gmail credentials
-          command: |
-            # Create credentials.json from environment variable
-            echo "$GMAIL_CREDENTIALS_JSON" > credentials.json
-
-            # Create token.json from environment variable if provided
-            if [ ! -z "$GMAIL_CI_TOKEN_JSON" ]; then
-              echo "$GMAIL_CI_TOKEN_JSON" > token.json
-            fi
-
-      # Run E2E tests
-      - run:
-          name: Run E2E tests
-          command: |
-            source $BASH_ENV
-            mkdir -p test-results
-            uv run pytest tests/e2e/ \
-              --junit-xml=test-results/e2e-junit.xml \
-              -v
-      
-      # Store test results
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: test-results
-          destination: e2e-test-results
-
+  # Job 1: Setup Environment and Install Dependencies
   build:
     docker:
       - image: cimg/python:3.12
     steps:
       - checkout
 
-      # Install uv
       - run:
-          name: Install uv
+          name: "Install UV and Add to Path"
           command: |
             curl -LsSf https://astral.sh/uv/install.sh | sh
             echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
             source $BASH_ENV
+            uv --version
 
-      # Cache uv dependencies
-      - restore_cache:
-          keys:
-            - v1-build-deps-{{ checksum "uv.lock" }}
-            - v1-build-deps-
-
-      # Install dependencies
       - run:
-          name: Install dependencies
+          name: "Create Virtual Env & Install All Dependencies via UV"
           command: |
-            source $BASH_ENV
-            uv sync --extra dev --extra email --extra gmail
+            uv venv --python 3.12
+            source .venv/bin/activate
+            uv sync --all-packages --extra dev --verbose
 
-      # Save cache
-      - save_cache:
+      - run:
+          name: "Install Local Packages (email_api, gmail_impl)"
+          command: |
+            source .venv/bin/activate
+            uv pip install -e src/email_api
+            uv pip install -e src/gmail_impl
+
+      - run:
+          name: "Verify Installation"
+          command: |
+            source .venv/bin/activate
+            uv tree
+            ruff --version
+            pytest --version
+            mypy --version
+
+      - run:
+          name: "Ensure OpenAPI Client Exists"
+          command: |
+            source .venv/bin/activate
+            echo "Checking for clients/specs/openapi.json..."
+            if [ ! -f clients/specs/openapi.json ]; then
+              echo "Generating OpenAPI spec..."
+              uv run python scripts/export_openapi.py
+            fi
+            echo "Checking for generated client..."
+            if [ ! -d clients/python/mail_client_service_client ]; then
+              echo "Generating Python client from spec..."
+              uv run openapi-python-client generate \
+                  --path clients/specs/openapi.json \
+                  --output clients/python --overwrite
+            fi
+
+      - persist_to_workspace:
+          root: .
           paths:
-            - .venv
-            - ~/.cache/uv
-          key: v1-build-deps-{{ checksum "uv.lock" }}
+            - .
 
-      # Build components
-      - run:
-          name: Build components
-          command: |
-            source $BASH_ENV
-            # Build email-api component
-            cd src/email_api
-            uv build
-            cd ../..
-
-            # Build gmail-impl component
-            cd src/gmail_impl
-            uv build
-            cd ../..
-
-      # Store build artifacts
-      - store_artifacts:
-          path: src/email_api/dist/
-          destination: email-api-build
-      - store_artifacts:
-          path: src/gmail_impl/dist/
-          destination: gmail-impl-build
-
-  docs:
+  # Job 2: Linting
+  lint:
     docker:
       - image: cimg/python:3.12
     steps:
-      - checkout
-
-      # Install uv
+      - attach_workspace:
+          at: .
       - run:
-          name: Install uv
+          name: "Run Ruff Linter"
           command: |
-            curl -LsSf https://astral.sh/uv/install.sh | sh
-            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
-            source $BASH_ENV
+            source .venv/bin/activate
+            ruff check .
 
-      # Cache uv dependencies
-      - restore_cache:
-          keys:
-            - v1-docs-deps-{{ checksum "uv.lock" }}
-            - v1-docs-deps-
-
-      # Install dependencies
+  # Job 3: Unit Tests and Coverage
+  unit_test:
+    docker:
+      - image: cimg/python:3.12
+    steps:
+      - attach_workspace:
+          at: .
       - run:
-          name: Install dependencies
+          name: "Prepare for Unit Tests"
           command: |
-            source $BASH_ENV
-            uv sync --extra dev --extra email --extra gmail
-            uv pip install mkdocs mkdocs-material mkdocstrings[python]
-
-      # Save cache
-      - save_cache:
-          paths:
-            - .venv
-            - ~/.cache/uv
-          key: v1-docs-deps-{{ checksum "uv.lock" }}
-
-      # Build documentation
+            source .venv/bin/activate
+            mkdir -p test-results/unit
       - run:
-          name: Build docs
+          name: "Run Unit Tests with Coverage"
           command: |
-            source $BASH_ENV
-            uv run mkdocs build --strict
-
-      # Store documentation artifacts
+            source .venv/bin/activate
+            pytest src/ --cov=src --cov-report=xml --cov-report=term \
+                   --junitxml=test-results/unit/junit.xml \
+                   --cov-fail-under=85
+      - run:
+          name: "Run Static Type Checks (mypy)"
+          command: |
+            source .venv/bin/activate
+            uv add types-requests
+            uv run mypy --config-file mypy.ini \
+              -p email_api \
+              -p gmail_impl \
+              -p mail_client_adapter \
+              -p mail_client_service
+      - store_test_results:
+          path: test-results/unit
       - store_artifacts:
-          path: site/
-          destination: documentation
+          path: coverage.xml
+      - store_artifacts:
+          path: test-results/unit
 
-# Define workflows
+  # Job 4: CircleCI Tests (All but local credentials)
+  circleci_test:
+    docker:
+      - image: cimg/python:3.12
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: "Prepare for CircleCI Tests"
+          command: |
+            source .venv/bin/activate
+            mkdir -p test-results/circleci
+      - run:
+          name: "Run All Non-local Tests"
+          command: |
+            source .venv/bin/activate
+            pytest src/ tests/ -m "not local_credentials" \
+                   --junitxml=test-results/circleci/junit.xml -v \
+                   --cov=src --cov-report=term
+      - store_test_results:
+          path: test-results/circleci
+      - store_artifacts:
+          path: test-results/circleci
+
+  # Job 5: Integration Tests with Real Credentials
+  integration_test:
+    docker:
+      - image: cimg/python:3.12
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: "Check Environment Variables"
+          command: |
+            if [ -z "$GMAIL_CLIENT_ID" ] || [ -z "$GMAIL_CLIENT_SECRET" ] || [ -z "$GMAIL_REFRESH_TOKEN" ]; then
+              echo "⚠️ Missing Gmail API credentials. Integration tests may be skipped."
+            else
+              echo "✅ All Gmail API credentials are present."
+            fi
+      - run:
+          name: "Run Integration Tests (Real Gmail API)"
+          command: |
+            source .venv/bin/activate
+            mkdir -p test-results/integration
+            pytest -m "integration and not local_credentials" \
+                   --junitxml=test-results/integration/junit.xml -v \
+                   --no-cov
+      - store_test_results:
+          path: test-results/integration
+      - store_artifacts:
+          path: test-results/integration
+
+  # Job 6: Summary Report
+  report_summary:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: "Report Results"
+          command: |
+            echo "---- Unit Tests ----"
+            [ -f test-results/unit/junit.xml ] && echo "✅ Unit results found." || echo "❌ Missing unit results."
+            echo "---- CircleCI Tests ----"
+            [ -f test-results/circleci/junit.xml ] && echo "✅ CircleCI results found." || echo "❌ Missing CircleCI results."
+            echo "---- Integration Tests ----"
+            [ -f test-results/integration/junit.xml ] && echo "✅ Integration results found." || echo "ℹ️ Integration skipped."
+            echo "---- Coverage ----"
+            [ -f coverage.xml ] && echo "Coverage file found." || echo "No coverage.xml."
+
+# Workflows
 workflows:
-  version: 2
-  full-test-suite:
+  build_and_test:
     jobs:
-      - lint
-      - test-unit:
-          requires:
-            - lint
-      - test-integration:
-          requires:
-            - test-unit
-          # Only run integration tests on main/develop branches or when explicitly triggered
-          filters:
-            branches:
-              only:
-                - main
-                - develop
-                - /feature\/.*integration.*/
-                - /feat\/.*gmail.*/
-      - test-e2e:
-          requires:
-            - test-integration
-          # Only run E2E tests on main branch or when explicitly triggered
-          filters:
-            branches:
-              only:
-                - main
-                - /feature\/.*e2e.*/
-                - /feat\/.*gmail.*/
       - build:
-          requires:
-            - test-unit
           filters:
             branches:
-              only:
+              ignore:
                 - main
                 - develop
-      - docs:
-          requires:
-            - lint
-          filters:
-            branches:
-              only:
-                - main
-                - develop
-
-  # Quick PR check workflow (no Gmail tests)
-  pr-check:
-    jobs:
+                - kamen-requierd-fixes
       - lint:
+          requires: [build]
           filters:
             branches:
-              ignore: 
+              ignore:
                 - main
                 - develop
-                - /feature\/.*integration.*/
-                - /feature\/.*e2e.*/
-      - test-unit:
-          requires:
-            - lint
+                - kamen-requierd-fixes
+      - unit_test:
+          requires: [build]
           filters:
             branches:
-              ignore: 
+              ignore:
                 - main
                 - develop
-                - /feature\/.*integration.*/
-                - /feature\/.*e2e.*/ 
+                - kamen-requierd-fixes
+      - circleci_test:
+        # Only run after unit tests, so we don't waste cycles
+          requires: [unit_test]
+          filters:
+            branches:
+              ignore:
+                - main
+                - develop
+                - kamen-requierd-fixes
+      - report_summary:
+          requires: [unit_test, circleci_test]
+          filters:
+            branches:
+              ignore:
+                - main
+                - develop
+                - kamen-requierd-fixes
+
+  full_integration:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+                - kamen-requierd-fixes
+      - lint:
+          requires: [build]
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+                - kamen-requierd-fixes
+      - unit_test:
+          requires: [build]
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+                - kamen-requierd-fixes
+      - circleci_test:
+          requires: [unit_test]
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+                - kamen-requierd-fixes
+      - integration_test:
+          requires: [circleci_test]
+          context: gmail-client
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+                - kamen-requierd-fixes
+      - report_summary:
+          requires: [unit_test, circleci_test, integration_test]
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+                - kamen-requierd-fixes

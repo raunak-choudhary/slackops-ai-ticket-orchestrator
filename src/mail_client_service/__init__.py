@@ -1,1 +1,1 @@
-"""Mail client service workspace package."""
+"""Mail client service runtime package."""

@@ -1,25 +1,15 @@
-"""Email API Component.
+# src/email_api/__init__.py
 
-Provides abstract interfaces and dependency injection for email clients.
-"""
+"""email_api package public API."""
 
-# Re-export everything from the inner client
-from .client import (
-    Client,
-    Email,
-    EmailAddress,
-    get_client,
-    register_client_factory,
-)
+from __future__ import annotations
 
-__all__ = [
-    "Client",
-    "Email",
-    "EmailAddress",
-    "get_client",
-    "register_client_factory",
-]
+from .client import Client, Email
 
-__version__ = "0.1.0"
-__author__ = "Adithya Balachandra"
-__description__ = "Email client interface component"
+
+def get_client() -> Client:
+    """Factory for obtaining an email client (overridable via DI/monkeypatch)."""
+    return Client()
+
+
+__all__ = ["Client", "Email", "get_client"]

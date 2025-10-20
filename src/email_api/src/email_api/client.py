@@ -3,6 +3,8 @@ email_api.client (package source)
 Defines Email and Client used by: `import email_api`
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 
@@ -18,7 +20,7 @@ class Email:
     subject: str = ""
     body: str = ""
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover (string repr convenience)
         return (
             f"From: {self.sender}\n"
             f"To: {self.recipient}\n"
@@ -28,9 +30,7 @@ class Email:
 
 
 class Client:
-    """
-    A lightweight email API client for basic email operations (in-memory).
-    """
+    """A lightweight email API client for basic email operations (in-memory)."""
 
     def __init__(self) -> None:
         self._sent_messages: list[Email] = []

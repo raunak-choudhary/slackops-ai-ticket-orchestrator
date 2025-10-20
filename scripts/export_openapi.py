@@ -8,7 +8,8 @@ import pathlib
 
 from fastapi.openapi.utils import get_openapi
 
-from mail_client_service.app import app
+from mail_client_service.src.mail_client_service.app import app
+
 
 logger = logging.getLogger(__name__)
 
