@@ -1,66 +1,56 @@
-"""Email client API."""
+"""
+email_api.client (package source)
+Defines Email and Client used by: `import email_api`
+"""
 
-from abc import ABC, abstractmethod
-from collections.abc import Iterator
+from __future__ import annotations
+
 from dataclasses import dataclass
-from datetime import datetime
 
 
-@dataclass(frozen=True)
-class EmailAddress:
-    """Represents an email address with optional display name."""
-
-    address: str
-    name: str | None = None
-
-    def __str__(self) -> str:
-        """Return formatted email address."""
-        if self.name:
-            return f"{self.name} <{self.address}>"
-        return self.address
-
-
-@dataclass(frozen=True)
+@dataclass
 class Email:
-    """Represents an email message."""
-
-    id: str
-    subject: str
-    sender: EmailAddress
-    recipients: list[EmailAddress]
-    date_sent: datetime
-    date_received: datetime
-    body: str
-
-
-class Client(ABC):
-    """Mail client abstract base class for fetching messages."""
-
-    @abstractmethod
-    def get_messages(self, limit: int | None = None) -> Iterator[Email]:
-        """Return an iterator of messages from inbox.
-
-        Args:
-            limit: Maximum number of messages to retrieve (optional)
-
-        Raises:
-            ConnectionError: If unable to connect to mail service
-            RuntimeError: If authentication fails
-        """
-        raise NotImplementedError
-
-
-def get_client() -> Client:
-    """Return an instance of a Mail Client.
-
-    This function should be replaced by implementation packages.
-    Import an implementation package (e.g., gmail_impl) to inject
-    the concrete implementation.
-
-    Returns:
-        Client instance from the injected implementation
-
-    Raises:
-        NotImplementedError: If no implementation has been imported
     """
-    raise NotImplementedError
+    Represents an email message with sender, recipient, subject, and body.
+
+    Defaults allow Email() to be instantiated with no arguments.
+    """
+    sender: str = ""
+    recipient: str = ""
+    subject: str = ""
+    body: str = ""
+
+    def __str__(self) -> str:  # pragma: no cover (string repr convenience)
+        return (
+            f"From: {self.sender}\n"
+            f"To: {self.recipient}\n"
+            f"Subject: {self.subject}\n\n"
+            f"{self.body}"
+        )
+
+
+class Client:
+    """A lightweight email API client for basic email operations (in-memory)."""
+
+    def __init__(self) -> None:
+        self._sent_messages: list[Email] = []
+
+    def send_email(self, email: Email) -> bool:
+        if not email.sender or not email.recipient:
+            raise ValueError("Sender and recipient must be provided.")
+        self._sent_messages.append(email)
+        return True
+
+    def list_emails(self) -> list[Email]:
+        return self._sent_messages
+
+    def get_email(self, index: int) -> Email | None:
+        if 0 <= index < len(self._sent_messages):
+            return self._sent_messages[index]
+        return None
+
+    def delete_email(self, index: int) -> bool:
+        if 0 <= index < len(self._sent_messages):
+            del self._sent_messages[index]
+            return True
+        return False

@@ -1,13 +1,8 @@
-"""Gmail implementation of the Client protocol.
-
-This component provides a concrete implementation of the Client protocol
-using the Gmail API with OAuth2 authentication.
+"""
+gmail_impl package initializer.
+Provides access to the GmailClient class for tests and service imports.
 """
 
-import email_api
-from gmail_impl.gmail_client import GmailClient
+from gmail_impl.gmail_client import GmailClient  # ✅ correct and stable import
 
 __all__ = ["GmailClient"]
-
-# Dependency injection: Replace email_api.get_client with our implementation
-email_api.get_client = lambda: GmailClient()

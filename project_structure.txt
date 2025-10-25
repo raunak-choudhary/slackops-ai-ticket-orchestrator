@@ -1,0 +1,1332 @@
+.
+├── .circleci
+│   └── config.yml
+├── .dockerignore
+├── .github
+│   ├── ISSUE_TEMPLATE
+│   │   ├── bug_report.md
+│   │   └── feature_request.md
+│   └── pull_request_template.md
+├── .gitignore
+├── .mypy_cache
+│   ├── .gitignore
+│   ├── 3.12
+│   │   ├── @plugins_snapshot.json
+│   │   ├── __future__.data.json
+│   │   ├── __future__.meta.json
+│   │   ├── _ast.data.json
+│   │   ├── _ast.meta.json
+│   │   ├── _asyncio.data.json
+│   │   ├── _asyncio.meta.json
+│   │   ├── _bisect.data.json
+│   │   ├── _bisect.meta.json
+│   │   ├── _blake2.data.json
+│   │   ├── _blake2.meta.json
+│   │   ├── _codecs.data.json
+│   │   ├── _codecs.meta.json
+│   │   ├── _collections_abc.data.json
+│   │   ├── _collections_abc.meta.json
+│   │   ├── _contextvars.data.json
+│   │   ├── _contextvars.meta.json
+│   │   ├── _ctypes.data.json
+│   │   ├── _ctypes.meta.json
+│   │   ├── _decimal.data.json
+│   │   ├── _decimal.meta.json
+│   │   ├── _frozen_importlib.data.json
+│   │   ├── _frozen_importlib.meta.json
+│   │   ├── _frozen_importlib_external.data.json
+│   │   ├── _frozen_importlib_external.meta.json
+│   │   ├── _hashlib.data.json
+│   │   ├── _hashlib.meta.json
+│   │   ├── _io.data.json
+│   │   ├── _io.meta.json
+│   │   ├── _operator.data.json
+│   │   ├── _operator.meta.json
+│   │   ├── _pickle.data.json
+│   │   ├── _pickle.meta.json
+│   │   ├── _queue.data.json
+│   │   ├── _queue.meta.json
+│   │   ├── _random.data.json
+│   │   ├── _random.meta.json
+│   │   ├── _sitebuiltins.data.json
+│   │   ├── _sitebuiltins.meta.json
+│   │   ├── _socket.data.json
+│   │   ├── _socket.meta.json
+│   │   ├── _ssl.data.json
+│   │   ├── _ssl.meta.json
+│   │   ├── _stat.data.json
+│   │   ├── _stat.meta.json
+│   │   ├── _struct.data.json
+│   │   ├── _struct.meta.json
+│   │   ├── _thread.data.json
+│   │   ├── _thread.meta.json
+│   │   ├── _typeshed
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── importlib.data.json
+│   │   │   └── importlib.meta.json
+│   │   ├── _warnings.data.json
+│   │   ├── _warnings.meta.json
+│   │   ├── _weakref.data.json
+│   │   ├── _weakref.meta.json
+│   │   ├── _weakrefset.data.json
+│   │   ├── _weakrefset.meta.json
+│   │   ├── abc.data.json
+│   │   ├── abc.meta.json
+│   │   ├── annotated_types
+│   │   │   ├── __init__.data.json
+│   │   │   └── __init__.meta.json
+│   │   ├── anyio
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── _core
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── _contextmanagers.data.json
+│   │   │   │   ├── _contextmanagers.meta.json
+│   │   │   │   ├── _eventloop.data.json
+│   │   │   │   ├── _eventloop.meta.json
+│   │   │   │   ├── _exceptions.data.json
+│   │   │   │   ├── _exceptions.meta.json
+│   │   │   │   ├── _fileio.data.json
+│   │   │   │   ├── _fileio.meta.json
+│   │   │   │   ├── _resources.data.json
+│   │   │   │   ├── _resources.meta.json
+│   │   │   │   ├── _signals.data.json
+│   │   │   │   ├── _signals.meta.json
+│   │   │   │   ├── _sockets.data.json
+│   │   │   │   ├── _sockets.meta.json
+│   │   │   │   ├── _streams.data.json
+│   │   │   │   ├── _streams.meta.json
+│   │   │   │   ├── _subprocesses.data.json
+│   │   │   │   ├── _subprocesses.meta.json
+│   │   │   │   ├── _synchronization.data.json
+│   │   │   │   ├── _synchronization.meta.json
+│   │   │   │   ├── _tasks.data.json
+│   │   │   │   ├── _tasks.meta.json
+│   │   │   │   ├── _tempfile.data.json
+│   │   │   │   ├── _tempfile.meta.json
+│   │   │   │   ├── _testing.data.json
+│   │   │   │   ├── _testing.meta.json
+│   │   │   │   ├── _typedattr.data.json
+│   │   │   │   └── _typedattr.meta.json
+│   │   │   ├── abc
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── _eventloop.data.json
+│   │   │   │   ├── _eventloop.meta.json
+│   │   │   │   ├── _resources.data.json
+│   │   │   │   ├── _resources.meta.json
+│   │   │   │   ├── _sockets.data.json
+│   │   │   │   ├── _sockets.meta.json
+│   │   │   │   ├── _streams.data.json
+│   │   │   │   ├── _streams.meta.json
+│   │   │   │   ├── _subprocesses.data.json
+│   │   │   │   ├── _subprocesses.meta.json
+│   │   │   │   ├── _tasks.data.json
+│   │   │   │   ├── _tasks.meta.json
+│   │   │   │   ├── _testing.data.json
+│   │   │   │   └── _testing.meta.json
+│   │   │   ├── from_thread.data.json
+│   │   │   ├── from_thread.meta.json
+│   │   │   ├── lowlevel.data.json
+│   │   │   ├── lowlevel.meta.json
+│   │   │   ├── streams
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── memory.data.json
+│   │   │   │   ├── memory.meta.json
+│   │   │   │   ├── stapled.data.json
+│   │   │   │   ├── stapled.meta.json
+│   │   │   │   ├── tls.data.json
+│   │   │   │   └── tls.meta.json
+│   │   │   ├── to_thread.data.json
+│   │   │   └── to_thread.meta.json
+│   │   ├── ast.data.json
+│   │   ├── ast.meta.json
+│   │   ├── asyncio
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── base_events.data.json
+│   │   │   ├── base_events.meta.json
+│   │   │   ├── coroutines.data.json
+│   │   │   ├── coroutines.meta.json
+│   │   │   ├── events.data.json
+│   │   │   ├── events.meta.json
+│   │   │   ├── exceptions.data.json
+│   │   │   ├── exceptions.meta.json
+│   │   │   ├── futures.data.json
+│   │   │   ├── futures.meta.json
+│   │   │   ├── locks.data.json
+│   │   │   ├── locks.meta.json
+│   │   │   ├── mixins.data.json
+│   │   │   ├── mixins.meta.json
+│   │   │   ├── protocols.data.json
+│   │   │   ├── protocols.meta.json
+│   │   │   ├── queues.data.json
+│   │   │   ├── queues.meta.json
+│   │   │   ├── runners.data.json
+│   │   │   ├── runners.meta.json
+│   │   │   ├── selector_events.data.json
+│   │   │   ├── selector_events.meta.json
+│   │   │   ├── streams.data.json
+│   │   │   ├── streams.meta.json
+│   │   │   ├── subprocess.data.json
+│   │   │   ├── subprocess.meta.json
+│   │   │   ├── taskgroups.data.json
+│   │   │   ├── taskgroups.meta.json
+│   │   │   ├── tasks.data.json
+│   │   │   ├── tasks.meta.json
+│   │   │   ├── threads.data.json
+│   │   │   ├── threads.meta.json
+│   │   │   ├── timeouts.data.json
+│   │   │   ├── timeouts.meta.json
+│   │   │   ├── transports.data.json
+│   │   │   ├── transports.meta.json
+│   │   │   ├── unix_events.data.json
+│   │   │   └── unix_events.meta.json
+│   │   ├── atexit.data.json
+│   │   ├── atexit.meta.json
+│   │   ├── base64.data.json
+│   │   ├── base64.meta.json
+│   │   ├── binascii.data.json
+│   │   ├── binascii.meta.json
+│   │   ├── bisect.data.json
+│   │   ├── bisect.meta.json
+│   │   ├── builtins.data.json
+│   │   ├── builtins.meta.json
+│   │   ├── calendar.data.json
+│   │   ├── calendar.meta.json
+│   │   ├── certifi
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── core.data.json
+│   │   │   └── core.meta.json
+│   │   ├── codecs.data.json
+│   │   ├── codecs.meta.json
+│   │   ├── collections
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── abc.data.json
+│   │   │   └── abc.meta.json
+│   │   ├── colorsys.data.json
+│   │   ├── colorsys.meta.json
+│   │   ├── concurrent
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   └── futures
+│   │   │       ├── __init__.data.json
+│   │   │       ├── __init__.meta.json
+│   │   │       ├── _base.data.json
+│   │   │       ├── _base.meta.json
+│   │   │       ├── process.data.json
+│   │   │       ├── process.meta.json
+│   │   │       ├── thread.data.json
+│   │   │       └── thread.meta.json
+│   │   ├── contextlib.data.json
+│   │   ├── contextlib.meta.json
+│   │   ├── contextvars.data.json
+│   │   ├── contextvars.meta.json
+│   │   ├── copy.data.json
+│   │   ├── copy.meta.json
+│   │   ├── copyreg.data.json
+│   │   ├── copyreg.meta.json
+│   │   ├── ctypes
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── _endian.data.json
+│   │   │   └── _endian.meta.json
+│   │   ├── dataclasses.data.json
+│   │   ├── dataclasses.meta.json
+│   │   ├── datetime.data.json
+│   │   ├── datetime.meta.json
+│   │   ├── decimal.data.json
+│   │   ├── decimal.meta.json
+│   │   ├── dis.data.json
+│   │   ├── dis.meta.json
+│   │   ├── doctest.data.json
+│   │   ├── doctest.meta.json
+│   │   ├── email
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── _policybase.data.json
+│   │   │   ├── _policybase.meta.json
+│   │   │   ├── charset.data.json
+│   │   │   ├── charset.meta.json
+│   │   │   ├── contentmanager.data.json
+│   │   │   ├── contentmanager.meta.json
+│   │   │   ├── errors.data.json
+│   │   │   ├── errors.meta.json
+│   │   │   ├── header.data.json
+│   │   │   ├── header.meta.json
+│   │   │   ├── message.data.json
+│   │   │   ├── message.meta.json
+│   │   │   ├── policy.data.json
+│   │   │   ├── policy.meta.json
+│   │   │   ├── utils.data.json
+│   │   │   └── utils.meta.json
+│   │   ├── email_api
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── client.data.json
+│   │   │   └── client.meta.json
+│   │   ├── enum.data.json
+│   │   ├── enum.meta.json
+│   │   ├── errno.data.json
+│   │   ├── errno.meta.json
+│   │   ├── fastapi
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── _compat.data.json
+│   │   │   ├── _compat.meta.json
+│   │   │   ├── applications.data.json
+│   │   │   ├── applications.meta.json
+│   │   │   ├── background.data.json
+│   │   │   ├── background.meta.json
+│   │   │   ├── concurrency.data.json
+│   │   │   ├── concurrency.meta.json
+│   │   │   ├── datastructures.data.json
+│   │   │   ├── datastructures.meta.json
+│   │   │   ├── dependencies
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── models.data.json
+│   │   │   │   ├── models.meta.json
+│   │   │   │   ├── utils.data.json
+│   │   │   │   └── utils.meta.json
+│   │   │   ├── encoders.data.json
+│   │   │   ├── encoders.meta.json
+│   │   │   ├── exception_handlers.data.json
+│   │   │   ├── exception_handlers.meta.json
+│   │   │   ├── exceptions.data.json
+│   │   │   ├── exceptions.meta.json
+│   │   │   ├── logger.data.json
+│   │   │   ├── logger.meta.json
+│   │   │   ├── middleware
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── asyncexitstack.data.json
+│   │   │   │   └── asyncexitstack.meta.json
+│   │   │   ├── openapi
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── constants.data.json
+│   │   │   │   ├── constants.meta.json
+│   │   │   │   ├── docs.data.json
+│   │   │   │   ├── docs.meta.json
+│   │   │   │   ├── models.data.json
+│   │   │   │   ├── models.meta.json
+│   │   │   │   ├── utils.data.json
+│   │   │   │   └── utils.meta.json
+│   │   │   ├── param_functions.data.json
+│   │   │   ├── param_functions.meta.json
+│   │   │   ├── params.data.json
+│   │   │   ├── params.meta.json
+│   │   │   ├── requests.data.json
+│   │   │   ├── requests.meta.json
+│   │   │   ├── responses.data.json
+│   │   │   ├── responses.meta.json
+│   │   │   ├── routing.data.json
+│   │   │   ├── routing.meta.json
+│   │   │   ├── security
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── api_key.data.json
+│   │   │   │   ├── api_key.meta.json
+│   │   │   │   ├── base.data.json
+│   │   │   │   ├── base.meta.json
+│   │   │   │   ├── http.data.json
+│   │   │   │   ├── http.meta.json
+│   │   │   │   ├── oauth2.data.json
+│   │   │   │   ├── oauth2.meta.json
+│   │   │   │   ├── open_id_connect_url.data.json
+│   │   │   │   ├── open_id_connect_url.meta.json
+│   │   │   │   ├── utils.data.json
+│   │   │   │   └── utils.meta.json
+│   │   │   ├── types.data.json
+│   │   │   ├── types.meta.json
+│   │   │   ├── utils.data.json
+│   │   │   ├── utils.meta.json
+│   │   │   ├── websockets.data.json
+│   │   │   └── websockets.meta.json
+│   │   ├── fractions.data.json
+│   │   ├── fractions.meta.json
+│   │   ├── functools.data.json
+│   │   ├── functools.meta.json
+│   │   ├── genericpath.data.json
+│   │   ├── genericpath.meta.json
+│   │   ├── getpass.data.json
+│   │   ├── getpass.meta.json
+│   │   ├── gmail_impl
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── gmail_client.data.json
+│   │   │   └── gmail_client.meta.json
+│   │   ├── google
+│   │   │   ├── auth
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── _cloud_sdk.data.json
+│   │   │   │   ├── _cloud_sdk.meta.json
+│   │   │   │   ├── _credentials_base.data.json
+│   │   │   │   ├── _credentials_base.meta.json
+│   │   │   │   ├── _default.data.json
+│   │   │   │   ├── _default.meta.json
+│   │   │   │   ├── _exponential_backoff.data.json
+│   │   │   │   ├── _exponential_backoff.meta.json
+│   │   │   │   ├── _helpers.data.json
+│   │   │   │   ├── _helpers.meta.json
+│   │   │   │   ├── _refresh_worker.data.json
+│   │   │   │   ├── _refresh_worker.meta.json
+│   │   │   │   ├── _service_account_info.data.json
+│   │   │   │   ├── _service_account_info.meta.json
+│   │   │   │   ├── credentials.data.json
+│   │   │   │   ├── credentials.meta.json
+│   │   │   │   ├── crypt
+│   │   │   │   │   ├── __init__.data.json
+│   │   │   │   │   ├── __init__.meta.json
+│   │   │   │   │   ├── _cryptography_rsa.data.json
+│   │   │   │   │   ├── _cryptography_rsa.meta.json
+│   │   │   │   │   ├── _python_rsa.data.json
+│   │   │   │   │   ├── _python_rsa.meta.json
+│   │   │   │   │   ├── base.data.json
+│   │   │   │   │   ├── base.meta.json
+│   │   │   │   │   ├── es256.data.json
+│   │   │   │   │   ├── es256.meta.json
+│   │   │   │   │   ├── rsa.data.json
+│   │   │   │   │   └── rsa.meta.json
+│   │   │   │   ├── environment_vars.data.json
+│   │   │   │   ├── environment_vars.meta.json
+│   │   │   │   ├── exceptions.data.json
+│   │   │   │   ├── exceptions.meta.json
+│   │   │   │   ├── iam.data.json
+│   │   │   │   ├── iam.meta.json
+│   │   │   │   ├── jwt.data.json
+│   │   │   │   ├── jwt.meta.json
+│   │   │   │   ├── metrics.data.json
+│   │   │   │   ├── metrics.meta.json
+│   │   │   │   ├── transport
+│   │   │   │   │   ├── __init__.data.json
+│   │   │   │   │   ├── __init__.meta.json
+│   │   │   │   │   ├── _custom_tls_signer.data.json
+│   │   │   │   │   ├── _custom_tls_signer.meta.json
+│   │   │   │   │   ├── _http_client.data.json
+│   │   │   │   │   ├── _http_client.meta.json
+│   │   │   │   │   ├── _mtls_helper.data.json
+│   │   │   │   │   ├── _mtls_helper.meta.json
+│   │   │   │   │   ├── requests.data.json
+│   │   │   │   │   └── requests.meta.json
+│   │   │   │   ├── version.data.json
+│   │   │   │   └── version.meta.json
+│   │   │   └── oauth2
+│   │   │       ├── __init__.data.json
+│   │   │       ├── __init__.meta.json
+│   │   │       ├── _client.data.json
+│   │   │       ├── _client.meta.json
+│   │   │       ├── challenges.data.json
+│   │   │       ├── challenges.meta.json
+│   │   │       ├── credentials.data.json
+│   │   │       ├── credentials.meta.json
+│   │   │       ├── reauth.data.json
+│   │   │       ├── reauth.meta.json
+│   │   │       ├── service_account.data.json
+│   │   │       ├── service_account.meta.json
+│   │   │       ├── webauthn_handler.data.json
+│   │   │       ├── webauthn_handler.meta.json
+│   │   │       ├── webauthn_handler_factory.data.json
+│   │   │       ├── webauthn_handler_factory.meta.json
+│   │   │       ├── webauthn_types.data.json
+│   │   │       └── webauthn_types.meta.json
+│   │   ├── google.data.json
+│   │   ├── google.meta.json
+│   │   ├── hashlib.data.json
+│   │   ├── hashlib.meta.json
+│   │   ├── hmac.data.json
+│   │   ├── hmac.meta.json
+│   │   ├── html
+│   │   │   ├── __init__.data.json
+│   │   │   └── __init__.meta.json
+│   │   ├── http
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── client.data.json
+│   │   │   ├── client.meta.json
+│   │   │   ├── cookies.data.json
+│   │   │   └── cookies.meta.json
+│   │   ├── idna
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── core.data.json
+│   │   │   ├── core.meta.json
+│   │   │   ├── idnadata.data.json
+│   │   │   ├── idnadata.meta.json
+│   │   │   ├── intranges.data.json
+│   │   │   ├── intranges.meta.json
+│   │   │   ├── package_data.data.json
+│   │   │   └── package_data.meta.json
+│   │   ├── importlib
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── _abc.data.json
+│   │   │   ├── _abc.meta.json
+│   │   │   ├── _bootstrap.data.json
+│   │   │   ├── _bootstrap.meta.json
+│   │   │   ├── _bootstrap_external.data.json
+│   │   │   ├── _bootstrap_external.meta.json
+│   │   │   ├── abc.data.json
+│   │   │   ├── abc.meta.json
+│   │   │   ├── machinery.data.json
+│   │   │   ├── machinery.meta.json
+│   │   │   ├── metadata
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── _meta.data.json
+│   │   │   │   └── _meta.meta.json
+│   │   │   ├── readers.data.json
+│   │   │   ├── readers.meta.json
+│   │   │   └── resources
+│   │   │       ├── __init__.data.json
+│   │   │       ├── __init__.meta.json
+│   │   │       ├── _common.data.json
+│   │   │       ├── _common.meta.json
+│   │   │       ├── abc.data.json
+│   │   │       └── abc.meta.json
+│   │   ├── inspect.data.json
+│   │   ├── inspect.meta.json
+│   │   ├── io.data.json
+│   │   ├── io.meta.json
+│   │   ├── ipaddress.data.json
+│   │   ├── ipaddress.meta.json
+│   │   ├── itertools.data.json
+│   │   ├── itertools.meta.json
+│   │   ├── json
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── decoder.data.json
+│   │   │   ├── decoder.meta.json
+│   │   │   ├── encoder.data.json
+│   │   │   └── encoder.meta.json
+│   │   ├── keyword.data.json
+│   │   ├── keyword.meta.json
+│   │   ├── logging
+│   │   │   ├── __init__.data.json
+│   │   │   └── __init__.meta.json
+│   │   ├── mail_client_adapter
+│   │   │   ├── src
+│   │   │   │   └── mail_client_adapter
+│   │   │   │       ├── __init__.data.json
+│   │   │   │       ├── __init__.meta.json
+│   │   │   │       ├── adapter.data.json
+│   │   │   │       ├── adapter.meta.json
+│   │   │   │       ├── mapping.data.json
+│   │   │   │       └── mapping.meta.json
+│   │   │   ├── src.data.json
+│   │   │   └── src.meta.json
+│   │   ├── mail_client_adapter.data.json
+│   │   ├── mail_client_adapter.meta.json
+│   │   ├── mail_client_service
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── app.data.json
+│   │   │   ├── app.meta.json
+│   │   │   ├── routes
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── messages.data.json
+│   │   │   │   └── messages.meta.json
+│   │   │   └── src
+│   │   │       ├── __init__.data.json
+│   │   │       ├── __init__.meta.json
+│   │   │       └── mail_client_service
+│   │   │           ├── __init__.data.json
+│   │   │           ├── __init__.meta.json
+│   │   │           ├── app.data.json
+│   │   │           ├── app.meta.json
+│   │   │           └── routes
+│   │   │               ├── __init__.data.json
+│   │   │               ├── __init__.meta.json
+│   │   │               ├── messages.data.json
+│   │   │               └── messages.meta.json
+│   │   ├── math.data.json
+│   │   ├── math.meta.json
+│   │   ├── mimetypes.data.json
+│   │   ├── mimetypes.meta.json
+│   │   ├── multiprocessing
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── connection.data.json
+│   │   │   ├── connection.meta.json
+│   │   │   ├── context.data.json
+│   │   │   ├── context.meta.json
+│   │   │   ├── managers.data.json
+│   │   │   ├── managers.meta.json
+│   │   │   ├── pool.data.json
+│   │   │   ├── pool.meta.json
+│   │   │   ├── popen_fork.data.json
+│   │   │   ├── popen_fork.meta.json
+│   │   │   ├── popen_forkserver.data.json
+│   │   │   ├── popen_forkserver.meta.json
+│   │   │   ├── popen_spawn_posix.data.json
+│   │   │   ├── popen_spawn_posix.meta.json
+│   │   │   ├── popen_spawn_win32.data.json
+│   │   │   ├── popen_spawn_win32.meta.json
+│   │   │   ├── process.data.json
+│   │   │   ├── process.meta.json
+│   │   │   ├── queues.data.json
+│   │   │   ├── queues.meta.json
+│   │   │   ├── reduction.data.json
+│   │   │   ├── reduction.meta.json
+│   │   │   ├── shared_memory.data.json
+│   │   │   ├── shared_memory.meta.json
+│   │   │   ├── sharedctypes.data.json
+│   │   │   ├── sharedctypes.meta.json
+│   │   │   ├── spawn.data.json
+│   │   │   ├── spawn.meta.json
+│   │   │   ├── synchronize.data.json
+│   │   │   ├── synchronize.meta.json
+│   │   │   ├── util.data.json
+│   │   │   └── util.meta.json
+│   │   ├── numbers.data.json
+│   │   ├── numbers.meta.json
+│   │   ├── opcode.data.json
+│   │   ├── opcode.meta.json
+│   │   ├── operator.data.json
+│   │   ├── operator.meta.json
+│   │   ├── orjson
+│   │   │   ├── __init__.data.json
+│   │   │   └── __init__.meta.json
+│   │   ├── os
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── path.data.json
+│   │   │   └── path.meta.json
+│   │   ├── pathlib
+│   │   │   ├── __init__.data.json
+│   │   │   └── __init__.meta.json
+│   │   ├── pathlib.data.json
+│   │   ├── pathlib.meta.json
+│   │   ├── pickle.data.json
+│   │   ├── pickle.meta.json
+│   │   ├── platform.data.json
+│   │   ├── platform.meta.json
+│   │   ├── posixpath.data.json
+│   │   ├── posixpath.meta.json
+│   │   ├── pydantic
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── _internal
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── _config.data.json
+│   │   │   │   ├── _config.meta.json
+│   │   │   │   ├── _core_metadata.data.json
+│   │   │   │   ├── _core_metadata.meta.json
+│   │   │   │   ├── _core_utils.data.json
+│   │   │   │   ├── _core_utils.meta.json
+│   │   │   │   ├── _dataclasses.data.json
+│   │   │   │   ├── _dataclasses.meta.json
+│   │   │   │   ├── _decorators.data.json
+│   │   │   │   ├── _decorators.meta.json
+│   │   │   │   ├── _decorators_v1.data.json
+│   │   │   │   ├── _decorators_v1.meta.json
+│   │   │   │   ├── _discriminated_union.data.json
+│   │   │   │   ├── _discriminated_union.meta.json
+│   │   │   │   ├── _docs_extraction.data.json
+│   │   │   │   ├── _docs_extraction.meta.json
+│   │   │   │   ├── _fields.data.json
+│   │   │   │   ├── _fields.meta.json
+│   │   │   │   ├── _forward_ref.data.json
+│   │   │   │   ├── _forward_ref.meta.json
+│   │   │   │   ├── _generate_schema.data.json
+│   │   │   │   ├── _generate_schema.meta.json
+│   │   │   │   ├── _generics.data.json
+│   │   │   │   ├── _generics.meta.json
+│   │   │   │   ├── _import_utils.data.json
+│   │   │   │   ├── _import_utils.meta.json
+│   │   │   │   ├── _internal_dataclass.data.json
+│   │   │   │   ├── _internal_dataclass.meta.json
+│   │   │   │   ├── _known_annotated_metadata.data.json
+│   │   │   │   ├── _known_annotated_metadata.meta.json
+│   │   │   │   ├── _mock_val_ser.data.json
+│   │   │   │   ├── _mock_val_ser.meta.json
+│   │   │   │   ├── _model_construction.data.json
+│   │   │   │   ├── _model_construction.meta.json
+│   │   │   │   ├── _namespace_utils.data.json
+│   │   │   │   ├── _namespace_utils.meta.json
+│   │   │   │   ├── _repr.data.json
+│   │   │   │   ├── _repr.meta.json
+│   │   │   │   ├── _schema_gather.data.json
+│   │   │   │   ├── _schema_gather.meta.json
+│   │   │   │   ├── _schema_generation_shared.data.json
+│   │   │   │   ├── _schema_generation_shared.meta.json
+│   │   │   │   ├── _serializers.data.json
+│   │   │   │   ├── _serializers.meta.json
+│   │   │   │   ├── _signature.data.json
+│   │   │   │   ├── _signature.meta.json
+│   │   │   │   ├── _std_types_schema.data.json
+│   │   │   │   ├── _std_types_schema.meta.json
+│   │   │   │   ├── _typing_extra.data.json
+│   │   │   │   ├── _typing_extra.meta.json
+│   │   │   │   ├── _utils.data.json
+│   │   │   │   ├── _utils.meta.json
+│   │   │   │   ├── _validate_call.data.json
+│   │   │   │   ├── _validate_call.meta.json
+│   │   │   │   ├── _validators.data.json
+│   │   │   │   └── _validators.meta.json
+│   │   │   ├── _migration.data.json
+│   │   │   ├── _migration.meta.json
+│   │   │   ├── aliases.data.json
+│   │   │   ├── aliases.meta.json
+│   │   │   ├── annotated_handlers.data.json
+│   │   │   ├── annotated_handlers.meta.json
+│   │   │   ├── class_validators.data.json
+│   │   │   ├── class_validators.meta.json
+│   │   │   ├── color.data.json
+│   │   │   ├── color.meta.json
+│   │   │   ├── config.data.json
+│   │   │   ├── config.meta.json
+│   │   │   ├── dataclasses.data.json
+│   │   │   ├── dataclasses.meta.json
+│   │   │   ├── deprecated
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── class_validators.data.json
+│   │   │   │   ├── class_validators.meta.json
+│   │   │   │   ├── config.data.json
+│   │   │   │   ├── config.meta.json
+│   │   │   │   ├── copy_internals.data.json
+│   │   │   │   ├── copy_internals.meta.json
+│   │   │   │   ├── json.data.json
+│   │   │   │   ├── json.meta.json
+│   │   │   │   ├── parse.data.json
+│   │   │   │   ├── parse.meta.json
+│   │   │   │   ├── tools.data.json
+│   │   │   │   └── tools.meta.json
+│   │   │   ├── error_wrappers.data.json
+│   │   │   ├── error_wrappers.meta.json
+│   │   │   ├── errors.data.json
+│   │   │   ├── errors.meta.json
+│   │   │   ├── fields.data.json
+│   │   │   ├── fields.meta.json
+│   │   │   ├── functional_serializers.data.json
+│   │   │   ├── functional_serializers.meta.json
+│   │   │   ├── functional_validators.data.json
+│   │   │   ├── functional_validators.meta.json
+│   │   │   ├── json_schema.data.json
+│   │   │   ├── json_schema.meta.json
+│   │   │   ├── main.data.json
+│   │   │   ├── main.meta.json
+│   │   │   ├── networks.data.json
+│   │   │   ├── networks.meta.json
+│   │   │   ├── plugin
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── _schema_validator.data.json
+│   │   │   │   └── _schema_validator.meta.json
+│   │   │   ├── root_model.data.json
+│   │   │   ├── root_model.meta.json
+│   │   │   ├── schema.data.json
+│   │   │   ├── schema.meta.json
+│   │   │   ├── type_adapter.data.json
+│   │   │   ├── type_adapter.meta.json
+│   │   │   ├── types.data.json
+│   │   │   ├── types.meta.json
+│   │   │   ├── typing.data.json
+│   │   │   ├── typing.meta.json
+│   │   │   ├── utils.data.json
+│   │   │   ├── utils.meta.json
+│   │   │   ├── v1
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── annotated_types.data.json
+│   │   │   │   ├── annotated_types.meta.json
+│   │   │   │   ├── class_validators.data.json
+│   │   │   │   ├── class_validators.meta.json
+│   │   │   │   ├── color.data.json
+│   │   │   │   ├── color.meta.json
+│   │   │   │   ├── config.data.json
+│   │   │   │   ├── config.meta.json
+│   │   │   │   ├── dataclasses.data.json
+│   │   │   │   ├── dataclasses.meta.json
+│   │   │   │   ├── datetime_parse.data.json
+│   │   │   │   ├── datetime_parse.meta.json
+│   │   │   │   ├── decorator.data.json
+│   │   │   │   ├── decorator.meta.json
+│   │   │   │   ├── env_settings.data.json
+│   │   │   │   ├── env_settings.meta.json
+│   │   │   │   ├── error_wrappers.data.json
+│   │   │   │   ├── error_wrappers.meta.json
+│   │   │   │   ├── errors.data.json
+│   │   │   │   ├── errors.meta.json
+│   │   │   │   ├── fields.data.json
+│   │   │   │   ├── fields.meta.json
+│   │   │   │   ├── json.data.json
+│   │   │   │   ├── json.meta.json
+│   │   │   │   ├── main.data.json
+│   │   │   │   ├── main.meta.json
+│   │   │   │   ├── networks.data.json
+│   │   │   │   ├── networks.meta.json
+│   │   │   │   ├── parse.data.json
+│   │   │   │   ├── parse.meta.json
+│   │   │   │   ├── schema.data.json
+│   │   │   │   ├── schema.meta.json
+│   │   │   │   ├── tools.data.json
+│   │   │   │   ├── tools.meta.json
+│   │   │   │   ├── types.data.json
+│   │   │   │   ├── types.meta.json
+│   │   │   │   ├── typing.data.json
+│   │   │   │   ├── typing.meta.json
+│   │   │   │   ├── utils.data.json
+│   │   │   │   ├── utils.meta.json
+│   │   │   │   ├── validators.data.json
+│   │   │   │   ├── validators.meta.json
+│   │   │   │   ├── version.data.json
+│   │   │   │   └── version.meta.json
+│   │   │   ├── validate_call_decorator.data.json
+│   │   │   ├── validate_call_decorator.meta.json
+│   │   │   ├── validators.data.json
+│   │   │   ├── validators.meta.json
+│   │   │   ├── version.data.json
+│   │   │   ├── version.meta.json
+│   │   │   ├── warnings.data.json
+│   │   │   └── warnings.meta.json
+│   │   ├── pydantic_core
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── _pydantic_core.data.json
+│   │   │   ├── _pydantic_core.meta.json
+│   │   │   ├── core_schema.data.json
+│   │   │   └── core_schema.meta.json
+│   │   ├── queue.data.json
+│   │   ├── queue.meta.json
+│   │   ├── random.data.json
+│   │   ├── random.meta.json
+│   │   ├── re.data.json
+│   │   ├── re.meta.json
+│   │   ├── resource.data.json
+│   │   ├── resource.meta.json
+│   │   ├── rsa
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── asn1.data.json
+│   │   │   ├── asn1.meta.json
+│   │   │   ├── common.data.json
+│   │   │   ├── common.meta.json
+│   │   │   ├── core.data.json
+│   │   │   ├── core.meta.json
+│   │   │   ├── key.data.json
+│   │   │   ├── key.meta.json
+│   │   │   ├── pem.data.json
+│   │   │   ├── pem.meta.json
+│   │   │   ├── pkcs1.data.json
+│   │   │   ├── pkcs1.meta.json
+│   │   │   ├── prime.data.json
+│   │   │   ├── prime.meta.json
+│   │   │   ├── randnum.data.json
+│   │   │   ├── randnum.meta.json
+│   │   │   ├── transform.data.json
+│   │   │   └── transform.meta.json
+│   │   ├── secrets.data.json
+│   │   ├── secrets.meta.json
+│   │   ├── select.data.json
+│   │   ├── select.meta.json
+│   │   ├── selectors.data.json
+│   │   ├── selectors.meta.json
+│   │   ├── shlex.data.json
+│   │   ├── shlex.meta.json
+│   │   ├── signal.data.json
+│   │   ├── signal.meta.json
+│   │   ├── sniffio
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── _impl.data.json
+│   │   │   ├── _impl.meta.json
+│   │   │   ├── _version.data.json
+│   │   │   └── _version.meta.json
+│   │   ├── socket.data.json
+│   │   ├── socket.meta.json
+│   │   ├── sre_compile.data.json
+│   │   ├── sre_compile.meta.json
+│   │   ├── sre_constants.data.json
+│   │   ├── sre_constants.meta.json
+│   │   ├── sre_parse.data.json
+│   │   ├── sre_parse.meta.json
+│   │   ├── ssl.data.json
+│   │   ├── ssl.meta.json
+│   │   ├── starlette
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── _exception_handler.data.json
+│   │   │   ├── _exception_handler.meta.json
+│   │   │   ├── _utils.data.json
+│   │   │   ├── _utils.meta.json
+│   │   │   ├── applications.data.json
+│   │   │   ├── applications.meta.json
+│   │   │   ├── background.data.json
+│   │   │   ├── background.meta.json
+│   │   │   ├── concurrency.data.json
+│   │   │   ├── concurrency.meta.json
+│   │   │   ├── convertors.data.json
+│   │   │   ├── convertors.meta.json
+│   │   │   ├── datastructures.data.json
+│   │   │   ├── datastructures.meta.json
+│   │   │   ├── exceptions.data.json
+│   │   │   ├── exceptions.meta.json
+│   │   │   ├── formparsers.data.json
+│   │   │   ├── formparsers.meta.json
+│   │   │   ├── middleware
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── base.data.json
+│   │   │   │   ├── base.meta.json
+│   │   │   │   ├── errors.data.json
+│   │   │   │   ├── errors.meta.json
+│   │   │   │   ├── exceptions.data.json
+│   │   │   │   └── exceptions.meta.json
+│   │   │   ├── requests.data.json
+│   │   │   ├── requests.meta.json
+│   │   │   ├── responses.data.json
+│   │   │   ├── responses.meta.json
+│   │   │   ├── routing.data.json
+│   │   │   ├── routing.meta.json
+│   │   │   ├── status.data.json
+│   │   │   ├── status.meta.json
+│   │   │   ├── types.data.json
+│   │   │   ├── types.meta.json
+│   │   │   ├── websockets.data.json
+│   │   │   └── websockets.meta.json
+│   │   ├── stat.data.json
+│   │   ├── stat.meta.json
+│   │   ├── string
+│   │   │   ├── __init__.data.json
+│   │   │   └── __init__.meta.json
+│   │   ├── string.data.json
+│   │   ├── string.meta.json
+│   │   ├── struct.data.json
+│   │   ├── struct.meta.json
+│   │   ├── subprocess.data.json
+│   │   ├── subprocess.meta.json
+│   │   ├── sys
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── _monitoring.data.json
+│   │   │   └── _monitoring.meta.json
+│   │   ├── tempfile.data.json
+│   │   ├── tempfile.meta.json
+│   │   ├── textwrap.data.json
+│   │   ├── textwrap.meta.json
+│   │   ├── threading.data.json
+│   │   ├── threading.meta.json
+│   │   ├── time.data.json
+│   │   ├── time.meta.json
+│   │   ├── traceback.data.json
+│   │   ├── traceback.meta.json
+│   │   ├── types.data.json
+│   │   ├── types.meta.json
+│   │   ├── typing.data.json
+│   │   ├── typing.meta.json
+│   │   ├── typing_extensions.data.json
+│   │   ├── typing_extensions.meta.json
+│   │   ├── typing_inspection
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── introspection.data.json
+│   │   │   ├── introspection.meta.json
+│   │   │   ├── typing_objects.data.json
+│   │   │   └── typing_objects.meta.json
+│   │   ├── unicodedata.data.json
+│   │   ├── unicodedata.meta.json
+│   │   ├── unittest
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── _log.data.json
+│   │   │   ├── _log.meta.json
+│   │   │   ├── async_case.data.json
+│   │   │   ├── async_case.meta.json
+│   │   │   ├── case.data.json
+│   │   │   ├── case.meta.json
+│   │   │   ├── loader.data.json
+│   │   │   ├── loader.meta.json
+│   │   │   ├── main.data.json
+│   │   │   ├── main.meta.json
+│   │   │   ├── result.data.json
+│   │   │   ├── result.meta.json
+│   │   │   ├── runner.data.json
+│   │   │   ├── runner.meta.json
+│   │   │   ├── signals.data.json
+│   │   │   ├── signals.meta.json
+│   │   │   ├── suite.data.json
+│   │   │   └── suite.meta.json
+│   │   ├── urllib
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── parse.data.json
+│   │   │   └── parse.meta.json
+│   │   ├── urllib3
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── _base_connection.data.json
+│   │   │   ├── _base_connection.meta.json
+│   │   │   ├── _collections.data.json
+│   │   │   ├── _collections.meta.json
+│   │   │   ├── _request_methods.data.json
+│   │   │   ├── _request_methods.meta.json
+│   │   │   ├── _version.data.json
+│   │   │   ├── _version.meta.json
+│   │   │   ├── connection.data.json
+│   │   │   ├── connection.meta.json
+│   │   │   ├── connectionpool.data.json
+│   │   │   ├── connectionpool.meta.json
+│   │   │   ├── contrib
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── pyopenssl.data.json
+│   │   │   │   └── pyopenssl.meta.json
+│   │   │   ├── exceptions.data.json
+│   │   │   ├── exceptions.meta.json
+│   │   │   ├── fields.data.json
+│   │   │   ├── fields.meta.json
+│   │   │   ├── filepost.data.json
+│   │   │   ├── filepost.meta.json
+│   │   │   ├── http2
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   ├── __init__.meta.json
+│   │   │   │   ├── probe.data.json
+│   │   │   │   └── probe.meta.json
+│   │   │   ├── poolmanager.data.json
+│   │   │   ├── poolmanager.meta.json
+│   │   │   ├── response.data.json
+│   │   │   ├── response.meta.json
+│   │   │   └── util
+│   │   │       ├── __init__.data.json
+│   │   │       ├── __init__.meta.json
+│   │   │       ├── connection.data.json
+│   │   │       ├── connection.meta.json
+│   │   │       ├── proxy.data.json
+│   │   │       ├── proxy.meta.json
+│   │   │       ├── request.data.json
+│   │   │       ├── request.meta.json
+│   │   │       ├── response.data.json
+│   │   │       ├── response.meta.json
+│   │   │       ├── retry.data.json
+│   │   │       ├── retry.meta.json
+│   │   │       ├── ssl_.data.json
+│   │   │       ├── ssl_.meta.json
+│   │   │       ├── ssl_match_hostname.data.json
+│   │   │       ├── ssl_match_hostname.meta.json
+│   │   │       ├── ssltransport.data.json
+│   │   │       ├── ssltransport.meta.json
+│   │   │       ├── timeout.data.json
+│   │   │       ├── timeout.meta.json
+│   │   │       ├── url.data.json
+│   │   │       ├── url.meta.json
+│   │   │       ├── util.data.json
+│   │   │       ├── util.meta.json
+│   │   │       ├── wait.data.json
+│   │   │       └── wait.meta.json
+│   │   ├── uuid.data.json
+│   │   ├── uuid.meta.json
+│   │   ├── warnings.data.json
+│   │   ├── warnings.meta.json
+│   │   ├── weakref.data.json
+│   │   ├── weakref.meta.json
+│   │   ├── zipfile
+│   │   │   ├── __init__.data.json
+│   │   │   ├── __init__.meta.json
+│   │   │   ├── _path
+│   │   │   │   ├── __init__.data.json
+│   │   │   │   └── __init__.meta.json
+│   │   │   ├── _path.data.json
+│   │   │   └── _path.meta.json
+│   │   ├── zipimport.data.json
+│   │   ├── zipimport.meta.json
+│   │   ├── zlib.data.json
+│   │   ├── zlib.meta.json
+│   │   └── zoneinfo
+│   │       ├── __init__.data.json
+│   │       ├── __init__.meta.json
+│   │       ├── _common.data.json
+│   │       ├── _common.meta.json
+│   │       ├── _tzpath.data.json
+│   │       └── _tzpath.meta.json
+│   └── CACHEDIR.TAG
+├── .pytest_cache
+│   ├── .gitignore
+│   ├── CACHEDIR.TAG
+│   ├── README.md
+│   └── v
+│       └── cache
+│           ├── lastfailed
+│           └── nodeids
+├── .python-version
+├── .ruff.toml
+├── .ruff_cache
+│   ├── .gitignore
+│   ├── 0.12.7
+│   │   ├── 10540209885690741799
+│   │   ├── 14152344099282976258
+│   │   ├── 15563930829803440575
+│   │   ├── 15905046711652253064
+│   │   ├── 15911070408467155056
+│   │   ├── 16767153240100270133
+│   │   ├── 17125594857786479485
+│   │   ├── 17250147161270303128
+│   │   ├── 18184120178332420268
+│   │   ├── 18240714065904220029
+│   │   ├── 18260297175559834227
+│   │   ├── 2358113538160480965
+│   │   ├── 3013064392652511772
+│   │   ├── 3936323639408255320
+│   │   ├── 5635052052665099841
+│   │   ├── 6010059437711693130
+│   │   ├── 7077368787009115319
+│   │   ├── 9044504389988536174
+│   │   └── 9652044718842957088
+│   ├── 0.13.3
+│   │   ├── 175749310316917074
+│   │   └── 434799620928512470
+│   ├── 0.14.1
+│   │   ├── 11239343091864220329
+│   │   ├── 2425402419617287253
+│   │   ├── 6333310111646893470
+│   │   ├── 6470102817521317043
+│   │   ├── 6988290372182172151
+│   │   └── 7226327752269493804
+│   └── CACHEDIR.TAG
+├── CONTRIBUTING.md
+├── Design.md
+├── Dockerfile
+├── LICENSE
+├── README.md
+├── build
+│   ├── bdist.macosx-11.1-arm64
+│   └── lib
+│       ├── email_api
+│       │   ├── src
+│       │   │   └── email_api
+│       │   │       ├── __init__.py
+│       │   │       ├── client.py
+│       │   │       └── py.typed
+│       │   └── tests
+│       │       └── test_api.py
+│       ├── gmail_impl
+│       │   ├── src
+│       │   │   └── gmail_impl
+│       │   │       ├── __init__.py
+│       │   │       ├── gmail_client.py
+│       │   │       └── py.typed
+│       │   └── tests
+│       │       └── test_gmail_client.py
+│       ├── mail_client_adapter
+│       │   ├── src
+│       │   │   └── mail_client_adapter
+│       │   │       ├── __init__.py
+│       │   │       ├── adapter.py
+│       │   │       └── py.typed
+│       │   └── tests
+│       │       ├── __init__.py
+│       │       └── test_adapter.py
+│       └── mail_client_service
+│           ├── src
+│           │   └── mail_client_service
+│           │       ├── __init__.py
+│           │       ├── app.py
+│           │       ├── mock_client.py
+│           │       └── py.typed
+│           └── tests
+│               ├── __init__.py
+│               ├── test_adapter.py
+│               └── test_service.py
+├── clients
+│   ├── __init__.py
+│   ├── python
+│   │   ├── __init__.py
+│   │   └── mail_client_service_client
+│   │       ├── __init__.py
+│   │       ├── api
+│   │       │   ├── __init__.py
+│   │       │   └── messages
+│   │       │       ├── __init__.py
+│   │       │       ├── delete_message_messages_message_id_delete.py
+│   │       │       ├── get_message_messages_message_id_get.py
+│   │       │       ├── list_messages_messages_get.py
+│   │       │       └── mark_as_read_messages_message_id_mark_as_read_post.py
+│   │       ├── client.py
+│   │       ├── errors.py
+│   │       ├── models
+│   │       │   ├── __init__.py
+│   │       │   ├── delete_message_messages_message_id_delete_response_delete_message_messages_message_id_delete.py
+│   │       │   ├── get_message_messages_message_id_get_response_get_message_messages_message_id_get.py
+│   │       │   ├── http_validation_error.py
+│   │       │   ├── list_messages_messages_get_response_200_item.py
+│   │       │   ├── mark_as_read_messages_message_id_mark_as_read_post_response_mark_as_read_messages_message_id_mark_as_read_post.py
+│   │       │   └── validation_error.py
+│   │       ├── pyproject.toml
+│   │       └── types.py
+│   └── specs
+│       └── openapi.json
+├── credentials.json
+├── docs
+│   ├── architecture
+│   │   ├── dependency-injection.md
+│   │   ├── design-philosophy.md
+│   │   └── testing.md
+│   ├── getting-started
+│   │   └── index.md
+│   ├── index.md
+│   └── reference
+│       ├── email-api.md
+│       └── gmail-impl.md
+├── file_structure.docx
+├── file_structure.txt
+├── main.py
+├── mkdocs.yml
+├── ospsd-team4-fall202
+│   ├── .circleci
+│   │   └── config.yml
+│   ├── .github
+│   │   ├── ISSUE_TEMPLATE
+│   │   │   ├── bug_report.md
+│   │   │   └── feature_request.md
+│   │   └── pull_request_template.md
+│   ├── .gitignore
+│   ├── .python-version
+│   ├── .ruff_cache
+│   │   ├── .gitignore
+│   │   ├── 0.12.7
+│   │   │   ├── 11684695600798571738
+│   │   │   ├── 13685647042417977662
+│   │   │   ├── 14540226265734568489
+│   │   │   ├── 15842240276103006275
+│   │   │   ├── 5053817694284097167
+│   │   │   ├── 6763487468304047467
+│   │   │   └── 8020171074252915609
+│   │   └── CACHEDIR.TAG
+│   ├── LICENSE
+│   ├── README.md
+│   ├── docs
+│   │   ├── architecture
+│   │   │   ├── dependency-injection.md
+│   │   │   ├── design-philosophy.md
+│   │   │   └── testing.md
+│   │   ├── getting-started
+│   │   │   └── index.md
+│   │   ├── index.md
+│   │   └── reference
+│   │       ├── email-api.md
+│   │       └── gmail-impl.md
+│   ├── main.py
+│   ├── mkdocs.yml
+│   ├── pyproject.toml
+│   ├── src
+│   │   ├── email_api
+│   │   │   ├── README.md
+│   │   │   ├── pyproject.toml
+│   │   │   ├── src
+│   │   │   │   └── email_api
+│   │   │   │       ├── __init__.py
+│   │   │   │       ├── client.py
+│   │   │   │       └── py.typed
+│   │   │   └── tests
+│   │   │       └── test_api.py
+│   │   └── gmail_impl
+│   │       ├── README.md
+│   │       ├── pyproject.toml
+│   │       ├── src
+│   │       │   └── gmail_impl
+│   │       │       ├── __init__.py
+│   │       │       ├── gmail_client.py
+│   │       │       └── py.typed
+│   │       └── tests
+│   │           └── test_gmail_client.py
+│   ├── tests
+│   │   ├── e2e
+│   │   │   └── test_email_workflows.py
+│   │   └── integration
+│   │       └── test_gmail_integration.py
+│   └── uv.lock
+├── project_structure.txt
+├── pyproject.toml
+├── scripts
+│   ├── __init__.py
+│   └── export_openapi.py
+├── src
+│   ├── email_api
+│   │   ├── README.md
+│   │   ├── __init__.py
+│   │   ├── client.py
+│   │   ├── py.typed
+│   │   ├── pyproject.toml
+│   │   ├── src
+│   │   │   └── email_api
+│   │   └── tests
+│   │       └── test_api.py
+│   ├── gmail_impl
+│   │   ├── README.md
+│   │   ├── __init__.py
+│   │   ├── py.typed
+│   │   ├── pyproject.toml
+│   │   ├── src
+│   │   │   └── gmail_impl
+│   │   │       └── gmail_client.py
+│   │   └── tests
+│   │       ├── __init__.py
+│   │       └── test_gmail_client.py
+│   ├── mail_client_adapter
+│   │   ├── pyproject.toml
+│   │   ├── src
+│   │   │   └── mail_client_adapter
+│   │   │       ├── __init__.py
+│   │   │       ├── adapter.py
+│   │   │       └── mapping.py
+│   │   └── tests
+│   │       └── test_adapter_unit.py
+│   ├── mail_client_service
+│   │   ├── README.md
+│   │   ├── __init__.py
+│   │   ├── app.py
+│   │   ├── pyproject.toml
+│   │   ├── routes
+│   │   │   ├── __init__.py
+│   │   │   └── messages.py
+│   │   └── tests
+│   │       ├── __init__.py
+│   │       ├── conftest.py
+│   │       ├── test_errors.py
+│   │       ├── test_messages.py
+│   │       └── test_messages_routes.py
+│   ├── mail_client_service_client
+│   │   ├── __init__.py
+│   │   ├── api
+│   │   │   ├── __init__.py
+│   │   │   └── messages
+│   │   │       ├── __init__.py
+│   │   │       ├── delete_message_messages_message_id_delete.py
+│   │   │       ├── get_message_messages_message_id_get.py
+│   │   │       ├── list_messages_messages_get.py
+│   │   │       └── mark_as_read_messages_message_id_mark_as_read_post.py
+│   │   ├── client.py
+│   │   ├── errors.py
+│   │   ├── models
+│   │   │   ├── __init__.py
+│   │   │   ├── delete_message_messages_message_id_delete_response_delete_message_messages_message_id_delete.py
+│   │   │   ├── get_message_messages_message_id_get_response_get_message_messages_message_id_get.py
+│   │   │   ├── http_validation_error.py
+│   │   │   ├── list_messages_messages_get_response_200_item.py
+│   │   │   ├── mark_as_read_messages_message_id_mark_as_read_post_response_mark_as_read_messages_message_id_mark_as_read_post.py
+│   │   │   └── validation_error.py
+│   │   └── types.py
+│   └── ospsd_ta_task.egg-info
+│       ├── PKG-INFO
+│       ├── SOURCES.txt
+│       ├── dependency_links.txt
+│       ├── requires.txt
+│       └── top_level.txt
+├── tests
+│   ├── e2e
+│   │   └── test_email_workflows.py
+│   └── integration
+│       └── test_gmail_integration.py
+└── uv.lock
+
+157 directories, 1173 files

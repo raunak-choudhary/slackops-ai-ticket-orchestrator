@@ -1,8 +1,13 @@
+# pyproject.toml root configuration 
 # Root workspace configuration
+
 [tool.uv.workspace]
 members = [
-    "src/email_api",
-    "src/gmail_impl",
+  "src/email_api",
+  "src/gmail_impl",
+  "src/mail_client_service",
+  "clients/python/mail_client_service_client",
+  "src/mail_client_adapter",
 ]
 
 [project]
@@ -11,15 +16,24 @@ version = "0.1.0"
 description = "OSPSD TA Task - Email client workspace"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "attrs>=25.3.0",
+    "fastapi>=0.118.0",
+    "httpx>=0.28.1",
+    "uvicorn>=0.37.0",
+    "google-auth>=2.25.0",
+    "google-auth-oauthlib>=1.1.0",
+    "google-api-python-client>=2.100.0",
+    "python-dotenv>=1.1.1",
+]
 
 [tool.uv.sources]
-# Workspace component sources
 email-api = { workspace = true }
 gmail-impl = { workspace = true }
+mail-client-service = { workspace = true }
+mail-client-adapter = { workspace = true }
 
 [project.optional-dependencies]
-# Shared development tools used across all workspace components
 dev = [
     "pytest>=8.0.0",
     "pytest-cov>=4.0.0",
@@ -27,17 +41,20 @@ dev = [
     "mypy>=1.8.0",
     "ruff>=0.1.0",
     "coverage[toml]>=7.0.0",
+    "httpx>=0.27.0",
+]
+email = ["email-api>=0.1.0"]
+gmail = ["gmail-impl>=0.1.0"]
+service = ["mail-client-service>=0.1.0"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "ruff>=0.12.7",
 ]
 
-# Component feature groups
-email = [
-    "email-api>=0.1.0",
-]
-gmail = [
-    "gmail-impl>=0.1.0",
-]
-
-# Shared tool configuration for all workspace members
+# ---------------- Ruff (keep your strict settings) ----------------
 [tool.ruff]
 target-version = "py312"
 line-length = 88
@@ -45,9 +62,7 @@ fix = true
 src = ["src"]
 
 [tool.ruff.lint]
-# Enable ALL available linter rules for maximum code quality enforcement
 select = ["ALL"]
-
 ignore = [
     "COM812",  # Conflicts with ruff formatter
     "ISC001",  # Conflicts with ruff formatter
@@ -56,14 +71,19 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"**/test_*.py" = ["ANN001", "ARG002", "INP001", "PLC0415", "PLR2004", "S101", "SLF001", "S603"]
-"main.py" = ["T201", "PLR2004"]
+"**/test_*.py" = [
+  "ANN001","ARG002","INP001","PLC0415","PLR2004","S101","SLF001","S603",
+  "PTH100","PTH118","PTH120","I001"
+]
+"**/tests/**/conftest.py" = ["I001","PLC0415","PTH100","PTH118","PTH120","PT001","B009","UP035"]
+"main.py" = ["T201","PLR2004"]
+# FastAPI routes commonly use Depends(...) in param defaults; ignore B008 there.
+"src/mail_client_service/routes/messages.py" = ["B008"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.ruff.lint.isort]
-# Use ruff's built-in import sorting (replaces isort)
 force-sort-within-sections = true
 known-first-party = ["email_api", "gmail_impl"]
 
@@ -73,39 +93,58 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 
+# ---------------- mypy (tightened to strict) ----------------
 [tool.mypy]
 python_version = "3.12"
 strict = true
+namespace_packages = true
 explicit_package_bases = true
-mypy_path = "src/email_api/src:src/gmail_impl/src"
-show_error_codes = true
+ignore_missing_imports = false
 warn_unused_ignores = true
-exclude = ["tests/", "src/*/tests/"]
+show_error_codes = true
+mypy_path = ["src", "clients"]
+exclude = ["src/__init__.py"]
 
-# Ignore missing type stubs for third-party libraries without them
+# Third-party libs: ignore missing stubs
 [[tool.mypy.overrides]]
 module = [
     "googleapiclient.*",
     "google_auth_oauthlib.*",
+    "httpx.*",
 ]
 ignore_missing_imports = true
 
-# Workspace-level pytest configuration
-[tool.pytest.ini_options]
-minversion = "8.0"
-addopts = [
-    "--strict-markers",
-    "--strict-config",
-    "--cov-report=html",
-    "--cov-report=term-missing",
-    "--import-mode=importlib",
+# Generated OpenAPI client: ignore typing inside
+[[tool.mypy.overrides]]
+module = [
+  "mail_client_service_client",
+  "mail_client_service_client.*",
 ]
-testpaths = ["src/*/tests", "tests"]
+ignore_errors = true
+
+# Tests: allow untyped defs
+[[tool.mypy.overrides]]
+module = [
+  "tests",
+  "tests.*",
+  "mail_client_service.tests",
+  "mail_client_service.tests.*",
+  "mail_client_adapter.tests",
+  "mail_client_adapter.tests.*",
+  "gmail_impl.tests",
+  "gmail_impl.tests.*",
+]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+# ---------------- Pytest ----------------
+[tool.pytest.ini_options]
+addopts = "-ra -q"
+testpaths = ["src", "tests"]
+pythonpath = ["src", "clients/python"]
 markers = [
     "unit: marks tests as unit tests",
     "integration: marks tests as integration tests",
     "e2e: marks tests as end-to-end tests",
-]
-filterwarnings = [
-    "ignore:datetime.datetime.utcfromtimestamp\\(\\) is deprecated:DeprecationWarning:google_auth_oauthlib.helpers",
+    "local_credentials: tests that need locally configured credentials",
 ]

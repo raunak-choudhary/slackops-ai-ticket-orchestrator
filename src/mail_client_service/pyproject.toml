@@ -1,0 +1,45 @@
+# src/mail_client_service/pyproject.toml
+
+[project]
+name = "mail_client_service"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["fastapi", "uvicorn"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# ---- Strict lint & type (package-local; root config also applies) ----
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E","F","I","UP","B","C4","PIE","PT","PTH","SIM","TID","RUF","ARG","PL"]
+ignore = ["PLR2004","PLR0913","PLR0912","PLR0915","PLR0917"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-wrap-aliases = true
+known-first-party = ["mail_client_service","email_api"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+namespace_packages = true
+explicit_package_bases = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unreachable = true
+warn_return_any = true
+no_implicit_optional = true
+check_untyped_defs = true
+show_error_codes = true
+mypy_path = ["src"]
+
+# tests: allow looser defs
+[[tool.mypy.overrides]]
+module = ["mail_client_service.tests", "mail_client_service.tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
