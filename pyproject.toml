@@ -28,4 +28,4 @@ allow-direct-references = true
 target-version = "py312"
 line-length = 100
 [project.optional-dependencies]
-dev = ["pytest", "mypy", "ruff"]
+dev = ["pytest", "mypy", "ruff", "pytest-cov"]
