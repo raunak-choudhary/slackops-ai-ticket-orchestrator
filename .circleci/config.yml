@@ -29,11 +29,15 @@ jobs:
           name: "Install Local Packages (email_api, gmail_impl, slack)"
           command: |
             source .venv/bin/activate
-            uv pip install -e ./src/email_api
-            uv pip install -e ./src/gmail_impl
-            uv pip install -e ./src/slack_api
-            uv pip install -e ./src/slack_impl
-            uv pip install -e ./src/slack_service
+            echo "Installing local packages from src directory..."
+            cd src
+            uv pip install -e ./email_api
+            uv pip install -e ./gmail_impl
+            uv pip install -e ./slack_api
+            uv pip install -e ./slack_impl
+            uv pip install -e ./slack_service
+            cd ..
+
 
       - run:
           name: "Verify Installation"
