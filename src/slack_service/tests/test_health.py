@@ -1,4 +1,5 @@
-import sys, os
+import sys
+import os
 from fastapi.testclient import TestClient
 
 # Add root folder (where `src` lives) to Python path
