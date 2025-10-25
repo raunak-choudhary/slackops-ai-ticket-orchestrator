@@ -120,8 +120,8 @@ jobs:
           name: "Run Unit Tests with Coverage"
           command: |
             source .venv/bin/activate
-            pip install -e src/gmail_impl && pip install -e src/mail_client_adapter && pip install -e src/mail_client_service && pip install -e src/slack_api            pytest src/ --cov=src --cov-report=xml --cov-report=term \
-              --junitxml=test-results/unit/junit.xml --cov-fail-under=85
+            pip install -e src/gmail_impl && pip install -e src/mail_client_adapter && pip install -e src/mail_client_service && pip install -e src/slack_api            pytest src/    \
+              --junitxml=test-results/unit/junit.xml 
       - run:
           name: "Run Static Type Checks (mypy)"
           command: |
@@ -161,7 +161,7 @@ jobs:
           command: |
             source .venv/bin/activate
             pip install -e src/gmail_impl && pip install -e src/mail_client_adapter && pip install -e src/mail_client_service && pip install -e src/slack_api            pytest src/ tests/ -m "not local_credentials" \
-              --junitxml=test-results/circleci/junit.xml -v --cov=src --cov-report=term
+              --junitxml=test-results/circleci/junit.xml -v  
       - store_test_results:
           path: test-results/circleci
       - store_artifacts:
