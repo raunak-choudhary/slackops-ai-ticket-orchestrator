@@ -1,7 +1,9 @@
 version: 2.1
 
 jobs:
+  # ---------------------------------------------------------
   # Job 1: Setup Environment and Install Dependencies
+  # ---------------------------------------------------------
   build:
     docker:
       - image: cimg/python:3.12
@@ -24,11 +26,14 @@ jobs:
             uv sync --all-packages --extra dev --verbose
 
       - run:
-          name: "Install Local Packages (email_api, gmail_impl)"
+          name: "Install Local Packages (email_api, gmail_impl, slack)"
           command: |
             source .venv/bin/activate
             uv pip install -e src/email_api
             uv pip install -e src/gmail_impl
+            uv pip install -e src/slack_api
+            uv pip install -e src/slack_impl
+            uv pip install -e src/slack_service
 
       - run:
           name: "Verify Installation"
@@ -61,7 +66,24 @@ jobs:
           paths:
             - .
 
-  # Job 2: Linting
+  # ---------------------------------------------------------
+  # Job 2: Local Precheck (Ruff + MyPy + Unit Tests)
+  # ---------------------------------------------------------
+  precheck:
+    docker:
+      - image: cimg/python:3.12
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: "Run Local Precommit Checks"
+          command: |
+            chmod +x scripts/precheck.sh || true
+            ./scripts/precheck.sh
+
+  # ---------------------------------------------------------
+  # Job 3: Linting
+  # ---------------------------------------------------------
   lint:
     docker:
       - image: cimg/python:3.12
@@ -74,7 +96,9 @@ jobs:
             source .venv/bin/activate
             ruff check .
 
-  # Job 3: Unit Tests and Coverage
+  # ---------------------------------------------------------
+  # Job 4: Unit Tests + Coverage + MyPy
+  # ---------------------------------------------------------
   unit_test:
     docker:
       - image: cimg/python:3.12
@@ -102,7 +126,10 @@ jobs:
               -p email_api \
               -p gmail_impl \
               -p mail_client_adapter \
-              -p mail_client_service
+              -p mail_client_service \
+              -p slack_api \
+              -p slack_impl \
+              -p slack_service
       - store_test_results:
           path: test-results/unit
       - store_artifacts:
@@ -110,7 +137,9 @@ jobs:
       - store_artifacts:
           path: test-results/unit
 
-  # Job 4: CircleCI Tests (All but local credentials)
+  # ---------------------------------------------------------
+  # Job 5: CircleCI Non-Local Tests
+  # ---------------------------------------------------------
   circleci_test:
     docker:
       - image: cimg/python:3.12
@@ -134,7 +163,9 @@ jobs:
       - store_artifacts:
           path: test-results/circleci
 
-  # Job 5: Integration Tests with Real Credentials
+  # ---------------------------------------------------------
+  # Job 6: Integration Tests with Real Gmail API
+  # ---------------------------------------------------------
   integration_test:
     docker:
       - image: cimg/python:3.12
@@ -162,7 +193,9 @@ jobs:
       - store_artifacts:
           path: test-results/integration
 
-  # Job 6: Summary Report
+  # ---------------------------------------------------------
+  # Job 7: Summary Report
+  # ---------------------------------------------------------
   report_summary:
     docker:
       - image: cimg/base:stable
@@ -181,7 +214,9 @@ jobs:
             echo "---- Coverage ----"
             [ -f coverage.xml ] && echo "Coverage file found." || echo "No coverage.xml."
 
+# ---------------------------------------------------------
 # Workflows
+# ---------------------------------------------------------
 workflows:
   build_and_test:
     jobs:
@@ -192,8 +227,16 @@ workflows:
                 - main
                 - develop
                 - kamen-requierd-fixes
-      - lint:
+      - precheck:
           requires: [build]
+          filters:
+            branches:
+              ignore:
+                - main
+                - develop
+                - kamen-requierd-fixes
+      - lint:
+          requires: [precheck]
           filters:
             branches:
               ignore:
@@ -209,7 +252,6 @@ workflows:
                 - develop
                 - kamen-requierd-fixes
       - circleci_test:
-        # Only run after unit tests, so we don't waste cycles
           requires: [unit_test]
           filters:
             branches:
