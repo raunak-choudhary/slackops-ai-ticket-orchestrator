@@ -1,12 +1,12 @@
 [project]
 name = "slack-impl"
 version = "0.1.0"
-description = "Slack API Implementation"
+description = "Slack API implementation module"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
-    "slack-api @ file://../slack_api"
+    "slack-api @ file:///opt/render/project/src/src/slack_api"
 ]
 
 [build-system]
