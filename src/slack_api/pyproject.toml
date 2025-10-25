@@ -1,7 +1,7 @@
 [project]
 name = "slack-api"
 version = "0.1.0"
-description = "Shared Slack API models and interfaces"
+description = "Slack API shared models and contracts"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"
