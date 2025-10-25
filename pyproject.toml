@@ -1,3 +1,23 @@
 [build-system]
 requires = ['setuptools', 'wheel']
 build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'mail_client_workspace'
+version = '0.1.0'
+dependencies = [
+    'fastapi',
+    'uvicorn',
+    'httpx',
+    'google-api-python-client',
+    'google-auth',
+    'google-auth-oauthlib',
+    'email-api',
+]
+
+[project.optional-dependencies]
+dev = [
+    'pytest',
+    'ruff',
+    'anyio'
+]
