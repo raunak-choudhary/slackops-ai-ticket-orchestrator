@@ -47,7 +47,7 @@ jobs:
             source .venv/bin/activate
             uv tree || true
             ruff --version
-            pytest --version
+            pip install -e src/gmail_impl && pip install -e src/mail_client_adapter && pip install -e src/mail_client_service && pip install -e src/slack_api            pytest --version
             mypy --version
 
       - run:
@@ -120,7 +120,7 @@ jobs:
           name: "Run Unit Tests with Coverage"
           command: |
             source .venv/bin/activate
-            pytest src/ --cov=src --cov-report=xml --cov-report=term \
+            pip install -e src/gmail_impl && pip install -e src/mail_client_adapter && pip install -e src/mail_client_service && pip install -e src/slack_api            pytest src/ --cov=src --cov-report=xml --cov-report=term \
               --junitxml=test-results/unit/junit.xml --cov-fail-under=85
       - run:
           name: "Run Static Type Checks (mypy)"
@@ -160,7 +160,7 @@ jobs:
           name: "Run All Non-local Tests"
           command: |
             source .venv/bin/activate
-            pytest src/ tests/ -m "not local_credentials" \
+            pip install -e src/gmail_impl && pip install -e src/mail_client_adapter && pip install -e src/mail_client_service && pip install -e src/slack_api            pytest src/ tests/ -m "not local_credentials" \
               --junitxml=test-results/circleci/junit.xml -v --cov=src --cov-report=term
       - store_test_results:
           path: test-results/circleci
@@ -189,7 +189,7 @@ jobs:
           command: |
             source .venv/bin/activate
             mkdir -p test-results/integration
-            pytest -m "integration and not local_credentials" \
+            pip install -e src/gmail_impl && pip install -e src/mail_client_adapter && pip install -e src/mail_client_service && pip install -e src/slack_api            pytest -m "integration and not local_credentials" \
               --junitxml=test-results/integration/junit.xml -v --no-cov
       - store_test_results:
           path: test-results/integration
