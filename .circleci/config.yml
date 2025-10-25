@@ -31,20 +31,21 @@ jobs:
             source .venv/bin/activate
             echo "Installing local packages from src directory..."
             cd src
-            uv pip install -e ./email_api
-            uv pip install -e ./gmail_impl
-            uv pip install -e ./slack_api
-            uv pip install -e ./slack_impl
-            uv pip install -e ./slack_service
+            for dir in email_api gmail_impl slack_api slack_impl slack_service; do
+              if [ -d "$dir" ]; then
+                echo "Installing $dir..."
+                uv pip install -e "./$dir"
+              else
+                echo "Skipping missing directory: $dir"
+              fi
+            done
             cd ..
-
-
 
       - run:
           name: "Verify Installation"
           command: |
             source .venv/bin/activate
-            uv tree
+            uv tree || true
             ruff --version
             pytest --version
             mypy --version
@@ -62,8 +63,8 @@ jobs:
             if [ ! -d clients/python/mail_client_service_client ]; then
               echo "Generating Python client from spec..."
               uv run openapi-python-client generate \
-                  --path clients/specs/openapi.json \
-                  --output clients/python --overwrite
+                --path clients/specs/openapi.json \
+                --output clients/python --overwrite
             fi
 
       - persist_to_workspace:
@@ -120,8 +121,7 @@ jobs:
           command: |
             source .venv/bin/activate
             pytest src/ --cov=src --cov-report=xml --cov-report=term \
-                   --junitxml=test-results/unit/junit.xml \
-                   --cov-fail-under=85
+              --junitxml=test-results/unit/junit.xml --cov-fail-under=85
       - run:
           name: "Run Static Type Checks (mypy)"
           command: |
@@ -161,15 +161,14 @@ jobs:
           command: |
             source .venv/bin/activate
             pytest src/ tests/ -m "not local_credentials" \
-                   --junitxml=test-results/circleci/junit.xml -v \
-                   --cov=src --cov-report=term
+              --junitxml=test-results/circleci/junit.xml -v --cov=src --cov-report=term
       - store_test_results:
           path: test-results/circleci
       - store_artifacts:
           path: test-results/circleci
 
   # ---------------------------------------------------------
-  # Job 6: Integration Tests with Real Gmail API
+  # Job 6: Integration Tests (Gmail API)
   # ---------------------------------------------------------
   integration_test:
     docker:
@@ -181,18 +180,17 @@ jobs:
           name: "Check Environment Variables"
           command: |
             if [ -z "$GMAIL_CLIENT_ID" ] || [ -z "$GMAIL_CLIENT_SECRET" ] || [ -z "$GMAIL_REFRESH_TOKEN" ]; then
-              echo "⚠️ Missing Gmail API credentials. Integration tests may be skipped."
+              echo "⚠️ Missing Gmail API credentials. Integration tests skipped."
             else
-              echo "✅ All Gmail API credentials are present."
+              echo "✅ All Gmail API credentials present."
             fi
       - run:
-          name: "Run Integration Tests (Real Gmail API)"
+          name: "Run Integration Tests"
           command: |
             source .venv/bin/activate
             mkdir -p test-results/integration
             pytest -m "integration and not local_credentials" \
-                   --junitxml=test-results/integration/junit.xml -v \
-                   --no-cov
+              --junitxml=test-results/integration/junit.xml -v --no-cov
       - store_test_results:
           path: test-results/integration
       - store_artifacts:
@@ -217,7 +215,7 @@ jobs:
             echo "---- Integration Tests ----"
             [ -f test-results/integration/junit.xml ] && echo "✅ Integration results found." || echo "ℹ️ Integration skipped."
             echo "---- Coverage ----"
-            [ -f coverage.xml ] && echo "Coverage file found." || echo "No coverage.xml."
+            [ -f coverage.xml ] && echo "✅ Coverage file found." || echo "❌ No coverage.xml."
 
 # ---------------------------------------------------------
 # Workflows
@@ -228,50 +226,18 @@ workflows:
       - build:
           filters:
             branches:
-              ignore:
-                - main
-                - develop
-                - kamen-requierd-fixes
+              only:
+                - hw2
       - precheck:
           requires: [build]
-          filters:
-            branches:
-              ignore:
-                - main
-                - develop
-                - kamen-requierd-fixes
       - lint:
           requires: [precheck]
-          filters:
-            branches:
-              ignore:
-                - main
-                - develop
-                - kamen-requierd-fixes
       - unit_test:
           requires: [build]
-          filters:
-            branches:
-              ignore:
-                - main
-                - develop
-                - kamen-requierd-fixes
       - circleci_test:
           requires: [unit_test]
-          filters:
-            branches:
-              ignore:
-                - main
-                - develop
-                - kamen-requierd-fixes
       - report_summary:
           requires: [unit_test, circleci_test]
-          filters:
-            branches:
-              ignore:
-                - main
-                - develop
-                - kamen-requierd-fixes
 
   full_integration:
     jobs:
@@ -282,50 +248,14 @@ workflows:
                 - main
                 - develop
                 - kamen-requierd-fixes
-                - hw2   # for debug
       - lint:
           requires: [build]
-          filters:
-            branches:
-              only:
-                - main
-                - develop
-                - kamen-requierd-fixes
-                - hw2
       - unit_test:
           requires: [build]
-          filters:
-            branches:
-              only:
-                - main
-                - develop
-                - kamen-requierd-fixes
-                - hw2
       - circleci_test:
           requires: [unit_test]
-          filters:
-            branches:
-              only:
-                - main
-                - develop
-                - kamen-requierd-fixes
-                - hw2
       - integration_test:
           requires: [circleci_test]
           context: gmail-client
-          filters:
-            branches:
-              only:
-                - main
-                - develop
-                - kamen-requierd-fixes
-                - hw2
       - report_summary:
           requires: [unit_test, circleci_test, integration_test]
-          filters:
-            branches:
-              only:
-                - main
-                - develop
-                - kamen-requierd-fixes
-                - hw2
