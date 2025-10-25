@@ -29,11 +29,11 @@ jobs:
           name: "Install Local Packages (email_api, gmail_impl, slack)"
           command: |
             source .venv/bin/activate
-            uv pip install -e src/email_api
-            uv pip install -e src/gmail_impl
-            uv pip install -e src/slack_api
-            uv pip install -e src/slack_impl
-            uv pip install -e src/slack_service
+            uv pip install -e ./src/email_api
+            uv pip install -e ./src/gmail_impl
+            uv pip install -e ./src/slack_api
+            uv pip install -e ./src/slack_impl
+            uv pip install -e ./src/slack_service
 
       - run:
           name: "Verify Installation"
@@ -277,6 +277,7 @@ workflows:
                 - main
                 - develop
                 - kamen-requierd-fixes
+                - hw2   # for debug
       - lint:
           requires: [build]
           filters:
@@ -285,6 +286,7 @@ workflows:
                 - main
                 - develop
                 - kamen-requierd-fixes
+                - hw2
       - unit_test:
           requires: [build]
           filters:
@@ -293,6 +295,7 @@ workflows:
                 - main
                 - develop
                 - kamen-requierd-fixes
+                - hw2
       - circleci_test:
           requires: [unit_test]
           filters:
@@ -301,6 +304,7 @@ workflows:
                 - main
                 - develop
                 - kamen-requierd-fixes
+                - hw2
       - integration_test:
           requires: [circleci_test]
           context: gmail-client
@@ -310,6 +314,7 @@ workflows:
                 - main
                 - develop
                 - kamen-requierd-fixes
+                - hw2
       - report_summary:
           requires: [unit_test, circleci_test, integration_test]
           filters:
@@ -318,3 +323,4 @@ workflows:
                 - main
                 - develop
                 - kamen-requierd-fixes
+                - hw2
