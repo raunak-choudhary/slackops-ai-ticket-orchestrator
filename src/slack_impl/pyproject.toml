@@ -1,12 +1,12 @@
 [project]
 name = "slack-impl"
 version = "0.1.0"
-description = "Implementation layer for Slack API (HW2)"
+description = "Slack API implementation module"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
-    "slack-api @ file:///Users/sheetalprasad/ospsd-team4-fall2025/src/slack_api"
+    "slack-api @ file://../slack_api"
 ]
 
 [build-system]
@@ -18,7 +18,3 @@ packages = ["src/slack_impl"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
-
-[tool.ruff]
-target-version = "py312"
-line-length = 100
