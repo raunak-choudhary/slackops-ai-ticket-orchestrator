@@ -8,9 +8,9 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi", 
     "uvicorn",
-    "slack_api @ file:///opt/render/project/src/src/slack_api",
-    "slack_impl @ file:///opt/render/project/src/src/slack_impl",
-     "slack_service @ file:///opt/render/project/src/src/slack_service"
+    "slack_api @ file:///home/circleci/project/src/slack_api",
+    "slack_impl @ file:///home/circleci/project/src/slack_impl",
+     "slack_service @ file:///home/circleci/project/src/slack_service"
 
 ]
 
