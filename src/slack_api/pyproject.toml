@@ -1,18 +1,6 @@
 [project]
-name = "slack-api"
+name = "slack_api"
 version = "0.1.0"
-description = "Slack API shared models and contracts"
-readme = "README.md"
-license = "MIT"
-requires-python = ">=3.12"
+description = "Slack API interface for OSPD HW2"
+requires-python = ">=3.10"
 dependencies = []
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/slack_api"]
-
-[tool.hatch.metadata]
-allow-direct-references = true

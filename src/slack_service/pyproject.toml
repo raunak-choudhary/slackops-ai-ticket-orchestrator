@@ -1,23 +1,6 @@
 [project]
-name = "slack-service"
+name = "slack_service"
 version = "0.1.0"
-description = "Slack service FastAPI microservice"
-readme = "README.md"
-license = "MIT"
-requires-python = ">=3.12"
-dependencies = [
-    "fastapi",
-    "uvicorn",
-    "slack-api @ file:///opt/render/project/src/src/slack_api",
-    "slack-impl @ file:///opt/render/project/src/src/slack_impl"
-]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/slack_service"]
-
-[tool.hatch.metadata]
-allow-direct-references = true
+description = "Slack service for OSPD HW2"
+requires-python = ">=3.10"
+dependencies = ["slack_api", "slack_impl"]
