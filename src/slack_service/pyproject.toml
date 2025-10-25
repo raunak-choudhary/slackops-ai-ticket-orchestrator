@@ -1,6 +1,6 @@
 [project]
-name = "slack_service"
+name = "slack-service"
 version = "0.1.0"
-description = "Slack service for OSPD HW2"
+description = "slack_service package for OSPD HW2"
 requires-python = ">=3.10"
-dependencies = ["slack_api", "slack_impl"]
+dependencies = []

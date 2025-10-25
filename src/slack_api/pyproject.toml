@@ -1,6 +1,6 @@
 [project]
-name = "slack_api"
+name = "slack-api"
 version = "0.1.0"
-description = "Slack API interface for OSPD HW2"
+description = "slack_api package for OSPD HW2"
 requires-python = ">=3.10"
 dependencies = []
