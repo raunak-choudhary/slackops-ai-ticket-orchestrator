@@ -5,6 +5,7 @@ build-backend = 'setuptools.build_meta'
 [project]
 name = 'mail_client_workspace'
 version = '0.1.0'
+requires-python = '>=3.12'
 dependencies = [
     'fastapi',
     'uvicorn',
@@ -12,12 +13,13 @@ dependencies = [
     'google-api-python-client',
     'google-auth',
     'google-auth-oauthlib',
-    'email-api',
+    'email-api'
 ]
 
 [project.optional-dependencies]
 dev = [
     'pytest',
     'ruff',
+    'mypy',
     'anyio'
 ]
