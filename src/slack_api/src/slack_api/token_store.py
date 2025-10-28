@@ -4,14 +4,16 @@ from typing import Protocol
 
 
 class TokenStore(Protocol):
-    """Interface for persisting OAuth tokens. Concrete impl comes later."""
-    def upsert(
-        self,
-        user_id: str,
-        access_token: str,
-        refresh_token: str | None,
-        expires_at: int | None,
-        scope: str | None,
-    ) -> None: ...
-    def get(self, user_id: str) -> dict | None: ...
-    def delete(self, user_id: str) -> None: ...
+    """Abstract token store keyed by user_id."""
+
+    def get(self, user_id: str) -> str | None:  # pragma: no cover - protocol
+        ...
+
+    def put(self, user_id: str, access_token: str) -> None:  # pragma: no cover - protocol
+        ...
+
+    def delete(self, user_id: str) -> None:  # pragma: no cover - protocol
+        ...
+
+    def has(self, user_id: str) -> bool:  # pragma: no cover - protocol
+        ...

@@ -1,2 +1,5 @@
-from setuptools import setup, find_packages
-setup(name="slack_impl", version="0.1.0", packages=find_packages())
+from setuptools import setup
+
+# Source of truth is pyproject.toml; this shim keeps legacy tools happy.
+# Do not add metadata here. Use pyproject.toml instead.
+setup()

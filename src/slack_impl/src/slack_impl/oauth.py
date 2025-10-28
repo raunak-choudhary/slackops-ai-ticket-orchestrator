@@ -1,13 +1,14 @@
 from __future__ import annotations
-from typing import Optional
+
 import os
 import urllib.parse
-import httpx
+from typing import Optional
 
 from .token_store import TokenBundle
 
 SLACK_OAUTH_AUTHORIZE = "https://slack.com/oauth/v2/authorize"
-SLACK_OAUTH_TOKEN     = "https://slack.com/api/oauth.v2.access"
+SLACK_OAUTH_TOKEN = "https://slack.com/api/oauth.v2.access"
+
 
 def _get_env(name: str) -> str:
     v = os.getenv(name)
@@ -15,9 +16,10 @@ def _get_env(name: str) -> str:
         raise RuntimeError(f"Missing env var: {name}")
     return v
 
+
 def build_authorization_url(state: str) -> str:
-    """
-    Returns the Slack authorization URL (OAuth 2.0).
+    """Build the Slack OAuth 2.0 authorization URL.
+
     Requires env:
       - SLACK_CLIENT_ID
       - SLACK_REDIRECT_URI
@@ -37,14 +39,22 @@ def build_authorization_url(state: str) -> str:
     )
     return f"{SLACK_OAUTH_AUTHORIZE}?{qs}"
 
+
 async def exchange_code_for_tokens(code: str, redirect_uri: Optional[str] = None) -> TokenBundle:
-    """
-    Exchanges the OAuth 'code' for access/refresh tokens.
+    """Exchange OAuth 'code' for tokens using Slack's oauth.v2.access.
+
     Requires env:
       - SLACK_CLIENT_ID
       - SLACK_CLIENT_SECRET
       - SLACK_REDIRECT_URI (if redirect_uri not passed)
+
+    Returns a TokenBundle. Slack v2 usually returns a bot token; refresh may be None.
     """
+    try:
+        import httpx  # lazy import to keep import-time light
+    except Exception as exc:  # pragma: no cover
+        raise RuntimeError("httpx is required for exchange_code_for_tokens") from exc
+
     client_id = _get_env("SLACK_CLIENT_ID")
     client_secret = _get_env("SLACK_CLIENT_SECRET")
     redirect_uri = redirect_uri or _get_env("SLACK_REDIRECT_URI")
@@ -61,19 +71,11 @@ async def exchange_code_for_tokens(code: str, redirect_uri: Optional[str] = None
         )
         resp.raise_for_status()
         data = resp.json()
-        # Slack returns { ok, access_token, token_type, scope, ... }
         if not data.get("ok", False):
             raise RuntimeError(f"Slack OAuth failed: {data}")
         return TokenBundle(
             access_token=data.get("access_token", ""),
-            refresh_token=None,  # Slack v2 doesn't always give refresh; leave None
+            refresh_token=None,  # Slack may not return refresh
             token_type=data.get("token_type", "Bearer"),
             scope=data.get("scope"),
         )
-
-async def refresh_tokens(refresh_token: str) -> TokenBundle:
-    """
-    Placeholder for token refresh if/when needed.
-    Slack typically uses long-lived bot tokens; leave as TODO for Part 4 if required.
-    """
-    raise NotImplementedError("Slack refresh flow not used; handled by Part 4 if needed.")

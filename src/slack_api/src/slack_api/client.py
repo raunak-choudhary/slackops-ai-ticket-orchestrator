@@ -1,23 +1,26 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from typing import Iterable, Protocol
 
-from .types import Channel, Message, User
+from .types import Channel, Message
 
 
-class ChatClient(ABC):
-    """Abstract contract for Slack-like chat operations."""
-    @abstractmethod
-    def list_channels(self) -> list[Channel]: ...
-    @abstractmethod
-    def fetch_messages(self, channel_id: str, limit: int = 50) -> list[Message]: ...
-    @abstractmethod
-    def send_message(self, channel_id: str, text: str, thread_ts: str | None = None) -> Message: ...
-    @abstractmethod
-    def delete_message(self, channel_id: str, ts: str) -> bool: ...
-    @abstractmethod
-    def get_user(self, user_id: str) -> User: ...
+class ChatClient(Protocol):
+    """Protocol for a Slack-like chat client.
 
-def get_client() -> ChatClient:
-    """Factory placeholder; will be wired to concrete impl via DI in later parts."""
-    raise NotImplementedError("ChatClient factory is not wired yet.")
+    Concrete implementations (e.g., slack_impl.SlackClient, adapters) should
+    satisfy this interface. Using a Protocol keeps us decoupled from any base
+    classes and friendly to static typing.
+    """
+
+    def health(self) -> bool:  # pragma: no cover - exercised via fakes/adapters
+        """Return True if the underlying service is healthy."""
+        ...
+
+    def list_channels(self) -> Iterable[Channel]:
+        """List accessible channels."""
+        ...
+
+    def post_message(self, channel_id: str, text: str) -> Message:
+        """Post a message to a channel and return the created message."""
+        ...

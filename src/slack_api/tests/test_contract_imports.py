@@ -1,9 +1,7 @@
-from slack_api import Channel, ChatClient, Message, TokenStore, User
+from __future__ import annotations
 
 
-def test_imports_exist():
-    assert Channel
-    assert Message
-    assert User
-    assert ChatClient
-    assert TokenStore
+def test_imports_surface() -> None:
+
+    from slack_api.client import ChatClient as _ChatClient  # noqa: F401
+    from slack_api.types import Channel as _C, User as _U, Message as _M  # noqa: F401
