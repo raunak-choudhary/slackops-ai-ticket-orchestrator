@@ -1,47 +1,79 @@
-from __future__ import annotations
+# --- add near top ---
+import os
+import secrets
+from typing import Any, Dict
 
-from fastapi import FastAPI
-from pydantic import BaseModel, Field
+from fastapi import Depends, HTTPException, Request
+from fastapi.responses import RedirectResponse
+from starlette.middleware.sessions import SessionMiddleware
 
-app = FastAPI(
-    title="Slack Chat Service (HW2)",
-    version="0.1.0",
-    description="In-memory FastAPI service used by the adapter tests.",
-)
+# Reuse your library’s helpers
+from slack_impl.oauth import build_authorization_url, exchange_code_for_tokens  # type: ignore
 
-# Simple in-memory data so tests don't hit any external service.
-_CHANNELS = [
-    {"id": "C001", "name": "general"},
-    {"id": "C002", "name": "random"},
-]
-_msg_counter = 0
+# Session middleware (needs SECRET_KEY in env)
+app.add_middleware(SessionMiddleware, secret_key=os.environ["SECRET_KEY"])
 
+# Env config
+OAUTH_CLIENT_ID = os.environ.get("OAUTH_CLIENT_ID", "")
+OAUTH_CLIENT_SECRET = os.environ.get("OAUTH_CLIENT_SECRET", "")
+OAUTH_REDIRECT_URI = os.environ.get("OAUTH_REDIRECT_URI", "")  # e.g. https://<render>/auth/callback
+OAUTH_SCOPE = os.environ.get("OAUTH_SCOPE", "channels:read,chat:write")
 
-@app.get("/health")
-def health() -> dict[str, bool]:
-    return {"ok": True}
+def _require_oauth_env() -> None:
+    missing = [k for k, v in {
+        "OAUTH_CLIENT_ID": OAUTH_CLIENT_ID,
+        "OAUTH_CLIENT_SECRET": OAUTH_CLIENT_SECRET,
+        "OAUTH_REDIRECT_URI": OAUTH_REDIRECT_URI,
+    }.items() if not v]
+    if missing:
+        raise HTTPException(status_code=500, detail=f"Missing OAuth env: {', '.join(missing)}")
 
+@app.get("/auth/login", tags=["auth"])
+def auth_login(request: Request) -> RedirectResponse:
+    """Start OAuth by redirecting to Slack."""
+    _require_oauth_env()
+    state = secrets.token_urlsafe(24)
+    request.session["oauth_state"] = state
+    url = build_authorization_url(
+        client_id=OAUTH_CLIENT_ID,
+        redirect_uri=OAUTH_REDIRECT_URI,
+        scope=OAUTH_SCOPE,
+        state=state,
+    )
+    return RedirectResponse(url)
 
-@app.get("/channels")
-def list_channels() -> list[dict[str, str]]:
-    return list(_CHANNELS)
+@app.get("/auth/callback", tags=["auth"])
+def auth_callback(request: Request, code: str | None = None, state: str | None = None) -> RedirectResponse:
+    """Handle Slack callback and store the access token in the session."""
+    _require_oauth_env()
+    if not code or not state:
+        raise HTTPException(status_code=400, detail="Missing code/state")
 
+    if state != request.session.get("oauth_state"):
+        raise HTTPException(status_code=400, detail="Invalid state")
 
-class PostMessageBody(BaseModel):
-    channel_id: str = Field(min_length=1)
-    text: str = Field(min_length=1)
+    bundle = exchange_code_for_tokens(
+        code=code,
+        client_id=OAUTH_CLIENT_ID,
+        client_secret=OAUTH_CLIENT_SECRET,
+        redirect_uri=OAUTH_REDIRECT_URI,
+    )
+    # Persist minimally in session (HW2 allows session storage)
+    request.session["access_token"] = getattr(bundle, "access_token", "")
+    request.session["scope"] = getattr(bundle, "scope", "")
+    if not request.session["access_token"]:
+        raise HTTPException(status_code=400, detail="Token exchange failed")
 
+    # send user somewhere nice
+    return RedirectResponse("/docs")
 
-@app.post("/messages")
-def post_message(body: PostMessageBody) -> dict[str, str]:
-    # Produce a deterministic-ish synthetic id/ts; tests only need shape.
-    global _msg_counter
-    _msg_counter += 1
-    ts = str(_msg_counter)
-    mid = f"{body.channel_id}:{ts}"
-    return {
-        "id": mid,
-        "channel_id": body.channel_id,
-        "text": body.text,
-        "ts": ts,
-    }
+def require_token(request: Request) -> str:
+    token = request.session.get("access_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return token
+
+@app.get("/me", tags=["auth"])
+def me(token: str = Depends(require_token)) -> Dict[str, Any]:
+    """Quick check that a token exists post-auth."""
+    return {"ok": True, "scope": request.session.get("scope", "")}

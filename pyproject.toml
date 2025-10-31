@@ -25,11 +25,10 @@ requires-python = ">=3.12"
 dependencies = [
   # Core shared deps
   "attrs>=25.3.0",
-  "fastapi>=0.118.0",
+  "fastapi[standard]>=0.118.0",
   "httpx>=0.28.1",
   "uvicorn>=0.37.0",
   "python-dotenv>=1.1.1",
-
   # Google / Email (HW1)
   "google-auth>=2.25.0",
   "google-auth-oauthlib>=1.1.0",
