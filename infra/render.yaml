@@ -1,16 +1,20 @@
 services:
   - type: web
     name: slack-chat-service-hw2
-    env: python
+    runtime: python
+    pythonVersion: 3.12
     plan: free
+
     buildCommand: |
-      uv sync --all-packages
-      uv pip install -e src/slack_api
-      uv pip install -e src/slack_impl
-      uv pip install -e src/slack_service
-    startCommand: uv run uvicorn src.slack_service.src.slack_service.app:app --host 0.0.0.0 --port $PORT
+      uv sync --all-packages --dev
+      uv run python -m pip install -e src/slack_api
+      uv run python -m pip install -e src/slack_impl
+      uv run python -m pip install -e src/slack_service
+
+    startCommand: uv run uvicorn slack_service.app:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     autoDeploy: false
+
     envVars:
       - key: ENV
         value: production
