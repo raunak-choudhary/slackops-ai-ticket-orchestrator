@@ -29,13 +29,13 @@ jobs:
           command: |
             curl -LsSf https://astral.sh/uv/install.sh | sh
             echo 'export PATH="$HOME/.local/bin:$PATH"' >> $BASH_ENV
-            source $BASH_ENV
+            source "$BASH_ENV"
             uv --version
       - restore_uv_cache
       - run:
           name: Sync dependencies (all + dev)
           command: |
-            source $BASH_ENV
+            source "$BASH_ENV"
             uv sync --all-packages --dev
       - save_uv_cache
       - persist_to_workspace:
@@ -52,7 +52,7 @@ jobs:
       - run:
           name: Ruff lint
           command: |
-            source $BASH_ENV || true
+            source "$BASH_ENV" || true
             uv run ruff version
             uv run ruff check .
 
@@ -64,7 +64,7 @@ jobs:
       - run:
           name: MyPy (strict, config-driven)
           command: |
-            source $BASH_ENV || true
+            source "$BASH_ENV" || true
             uv run mypy --config-file mypy.ini
 
   unit_tests_pytest:
@@ -76,7 +76,7 @@ jobs:
           name: Run tests with coverage + JUnit
           command: |
             mkdir -p test-results
-            source $BASH_ENV || true
+            source "$BASH_ENV" || true
             uv run pytest -q --cov=src --cov-report=xml --junitxml=test-results/junit.xml
       - store_test_results:
           path: test-results
@@ -107,11 +107,21 @@ jobs:
       - run:
           name: Import smoke (top-level packages)
           command: |
-            source $BASH_ENV || true
-            uv run python -c "import importlib, sys; mods=['slack_service','slack_adapter','slack_api','slack_impl','mail_client_service','mail_client_adapter','mail_client_api','gmail_impl']; 
-print('Importing:', mods); 
-[importlib.import_module(m) for m in mods if m]; 
-print('OK')"
+            source "$BASH_ENV" || true
+            uv run python - \<< 'PY'
+            import importlib
+            modules = [
+              "slack_service","slack_adapter","slack_api","slack_impl",
+              "mail_client_service","mail_client_adapter","mail_client_api","gmail_impl"
+            ]
+            print("Importing:", modules)
+            for m in modules:
+                try:
+                    importlib.import_module(m)
+                except Exception as e:
+                    raise SystemExit(f"Failed to import {m}: {e}")
+            print("OK")
+            PY
 
   report_summary:
     executor: py312
@@ -133,7 +143,6 @@ print('OK')"
   deploy_health_check_200:
     executor: py312
     environment:
-      # Set/override in Project Settings → Environment Variables if needed
       SERVICE_HEALTH_URL: "https://ospsd-hw2-final-demo.onrender.com/health"
     steps:
       - attach_workspace:
@@ -160,20 +169,15 @@ workflows:
     jobs:
       - bootstrap_env
       - ruff_lint:
-          requires:
-            - bootstrap_env
+          requires: [bootstrap_env]
       - mypy_strict_checks:
-          requires:
-            - bootstrap_env
+          requires: [bootstrap_env]
       - unit_tests_pytest:
-          requires:
-            - bootstrap_env
+          requires: [bootstrap_env]
       - coverage_enforce_85:
-          requires:
-            - unit_tests_pytest
+          requires: [unit_tests_pytest]
       - package_import_smoke:
-          requires:
-            - bootstrap_env
+          requires: [bootstrap_env]
       - report_summary:
           requires:
             - ruff_lint
@@ -182,8 +186,7 @@ workflows:
             - coverage_enforce_85
             - package_import_smoke
       - deploy_health_check_200:
-          requires:
-            - report_summary
+          requires: [report_summary]
           filters:
             branches:
               only:
