@@ -35,6 +35,7 @@ try:
         list_messages_messages_get as api_list_messages,
         mark_as_read_messages_message_id_mark_as_read_post as api_mark_as_read,
     )
+
     logger.debug("Imported generated client from installed package.")
 except ModuleNotFoundError:  # pragma: no cover  (environment-specific import path)
     # Fallback: add "<repo-root>/clients/python" to sys.path
@@ -51,7 +52,9 @@ except ModuleNotFoundError:  # pragma: no cover  (environment-specific import pa
         list_messages_messages_get as api_list_messages,
         mark_as_read_messages_message_id_mark_as_read_post as api_mark_as_read,
     )
+
     logger.debug("Imported generated client via monorepo fallback path.")
+
 
 # ---------------------------------------------------------------------------
 # Utility: normalize generated objects into dicts/lists with a single return

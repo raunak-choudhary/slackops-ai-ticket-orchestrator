@@ -21,6 +21,7 @@ class OnlyGetPostHTTP:
             return R()
 
         if url == "/channels":
+
             class R:
                 def json(self):
                     return {"channels": [{"id": "C42", "name": "answer"}]}
@@ -31,6 +32,7 @@ class OnlyGetPostHTTP:
 
     def post(self, url, **kwargs):
         if url == "/messages":
+
             class R:
                 def json(self):
                     j = kwargs.get("json", {})

@@ -13,18 +13,14 @@ class Email:
 
     Defaults allow Email() to be instantiated with no arguments.
     """
+
     sender: str = ""
     recipient: str = ""
     subject: str = ""
     body: str = ""
 
     def __str__(self) -> str:
-        return (
-            f"From: {self.sender}\n"
-            f"To: {self.recipient}\n"
-            f"Subject: {self.subject}\n\n"
-            f"{self.body}"
-        )
+        return f"From: {self.sender}\nTo: {self.recipient}\nSubject: {self.subject}\n\n{self.body}"
 
 
 class Client:

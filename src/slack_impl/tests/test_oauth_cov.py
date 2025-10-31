@@ -10,7 +10,9 @@ from slack_impl.oauth import (
 )
 
 
-def test_get_env_and_build_authorization_url_roundtrip(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_get_env_and_build_authorization_url_roundtrip(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("SLACK_CLIENT_ID", "CID123")
     monkeypatch.setenv("SLACK_REDIRECT_URI", "https://app.example/callback")
     monkeypatch.setenv("SLACK_SCOPES", "channels:read chat:write")

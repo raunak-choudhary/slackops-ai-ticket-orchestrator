@@ -9,6 +9,7 @@ from typing import Optional
 @dataclass(frozen=True)
 class TokenBundle:
     """A minimal bundle for storing OAuth tokens in a DB."""
+
     access_token: str
     refresh_token: Optional[str] = None
     token_type: str = "Bearer"

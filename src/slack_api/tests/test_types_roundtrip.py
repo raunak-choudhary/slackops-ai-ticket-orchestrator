@@ -16,7 +16,9 @@ def test_user_roundtrip_normalizes() -> None:
 
 
 def test_message_roundtrip_and_validation() -> None:
-    m = Message.from_dict({"channel_id": "C123", "text": "  hi   there  ", "ts": "1.23"})
+    m = Message.from_dict(
+        {"channel_id": "C123", "text": "  hi   there  ", "ts": "1.23"}
+    )
     assert m.to_dict() == {"channel_id": "C123", "text": "hi there", "ts": "1.23"}
 
     with pytest.raises(ValidationError):

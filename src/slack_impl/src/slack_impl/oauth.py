@@ -40,7 +40,9 @@ def build_authorization_url(state: str) -> str:
     return f"{SLACK_OAUTH_AUTHORIZE}?{qs}"
 
 
-async def exchange_code_for_tokens(code: str, redirect_uri: Optional[str] = None) -> TokenBundle:
+async def exchange_code_for_tokens(
+    code: str, redirect_uri: Optional[str] = None
+) -> TokenBundle:
     """Exchange OAuth 'code' for tokens using Slack's oauth.v2.access.
 
     Requires env:

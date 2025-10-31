@@ -20,6 +20,7 @@ def get_mail_client():
 get_client_dep = Depends(get_mail_client)
 # -----------------------------------------------------------------------------
 
+
 def _exc_to_status(exc: Exception) -> int:
     """Map arbitrary exceptions into sensible HTTP status codes."""
     msg = str(exc).lower()
@@ -33,7 +34,7 @@ def _exc_to_status(exc: Exception) -> int:
 @router.get("")
 def list_messages(
     limit: int | None = Query(default=None, ge=1),
-    client = get_client_dep,  # B008-safe
+    client=get_client_dep,  # B008-safe
 ) -> list[dict[str, Any]]:
     """Return message summaries.
 
@@ -55,7 +56,7 @@ def list_messages(
 @router.get("/{message_id}")
 def get_message(
     message_id: str,
-    client = get_client_dep,  # B008-safe
+    client=get_client_dep,  # B008-safe
 ) -> dict[str, Any]:
     """Return a full message by ID as plain JSON."""
     try:
@@ -68,7 +69,7 @@ def get_message(
 @router.post("/{message_id}/mark-as-read")
 def mark_as_read(
     message_id: str,
-    client = get_client_dep,  # B008-safe
+    client=get_client_dep,  # B008-safe
 ) -> dict[str, Any]:
     """Mark a message as read; return JSON that satisfies both suites."""
     try:
@@ -85,7 +86,7 @@ def mark_as_read(
 @router.delete("/{message_id}")
 def delete_message(
     message_id: str,
-    client = get_client_dep,  # B008-safe
+    client=get_client_dep,  # B008-safe
 ) -> dict[str, Any]:
     """Delete a message; return JSON that satisfies both suites."""
     try:

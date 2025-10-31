@@ -14,6 +14,7 @@ from email_api.client import Client  # noqa: E402
 
 class MockClient(Client):
     """Concrete mock subclass of Client for testing."""
+
     def get_messages(self):
         return [{"id": "1", "subject": "Mock message"}]
 

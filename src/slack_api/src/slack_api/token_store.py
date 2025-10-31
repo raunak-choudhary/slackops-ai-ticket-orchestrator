@@ -9,7 +9,9 @@ class TokenStore(Protocol):
     def get(self, user_id: str) -> str | None:  # pragma: no cover - protocol
         ...
 
-    def put(self, user_id: str, access_token: str) -> None:  # pragma: no cover - protocol
+    def put(
+        self, user_id: str, access_token: str
+    ) -> None:  # pragma: no cover - protocol
         ...
 
     def delete(self, user_id: str) -> None:  # pragma: no cover - protocol

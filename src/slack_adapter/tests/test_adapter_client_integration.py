@@ -13,11 +13,13 @@ sys.path.append(os.path.abspath("clients/python"))
 # DUMMY INFRASTRUCTURE
 # ---------------------------------------------------------------------------
 
+
 class DummyResponse:
     """
     Minimal stand-in for httpx.Response.
     Includes all attributes accessed by the generated client functions.
     """
+
     status_code = 200
     content = b"{}"
     headers = {}
@@ -56,6 +58,7 @@ class DummyGeneratedClient:
 # ---------------------------------------------------------------------------
 # TESTS
 # ---------------------------------------------------------------------------
+
 
 def test_health_endpoint(monkeypatch):
     """
@@ -120,6 +123,7 @@ def test_list_channels_and_post_message(monkeypatch):
 # ---------------------------------------------------------------------------
 # ADDITIONAL CONTRACT CHECK
 # ---------------------------------------------------------------------------
+
 
 def test_adapter_context_manager_behavior():
     """

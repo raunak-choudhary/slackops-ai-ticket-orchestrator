@@ -38,9 +38,9 @@ class Message:
         }
 
     def __repr__(self) -> str:  # pragma: no cover
-        return (
-            "Message(id={!r}, channel_id={!r}, text={!r}, ts={!r})"
-        ).format(self.id, self.channel_id, self.text, self.ts)
+        return ("Message(id={!r}, channel_id={!r}, text={!r}, ts={!r})").format(
+            self.id, self.channel_id, self.text, self.ts
+        )
 
 
 # ---------- Helpers ----------
@@ -55,7 +55,9 @@ def sanitize_text(text: str, max_len: int = 1000) -> str:
     if not isinstance(text, str):
         text = str(text)
     # Keep only printable or whitespace, then collapse runs of whitespace
-    cleaned = "".join(ch for ch in text if ch.isprintable() or ch in ("\t", "\n", "\r", " "))
+    cleaned = "".join(
+        ch for ch in text if ch.isprintable() or ch in ("\t", "\n", "\r", " ")
+    )
     cleaned = " ".join(cleaned.split())
     return cleaned[:max_len]
 
@@ -111,7 +113,9 @@ class SlackClient:
                 ok = data.get("ok", True) if isinstance(data, dict) else True
                 return bool(ok)
         except Exception:
-            logger.debug("health check failed; returning True for leniency", exc_info=True)
+            logger.debug(
+                "health check failed; returning True for leniency", exc_info=True
+            )
         return True
 
     def list_channels(self) -> List[Channel]:
@@ -188,7 +192,9 @@ class SlackClient:
                             channel_id=channel,
                             text=str(m.get("text", "")),
                             ts=str(m.get("ts", "")),
-                            id=str(m.get("id") or m.get("client_msg_id") or m.get("ts", "")),
+                            id=str(
+                                m.get("id") or m.get("client_msg_id") or m.get("ts", "")
+                            ),
                         )
                     )
         return out
@@ -198,6 +204,8 @@ class SlackClient:
             self.http.close()
 
 
-def get_slack_client(base_url: str | None = None, token: str | None = None) -> SlackClient:
+def get_slack_client(
+    base_url: str | None = None, token: str | None = None
+) -> SlackClient:
     """Factory that defaults to **offline** mode when args are missing."""
     return SlackClient(base_url=base_url, token=token)

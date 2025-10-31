@@ -35,6 +35,7 @@ class DummyHTTPXClient:
                         "ts": "1.23",
                     }
                 return {}
+
         return R(method, url, kwargs)
 
     def close(self):

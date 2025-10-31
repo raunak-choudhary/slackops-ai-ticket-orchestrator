@@ -26,15 +26,32 @@ class DummyHTTP:
         if url == "/health":
             return DummyResp({"ok": True})
         if url == "/conversations.list":
-            return DummyResp({"channels": [{"id": "C77", "name": "dev"}, {"id": "C88", "name": "ops"}]})
+            return DummyResp(
+                {
+                    "channels": [
+                        {"id": "C77", "name": "dev"},
+                        {"id": "C88", "name": "ops"},
+                    ]
+                }
+            )
         if url == "/conversations.history":
-            return DummyResp({"messages": [{"text": "hi", "ts": "1.0"}, {"text": "yo", "ts": "2.0"}]})
+            return DummyResp(
+                {"messages": [{"text": "hi", "ts": "1.0"}, {"text": "yo", "ts": "2.0"}]}
+            )
         return DummyResp({})
 
     def post(self, url: str, json: Dict[str, Any] | None = None):
         self.called.append(("POST", url, json))
         if url == "/chat.postMessage":
-            return DummyResp({"message": {"channel": json.get("channel"), "text": json.get("text"), "ts": "3.0"}})
+            return DummyResp(
+                {
+                    "message": {
+                        "channel": json.get("channel"),
+                        "text": json.get("text"),
+                        "ts": "3.0",
+                    }
+                }
+            )
         return DummyResp({})
 
 
@@ -53,7 +70,9 @@ def test_online_mode_paths() -> None:
 
     # post_message online mapping
     msg = c.post_message("C77", "hey there")
-    assert isinstance(msg, Message) and msg.channel_id == "C77" and "hey there" in msg.text
+    assert (
+        isinstance(msg, Message) and msg.channel_id == "C77" and "hey there" in msg.text
+    )
 
     # get_channel_history online mapping + limit param exercised
     hist = c.get_channel_history("C77", limit=2)

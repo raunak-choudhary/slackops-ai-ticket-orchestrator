@@ -11,6 +11,7 @@ from email_api import (
 
 class _FakeAdapter:
     """Minimal stand-in for ServiceAdapter so we avoid any network calls."""
+
     def __init__(self, base_url: str = "http://does-not-matter") -> None:  # noqa: ARG002
         self._messages: list[dict[str, Any]] = [
             {

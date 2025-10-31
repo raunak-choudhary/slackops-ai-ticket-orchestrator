@@ -2,6 +2,7 @@
 
 import sys
 import os
+
 # Add the project root to sys.path so that 'src' can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
@@ -16,6 +17,7 @@ def test_email_class_exists():
 
 def test_email_send(monkeypatch):
     """Mock an email send method to verify basic functionality."""
+
     class DummyEmail:
         def send(self):
             return "sent"

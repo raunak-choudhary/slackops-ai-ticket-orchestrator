@@ -30,6 +30,7 @@ if not hasattr(mod, "app"):
     raise ImportError(f"{APP_FILE} loaded as {SUBMOD_NAME}, but no global `app` found.")
 app = mod.app  # direct attribute access
 
+
 # ---------- Fixtures ----------
 @pytest.fixture
 def test_client() -> Generator[TestClient, None, None]:
