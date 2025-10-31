@@ -6,181 +6,191 @@ executors:
       - image: cimg/python:3.12
 
 commands:
-  install_uv:
-    steps:
-      - run:
-          name: Install uv
-          command: |
-            curl -LsSf https://astral.sh/uv/install.sh | sh
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> $BASH_ENV
-            source $BASH_ENV
-            uv --version
-
   restore_uv_cache:
     steps:
       - restore_cache:
-          keys:
-            - v2-uv-cache-{{ checksum "pyproject.toml" }}-{{ checksum "uv.lock" }}
+          key: v1-uv-cache-{{ checksum "pyproject.toml" }}-{{ checksum "uv.lock" }}
 
   save_uv_cache:
     steps:
       - save_cache:
-          key: v2-uv-cache-{{ checksum "pyproject.toml" }}-{{ checksum "uv.lock" }}
+          key: v1-uv-cache-{{ checksum "pyproject.toml" }}-{{ checksum "uv.lock" }}
           paths:
             - ~/.cache/uv
-
-  setup_workspace:
-    steps:
-      - checkout
-      - install_uv
-      - run:
-          name: Sync workspace (dev + all packages)
-          command: |
-            uv sync --all-packages --dev
-      - run:
-          name: Activate venv
-          command: |
-            echo 'source .venv/bin/activate' >> $BASH_ENV
-            source $BASH_ENV
+            - .venv
 
 jobs:
   bootstrap_env:
     executor: py312
     steps:
-      - setup_workspace
+      - checkout
+      - run:
+          name: Install uv
+          command: |
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> $BASH_ENV
+            source "$BASH_ENV"
+            uv --version
       - restore_uv_cache
-      - run: python --version
-      - run: uv --version
+      - run:
+          name: Sync dependencies (all + dev)
+          command: |
+            source "$BASH_ENV"
+            uv sync --all-packages --dev
       - save_uv_cache
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+            - .venv
 
   ruff_lint:
     executor: py312
     steps:
-      - setup_workspace
+      - attach_workspace: { at: . }
       - run:
           name: Ruff lint
-          command: uv run ruff check .
+          command: |
+            source "$BASH_ENV" || true
+            uv run ruff version
+            uv run ruff check .
 
   mypy_strict_checks:
     executor: py312
     steps:
-      - setup_workspace
+      - attach_workspace: { at: . }
       - run:
-          name: MyPy strict
-          command: uv run mypy --config-file mypy.ini
+          name: MyPy (strict, config-driven)
+          command: |
+            source "$BASH_ENV" || true
+            uv run mypy --config-file mypy.ini
 
   unit_tests_pytest:
     executor: py312
     steps:
-      - setup_workspace
+      - attach_workspace: { at: . }
       - run:
-          name: Run unit/integration tests
+          name: Run tests with coverage + JUnit
           command: |
             mkdir -p test-results
+            source "$BASH_ENV" || true
             uv run pytest -q --cov=src --cov-report=xml --junitxml=test-results/junit.xml
       - store_test_results:
           path: test-results
       - store_artifacts:
           path: coverage.xml
+      - persist_to_workspace:
+          root: .
+          paths:
+            - coverage.xml
+            - test-results
 
   coverage_enforce_85:
     executor: py312
     steps:
-      - setup_workspace
+      - attach_workspace: { at: . }
       - run:
-          name: Enforce coverage ≥ 85%
+          name: Enforce 85% coverage
           command: |
-            uv run pytest -q --cov=src --cov-fail-under=85
+            python - \<< 'PY'
+            import xml.etree.ElementTree as ET, os, sys
+            path = 'coverage.xml'
+            if not os.path.exists(path):
+              print("coverage.xml not found")
+              sys.exit(1)
+            p = ET.parse(path)
+            cov = float(p.getroot().attrib.get('line-rate', '0')) * 100
+            print(f"Total coverage: {cov:.2f}%")
+            assert cov >= 85, f"Coverage failure: total of {cov:.0f} is less than fail-under=85"
+            PY
 
   package_import_smoke:
     executor: py312
     steps:
-      - setup_workspace
+      - attach_workspace: { at: . }
       - run:
-          name: Import smoke test for packages
+          name: Import smoke (auto-discovered top-level packages)
           command: |
-            python - <<'PY'
-            import importlib, pathlib
-            roots = [pathlib.Path('src')]
-            mods = []
-            for root in roots:
-                for pkg in root.iterdir():
-                    inner = pkg / 'src'
-                    if inner.is_dir():
-                        for mod_dir in inner.iterdir():
-                            if mod_dir.is_dir() and (mod_dir / '__init__.py').exists():
-                                mods.append(mod_dir.name)
-            print("Discovered packages:", mods)
-            failed = []
-            for m in mods:
+            source "$BASH_ENV" || true
+            uv run python - \<< 'PY'
+            import sys, pathlib, importlib
+
+            root = pathlib.Path(".").resolve()
+            # Find all inner "src/*/src/*" package roots
+            pkg_src_dirs = sorted(root.glob("src/*/src"))
+            for d in pkg_src_dirs:
+                p = str(d.resolve())
+                if p not in sys.path:
+                    sys.path.insert(0, p)
+
+            modules = []
+            for d in pkg_src_dirs:
+                # Every immediate child dir in src/*/src that contains __init__.py is a module
+                for mod_dir in d.iterdir():
+                    if mod_dir.is_dir() and (mod_dir / "__init__.py").exists():
+                        modules.append(mod_dir.name)
+
+            print("Discovered packages:", modules)
+            failures = []
+            for m in modules:
                 try:
                     importlib.import_module(m)
                 except Exception as e:
-                    failed.append((m, repr(e)))
-            if failed:
-                for m, e in failed:
-                    print(f"FAILED IMPORT: {m}: {e}")
+                    failures.append((m, repr(e)))
+
+            if failures:
+                for m, err in failures:
+                    print(f"Failed to import {m}: {err}")
                 raise SystemExit(1)
+            print("All discovered packages import successfully.")
             PY
 
   report_summary:
     executor: py312
     steps:
-      - setup_workspace
+      - attach_workspace: { at: . }
       - run:
-          name: Report environment and summaries
+          name: Summarize results (Ruff / MyPy / Pytest / Coverage)
           command: |
-            python -V
-            uv --version
-            echo "Workspace ready. Reports uploaded in previous jobs."
-
-  deploy_render:
-    executor: py312
-    steps:
-      - checkout
-      - run:
-          name: Trigger Render auto-deploy (no-op if auto deploy is on push)
-          command: echo "Render is configured to auto-deploy on push to this branch."
+            set -e
+            echo "===== SUMMARY ====="
+            echo "• Ruff: ran in job ruff_lint"
+            echo "• MyPy: ran with mypy.ini in job mypy_strict_checks"
+            echo "• Pytests: junit -> test-results/junit.xml"
+            echo "• Coverage: coverage.xml (gate at 85%)"
+            echo "• Imports: package_import_smoke (auto-discovered)"
+            echo "==================="
 
   deploy_health_check_200:
     executor: py312
     environment:
-      RENDER_HEALTH_URL: "https://ospsd-hw2-final-demo.onrender.com/health"
+      SERVICE_HEALTH_URL: "https://ospsd-hw2-final-demo.onrender.com/health"
     steps:
-      - checkout
+      - attach_workspace:
+          at: .
       - run:
           name: Health check /health returns 200 with retries
           command: |
-            chmod +x scripts/ci/health_check.sh || true
-            if [ ! -f scripts/ci/health_check.sh ]; then
-              echo "health_check.sh not found; creating a temporary one as fallback"
-              mkdir -p scripts/ci
-              cat > scripts/ci/health_check.sh <<'SH'
-              #!/usr/bin/env bash
-              set -euo pipefail
-              URL="${RENDER_HEALTH_URL:-https://ospsd-hw2-final-demo.onrender.com/health}"
-              MAX_ATTEMPTS="${MAX_ATTEMPTS:-12}"
-              SLEEP_SECS="${SLEEP_SECS:-5}"
-              CONNECT_TIMEOUT="${CONNECT_TIMEOUT:-10}"
-              READ_TIMEOUT="${READ_TIMEOUT:-10}"
-              echo "Checking: $URL"
-              for i in $(seq 1 "$MAX_ATTEMPTS"); do
-                CODE="$(curl -sS -o /dev/null -w "%{http_code}"                   --connect-timeout "$CONNECT_TIMEOUT"                   --max-time "$READ_TIMEOUT"                   "$URL" || echo "000")"
-                if [[ "$CODE" == "200" ]]; then
-                  echo "HTTP 200 OK from $URL"
-                  curl -sS "$URL" || true
-                  exit 0
-                fi
-                echo "Attempt $i/$MAX_ATTEMPTS → got $CODE; sleeping ${SLEEP_SECS}s…"
-                sleep "$SLEEP_SECS"
-              done
-              echo "Health check FAILED after $MAX_ATTEMPTS attempts."
-              exit 1
-              SH
-              chmod +x scripts/ci/health_check.sh
-            fi
-            scripts/ci/health_check.sh
-
+            URL="${SERVICE_HEALTH_URL}"
+            echo "Checking: $URL"
+            ATTEMPTS=12
+            SLEEP=5
+            CONNECT_TIMEOUT=10
+            READ_TIMEOUT=10
+            i=1
+            while [ $i -le $ATTEMPTS ]; do
+              CODE=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout $CONNECT_TIMEOUT --max-time $READ_TIMEOUT "$URL" || echo "000")
+              if [ "$CODE" = "200" ]; then
+                echo "HTTP 200 OK from $URL"
+                curl -sS "$URL" || true
+                exit 0
+              fi
+              echo "Attempt $i/$ATTEMPTS → got $CODE; sleeping ${SLEEP}s…"
+              i=$((i+1))
+              sleep $SLEEP
+            done
+            echo "Health check FAILED after $ATTEMPTS attempts."
+            exit 1
 workflows:
   hw2_pipeline:
     jobs:
@@ -190,20 +200,23 @@ workflows:
       - mypy_strict_checks:
           requires: [bootstrap_env]
       - unit_tests_pytest:
-          requires: [ruff_lint, mypy_strict_checks]
+          requires: [bootstrap_env]
       - coverage_enforce_85:
           requires: [unit_tests_pytest]
       - package_import_smoke:
-          requires: [unit_tests_pytest]
+          requires: [bootstrap_env]
       - report_summary:
-          requires: [coverage_enforce_85, package_import_smoke]
-      - deploy_render:
-          requires: [report_summary]
+          requires:
+            - ruff_lint
+            - mypy_strict_checks
+            - unit_tests_pytest
+            - coverage_enforce_85
+            - package_import_smoke
       - deploy_health_check_200:
-          requires: [deploy_render]
+          requires: [report_summary]
           filters:
             branches:
               only:
                 - main
-                - hw2
                 - feature/slack-client-and-ci-raunak
+                - hw2
