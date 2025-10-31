@@ -83,7 +83,7 @@ jobs:
           name: MyPy Strict
           command: |
             source "$BASH_ENV"
-            uv run mypy \
+            uv run python -m mypy \
               -p email_api \
               -p gmail_impl \
               -p mail_client_service \
@@ -91,8 +91,8 @@ jobs:
               -p slack_api \
               -p slack_impl \
               -p slack_service \
-              -p slack_adapter \
-              tests
+              -p slack_adapter
+            uv run python -m mypy tests
 
   test:
     executor: py312
