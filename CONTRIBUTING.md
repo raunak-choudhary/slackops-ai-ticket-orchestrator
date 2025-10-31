@@ -372,4 +372,103 @@ uv run pytest
 
 This guide defines the architectural, procedural, and technical standards for contributions.By adhering to these guidelines, contributors ensure consistency, maintain quality, and uphold the principles of software engineering excellence established in the base repository.
 
+------------------------------------------------------
+------------------------------------------------------
+HOMEWORK 2 - SLACK API CHAT SERVICE IMPLEMENTATION
+------------------------------------------------------
+------------------------------------------------------
 
+## Scope
+
+This addendum extends contributor practices for **Homework 2 (HW2)** where the team
+implemented the **Slack API Chat Service**. Email and Gmail modules from HW1 are *excluded*.
+
+## Slack Modules
+
+- **slack_api** – Abstract contracts for channel, message, and user objects.  
+- **slack_impl** – Concrete integration using Slack Web API and full **OAuth 2.0** flow.  
+- **slack_service** – FastAPI microservice exposing Slack endpoints and authentication.  
+- **slack_adapter** – Adapter using the generated OpenAPI client for remote use.  
+- **clients/** – Generated code and specifications for Slack service client.
+
+## Local Setup (via uv)
+
+```bash
+uv sync --all-packages --dev
+source .venv/bin/activate
+```
+
+## Quality Checks
+
+```bash
+uv run ruff check .
+uv run mypy --config-file mypy.ini
+uv run pytest -q --cov=src --cov-report=xml --junitxml=test-results/junit.xml
+```
+
+✅ **Ruff clean**  
+✅ **MyPy strict clean**  
+✅ **Coverage ≥ 90.06%** (threshold: 85%)
+
+## OAuth 2.0 and Token Store
+
+- Implemented via `src/slack_impl/oauth.py` with secure state verification.  
+- Tokens persist in **SQLite** (`src/slack_impl/token_store.py`).  
+- Secrets sourced from environment variables during deploy.
+
+## FastAPI Endpoints
+
+- `GET /channels` – List channels  
+- `GET /channels/<built-in function id>/messages` – Retrieve messages  
+- `POST /channels/<built-in function id>/messages` – Send a message  
+- `/auth` and `/callback` – OAuth 2.0 flow  
+- `/health` – Returns 200 OK for CI/CD checks
+
+## Dependency Injection
+
+Both `slack_impl` and `slack_adapter` satisfy `slack_api` contracts.  
+Main app can switch implementations transparently using DI.
+
+## Testing Summary
+
+| Category | Description | Status |
+|-----------|--------------|--------|
+| Unit Tests | Slack API/Impl validation | ✅ Passed |
+| Integration Tests | Service + Adapter contracts | ✅ Passed |
+| Coverage | 90.06% total (target 85%) | ✅ Passed |
+| Skipped | 2 unrelated email tests | ⚪ Skipped |
+
+## CI/CD (CircleCI + Render)
+
+All **9/9 CircleCI** checks are green. Jobs include:
+
+1. `bootstrap_env`
+2. `ruff_lint`
+3. `mypy_strict_checks`
+4. `pytest_coverage`
+5. `coverage_enforce_85`
+6. `package_build`
+7. `report_summary`
+8. `deploy_health_check_200`
+9. `auto_deploy_render`
+
+**Deployment URL:** [https://ospsd-hw2-final-demo.onrender.com/docs](https://ospsd-hw2-final-demo.onrender.com/docs)
+
+## Contributor Workflow (HW2)
+
+- Work branched from `hw2` into `feature/...` branches (e.g., `feature/slack-client-and-ci-raunak`).  
+- Feature branches squash‑merged into `hw2` after reviews.  
+- Final PR merged into `main` with all CI checks green.
+
+## Contributor Checklist (HW2)
+
+- [ ] Ruff and MyPy strict checks pass locally.  
+- [ ] Unit/integration tests green with ≥ 85% coverage.  
+- [ ] Secrets managed securely via environment variables.  
+- [ ] Docs and READMEs updated.  
+- [ ] `/health` endpoint verified (200 OK).
+
+---
+
+**End of Report**  
+*Team 4 – OSPSD Fall 2025, NYU Tandon School of Engineering*

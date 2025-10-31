@@ -357,6 +357,92 @@ This project successfully extends the local Gmail client architecture into a **d
 
 This project serves as a reusable blueprint for similar **API modernization efforts**, illustrating how legacy codebases can be safely evolved into distributed, service-based architectures while retaining interface integrity.
 
+------------------------------------------------------
+------------------------------------------------------
+HOMEWORK 2 - SLACK API CHAT SERVICE IMPLEMENTATION
+------------------------------------------------------
+------------------------------------------------------
+
+## 13. HW2 Design Overview — Slack API Chat Service
+
+### 13.1 Architectural Shape (Slack)
+
+```
+Contract (slack_api)  →  Implementation (slack_impl)  →  Service (slack_service)  →  Adapter (slack_adapter)
+                                   │                            ↑
+                                   └────────────── DI ──────────┘
+```
+
+- **slack_api**: pure contracts and value objects (Channel, Message, User) with validators and utilities.
+- **slack_impl**: Slack Web API wrapper + **OAuth 2.0** flow; **SQLite token store**.
+- **slack_service**: FastAPI microservice exposing channels, messages, health, and OAuth routes.
+- **slack_adapter**: wraps auto‑generated OpenAPI client to satisfy the same contract remotely.
+
+### 13.2 OAuth 2.0 Flow
+
+1. Client hits `/auth` → redirect to Slack authorize URL (scopes configured via env).
+2. Slack redirects to `/callback?code=...&state=...`.
+3. `slack_impl.oauth.exchange_code_for_tokens()` trades the code for **access/refresh** tokens.
+4. Tokens persist in **SQLite** (per user/team) via `token_store.py`.
+5. Subsequent requests use stored credentials; refresh is handled as needed.
+
+**Security Notes:** State/nonce is verified; secrets sourced from environment variables.
+
+### 13.3 Service Endpoints (Slack)
+
+- `GET /channels` — list channels (id, name, is_private)
+- `GET /channels/<built-in function id>/messages` — recent messages with ts, user, text
+- `POST /channels/<built-in function id>/messages` — post sanitized text; returns message with Slack `ts`
+- `/auth`, `/callback` — OAuth entrypoints
+- `/health` — readiness probe returning **200 OK**
+
+### 13.4 Dependency Injection Validation
+
+- Both `slack_impl` and `slack_adapter` conform to `slack_api`.
+- `main.py` can swap implementations via constructor/factory injection without changing call‑sites.
+- Verified through unit and integration tests in each package.
+
+### 13.5 Testing Results (Slack)
+
+Executed with:
+```bash
+uv run pytest -q --cov=src --cov-report=xml --junitxml=test-results/junit.xml
+```
+- **Total tests:** 69 (2 unrelated email E2E skipped)
+- **Coverage:** **90.06%** (threshold 85%)
+- Test suites cover contracts, OAuth/token store, endpoint behavior, adapter integration, and health.
+
+### 13.6 CI/CD and Deployment
+
+- **CircleCI** pipeline with **9/9 green jobs**, including:
+  `bootstrap_env`, `ruff_lint`, `mypy_strict_checks`, `unit_tests_pytest`,
+  `coverage_enforce_85`, `package_import_smoke`, `report_summary`, `deploy_health_check_200`, and a deploy/build step.
+- **Render** deployment:
+  - URL: **https://ospsd-hw2-final-demo.onrender.com/docs**
+  - Python 3.12 + `uv`
+  - Secrets: `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, redirect URL, etc.
+  - `/health` used for post‑deploy verification in CI.
+
+### 13.7 Design Tradeoffs (Slack)
+
+| Choice | Rationale | Benefit | Tradeoff |
+|---|---|---|---|
+| SQLite token store | Simplest durable option for HW2 | Fast local dev, easy CI | Not multi‑tenant/HA |
+| Adapter over HTTP | Preserve contract & location transparency | Swap impl/adapter freely | Network latency |
+| Strict MyPy + Ruff | Catch defects early | Safer refactors | Higher initial effort |
+| Generated client | Prevent schema drift | Type‑safe calls | Regeneration step in flow |
+
+### 13.8 Future Enhancements (Slack)
+
+- Migrate token store to Postgres with encryption‐at‐rest.
+- Add scoped service accounts and granular Slack permission sets.
+- Introduce async FastAPI endpoints and streaming events (Socket Mode / Events API).
+- Add observability: structured logs, metrics, traces.
+- Expand endpoints: threads, reactions, attachments, channel create/rename.
+
+**Conclusion (HW2):** The Slack Chat Service realizes the same architectural ideals as HW1 while adding
+a production‑style OAuth layer, CI‑enforced quality gates, and a public deployment with health checks.
+
 ---
 
 **End of Report**  
