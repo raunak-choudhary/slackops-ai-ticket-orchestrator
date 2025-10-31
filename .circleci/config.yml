@@ -9,12 +9,11 @@ commands:
   setup-env:
     steps:
       - run:
-          name: Setup Environment
+          name: Init shell env
           command: |
             touch "$BASH_ENV"
             echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
             source "$BASH_ENV"
-
   install-uv:
     steps:
       - run:
@@ -27,13 +26,13 @@ commands:
           keys:
             - v1-uv-cache-{{ arch }}-{{ checksum "uv.lock" }}
             - v1-uv-cache-{{ arch }}
-
   sync-and-editables:
     steps:
       - run:
-          name: Sync env + editable installs
+          name: Sync env and install all packages (HW1 + HW2)
           command: |
             source "$BASH_ENV"
+            rm -rf .venv
             uv sync --all-packages --dev
             # HW1 scope
             uv pip install -e src/email_api
@@ -47,25 +46,13 @@ commands:
             uv pip install -e src/slack_adapter
 
 jobs:
-  build:
+  lint:
     executor: py312
     steps:
       - checkout
       - setup-env
       - install-uv
       - sync-and-editables
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .
-
-  lint:
-    executor: py312
-    steps:
-      - attach_workspace:
-          at: .
-      - setup-env
-      - install-uv
       - run:
           name: Ruff Linter
           command: |
@@ -75,17 +62,15 @@ jobs:
   typecheck:
     executor: py312
     steps:
-      - attach_workspace:
-          at: .
+      - checkout
       - setup-env
       - install-uv
+      - sync-and-editables
       - run:
-          name: MyPy Strict
+          name: Install mypy (ensure present) + run strict checks
           command: |
             source "$BASH_ENV"
-            # Ensure mypy is installed in this CI environment
             uv pip install mypy
-            # Run per-package checks
             uv run python -m mypy \
               -p email_api \
               -p gmail_impl \
@@ -100,12 +85,12 @@ jobs:
   test:
     executor: py312
     steps:
-      - attach_workspace:
-          at: .
+      - checkout
       - setup-env
       - install-uv
+      - sync-and-editables
       - run:
-          name: Pytest + Coverage Gate
+          name: Pytest with coverage gate
           command: |
             source "$BASH_ENV"
             mkdir -p test-results
@@ -115,26 +100,27 @@ jobs:
           path: test-results
       - store_artifacts:
           path: coverage.xml
+      - save_cache:
+          key: v1-uv-cache-{{ arch }}-{{ checksum "uv.lock" }}
+          paths:
+            - ~/.cache/uv
 
   report_summary:
     executor: py312
     steps:
-      - attach_workspace:
-          at: .
+      - checkout
       - run:
           name: Summary
           command: |
             echo "---- CI Summary ----"
-            echo "✅ Ruff check passed"
-            echo "✅ MyPy passed"
-            echo "✅ Tests and coverage ≥85%"
+            echo "✅ Ruff"
+            echo "✅ MyPy"
+            echo "✅ Pytest + coverage ≥85%"
 
 workflows:
   hw2_pipeline:
     jobs:
-      - build
-      - lint:
-          requires: [build]
+      - lint
       - typecheck:
           requires: [lint]
       - test:
