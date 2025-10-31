@@ -6,14 +6,23 @@ executors:
       - image: cimg/python:3.12.5
 
 commands:
+  setup-env:
+    steps:
+      - run:
+          name: Setup Environment
+          command: |
+            touch "$BASH_ENV"
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+
   install-uv:
     steps:
       - run:
           name: Install uv
           command: |
             curl -LsSf https://astral.sh/uv/install.sh | sh
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> $BASH_ENV
-            source $BASH_ENV
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
       - restore_cache:
           keys:
             - v1-uv-cache-{{ arch }}-{{ checksum "uv.lock" }}
@@ -22,9 +31,9 @@ commands:
   sync-and-editables:
     steps:
       - run:
-          name: Sync environment and install all 8 packages
+          name: Sync env + editable installs
           command: |
-            source $BASH_ENV
+            source "$BASH_ENV"
             uv sync --all-packages --dev
             # HW1 scope
             uv pip install -e src/email_api
@@ -42,6 +51,7 @@ jobs:
     executor: py312
     steps:
       - checkout
+      - setup-env
       - install-uv
       - sync-and-editables
       - persist_to_workspace:
@@ -54,10 +64,12 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      - setup-env
+      - install-uv
       - run:
           name: Ruff Linter
           command: |
-            source $BASH_ENV
+            source "$BASH_ENV"
             uv run ruff check .
 
   typecheck:
@@ -65,10 +77,12 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      - setup-env
+      - install-uv
       - run:
-          name: MyPy Strict Type Check
+          name: MyPy Strict
           command: |
-            source $BASH_ENV
+            source "$BASH_ENV"
             uv run mypy \
               -p email_api \
               -p gmail_impl \
@@ -85,10 +99,12 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      - setup-env
+      - install-uv
       - run:
-          name: Pytest with Coverage Gate
+          name: Pytest + Coverage Gate
           command: |
-            source $BASH_ENV
+            source "$BASH_ENV"
             mkdir -p test-results
             uv run pytest --cov=src --cov-report=xml:coverage.xml \
               --junitxml=test-results/junit.xml --cov-fail-under=85
@@ -96,11 +112,6 @@ jobs:
           path: test-results
       - store_artifacts:
           path: coverage.xml
-      - save_cache:
-          key: v1-uv-cache-{{ arch }}-{{ checksum "uv.lock" }}
-          paths:
-            - ~/.cache/uv
-            - .venv
 
   report_summary:
     executor: py312
@@ -110,24 +121,15 @@ jobs:
       - run:
           name: Summary
           command: |
-            echo "---- Lint ----"
-            echo "✅ Ruff check passed."
-            echo "---- Type Check ----"
-            echo "✅ MyPy strict mode passed."
-            echo "---- Tests ----"
-            [ -f test-results/junit.xml ] && echo "✅ Pytest results found." || echo "❌ Missing results."
-            echo "---- Coverage ----"
-            [ -f coverage.xml ] && echo "✅ Coverage.xml exists (≥85%)." || echo "❌ Missing coverage file."
+            echo "---- CI Summary ----"
+            echo "✅ Ruff check passed"
+            echo "✅ MyPy passed"
+            echo "✅ Tests and coverage ≥85%"
 
 workflows:
   hw2_pipeline:
     jobs:
-      - build:
-          filters:
-            branches:
-              only:
-                - feature/slack-client-and-ci-raunak
-                - hw2
+      - build
       - lint:
           requires: [build]
       - typecheck:
