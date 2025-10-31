@@ -16,7 +16,7 @@ commands:
       - save_cache:
           key: v1-uv-cache-{{ checksum "pyproject.toml" }}-{{ checksum "uv.lock" }}
           paths:
-            - ~/.cache/pip
+            - ~/.cache/uv
             - .venv
 
 jobs:
@@ -24,55 +24,60 @@ jobs:
     executor: py312
     steps:
       - checkout
-      - run: python -V && pip -V
       - run:
           name: Install uv
           command: |
-            pip install --upgrade pip
-            pip install uv
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> $BASH_ENV
+            source $BASH_ENV
+            uv --version
       - restore_uv_cache
       - run:
-          name: uv sync
-          command: uv sync --all-packages --dev
+          name: Sync dependencies (all + dev)
+          command: |
+            source $BASH_ENV
+            uv sync --all-packages --dev
       - save_uv_cache
       - persist_to_workspace:
           root: .
           paths:
             - .
+            - .venv
 
   ruff_lint:
     executor: py312
     steps:
-      - attach_workspace: { at: . }
+      - attach_workspace:
+          at: .
       - run:
-          name: uv run ruff check
-          command: uv run ruff check .
+          name: Ruff lint
+          command: |
+            source $BASH_ENV || true
+            uv run ruff version
+            uv run ruff check .
 
   mypy_strict_checks:
     executor: py312
     steps:
-      - attach_workspace: { at: . }
+      - attach_workspace:
+          at: .
       - run:
-          name: uv run mypy (strict)
-          command: >
-            uv run mypy
-            -p email_api -p gmail_impl -p mail_client_service -p mail_client_adapter
-            -p slack_api -p slack_impl -p slack_service -p slack_adapter
-            tests
+          name: MyPy (strict, config-driven)
+          command: |
+            source $BASH_ENV || true
+            uv run mypy --config-file mypy.ini
 
   unit_tests_pytest:
     executor: py312
     steps:
-      - attach_workspace: { at: . }
+      - attach_workspace:
+          at: .
       - run:
-          name: Ensure test-results dir
-          command: mkdir -p test-results
-      - run:
-          name: uv run pytest with coverage
-          command: >
-            uv run pytest -q
-            --cov=src --cov-report=xml
-            --junitxml=test-results/junit.xml
+          name: Run tests with coverage + JUnit
+          command: |
+            mkdir -p test-results
+            source $BASH_ENV || true
+            uv run pytest -q --cov=src --cov-report=xml --junitxml=test-results/junit.xml
       - store_test_results:
           path: test-results
       - store_artifacts:
@@ -81,14 +86,15 @@ jobs:
   coverage_enforce_85:
     executor: py312
     steps:
-      - attach_workspace: { at: . }
+      - attach_workspace:
+          at: .
       - run:
           name: Enforce 85% coverage
           command: |
-            python - << 'PY'
+            python - \<< 'PY'
             import xml.etree.ElementTree as ET
             p = ET.parse('coverage.xml')
-            cov = float(p.getroot().attrib['line-rate']) * 100
+            cov = float(p.getroot().attrib.get('line-rate', '0')) * 100
             print(f"Total coverage: {cov:.2f}%")
             assert cov >= 85, f"Coverage failure: total of {cov:.0f} is less than fail-under=85"
             PY
@@ -96,42 +102,56 @@ jobs:
   package_import_smoke:
     executor: py312
     steps:
-      - attach_workspace: { at: . }
+      - attach_workspace:
+          at: .
       - run:
-          name: Import smoke
-          command: >
-            uv run python -c "import email_api, gmail_impl, mail_client_service, mail_client_adapter,
-            slack_api, slack_impl, slack_service, slack_adapter; print('imports OK')"
+          name: Import smoke (top-level packages)
+          command: |
+            source $BASH_ENV || true
+            uv run python -c "import importlib, sys; mods=['slack_service','slack_adapter','slack_api','slack_impl','mail_client_service','mail_client_adapter','mail_client_api','gmail_impl']; 
+print('Importing:', mods); 
+[importlib.import_module(m) for m in mods if m]; 
+print('OK')"
 
   report_summary:
     executor: py312
     steps:
-      - attach_workspace: { at: . }
+      - attach_workspace:
+          at: .
       - run:
-          name: Summary
+          name: Summarize results (Ruff / MyPy / Pytest / Coverage)
           command: |
-            echo "✅ Ruff, MyPy, Tests, Coverage, and Imports all passed."
+            set -e
+            echo "===== SUMMARY ====="
+            echo "• Ruff: ran in job ruff_lint"
+            echo "• MyPy: ran with mypy.ini in job mypy_strict_checks"
+            echo "• Pytests: junit -> test-results/junit.xml"
+            echo "• Coverage: coverage.xml (gate at 85%)"
+            echo "• Imports: package_import_smoke"
+            echo "==================="
 
   deploy_health_check_200:
     executor: py312
+    environment:
+      # Set/override in Project Settings → Environment Variables if needed
+      SERVICE_HEALTH_URL: "https://ospsd-hw2-final-demo.onrender.com/health"
     steps:
-      - attach_workspace: { at: . }
+      - attach_workspace:
+          at: .
       - run:
-          name: Deploy (Render) via uvicorn (example) or skip if external CI handles deploy
-          command: echo "Deploy step handled by Render auto-deploy on push."
-      - run:
-          name: Health check /health
+          name: Health check /health returns 200
           command: |
-            python - << 'PY'
+            python - \<< 'PY'
             import os, urllib.request, sys
-            url = os.getenv('SERVICE_HEALTH_URL', 'https://ospsd-hw2-final-demo.onrender.com/health')
+            url = os.getenv('SERVICE_HEALTH_URL')
+            print('Checking:', url)
             try:
-              with urllib.request.urlopen(url, timeout=20) as r:
+              with urllib.request.urlopen(url, timeout=25) as r:
                 code = r.getcode()
-                print("Health:", code)
+                print('Health:', code)
                 sys.exit(0 if code == 200 else 1)
             except Exception as e:
-              print("Health check failed:", e)
+              print('Health check failed:', e)
               sys.exit(1)
             PY
 
@@ -140,15 +160,20 @@ workflows:
     jobs:
       - bootstrap_env
       - ruff_lint:
-          requires: [bootstrap_env]
+          requires:
+            - bootstrap_env
       - mypy_strict_checks:
-          requires: [bootstrap_env]
+          requires:
+            - bootstrap_env
       - unit_tests_pytest:
-          requires: [bootstrap_env]
+          requires:
+            - bootstrap_env
       - coverage_enforce_85:
-          requires: [unit_tests_pytest]
+          requires:
+            - unit_tests_pytest
       - package_import_smoke:
-          requires: [bootstrap_env]
+          requires:
+            - bootstrap_env
       - report_summary:
           requires:
             - ruff_lint
@@ -157,9 +182,11 @@ workflows:
             - coverage_enforce_85
             - package_import_smoke
       - deploy_health_check_200:
-          requires: [report_summary]
+          requires:
+            - report_summary
           filters:
             branches:
               only:
                 - main
                 - feature/slack-client-and-ci-raunak
+                - hw2
