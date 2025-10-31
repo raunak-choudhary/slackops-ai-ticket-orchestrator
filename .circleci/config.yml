@@ -21,7 +21,7 @@ jobs:
           name: Sync deps
           command: |
             uv sync --all-packages --dev
-            uv run python -m pip install -e src/slack_api -e src/slack_impl -e src/slack_service
+            uv pip install -e src/slack_api -e src/slack_impl -e src/slack_service
       - save_cache:
           key: v1-uv-cache-{{ checksum "pyproject.toml" }}-{{ checksum "uv.lock" }}
           paths:
