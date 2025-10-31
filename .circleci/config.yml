@@ -47,8 +47,7 @@ jobs:
   ruff_lint:
     executor: py312
     steps:
-      - attach_workspace:
-          at: .
+      - attach_workspace: { at: . }
       - run:
           name: Ruff lint
           command: |
@@ -59,8 +58,7 @@ jobs:
   mypy_strict_checks:
     executor: py312
     steps:
-      - attach_workspace:
-          at: .
+      - attach_workspace: { at: . }
       - run:
           name: MyPy (strict, config-driven)
           command: |
@@ -70,8 +68,7 @@ jobs:
   unit_tests_pytest:
     executor: py312
     steps:
-      - attach_workspace:
-          at: .
+      - attach_workspace: { at: . }
       - run:
           name: Run tests with coverage + JUnit
           command: |
@@ -82,18 +79,26 @@ jobs:
           path: test-results
       - store_artifacts:
           path: coverage.xml
+      - persist_to_workspace:
+          root: .
+          paths:
+            - coverage.xml
+            - test-results
 
   coverage_enforce_85:
     executor: py312
     steps:
-      - attach_workspace:
-          at: .
+      - attach_workspace: { at: . }
       - run:
           name: Enforce 85% coverage
           command: |
             python - \<< 'PY'
-            import xml.etree.ElementTree as ET
-            p = ET.parse('coverage.xml')
+            import xml.etree.ElementTree as ET, os, sys
+            path = 'coverage.xml'
+            if not os.path.exists(path):
+              print("coverage.xml not found")
+              sys.exit(1)
+            p = ET.parse(path)
             cov = float(p.getroot().attrib.get('line-rate', '0')) * 100
             print(f"Total coverage: {cov:.2f}%")
             assert cov >= 85, f"Coverage failure: total of {cov:.0f} is less than fail-under=85"
@@ -102,32 +107,48 @@ jobs:
   package_import_smoke:
     executor: py312
     steps:
-      - attach_workspace:
-          at: .
+      - attach_workspace: { at: . }
       - run:
-          name: Import smoke (top-level packages)
+          name: Import smoke (auto-discovered top-level packages)
           command: |
             source "$BASH_ENV" || true
             uv run python - \<< 'PY'
-            import importlib
-            modules = [
-              "slack_service","slack_adapter","slack_api","slack_impl",
-              "mail_client_service","mail_client_adapter","mail_client_api","gmail_impl"
-            ]
-            print("Importing:", modules)
+            import sys, pathlib, importlib
+
+            root = pathlib.Path(".").resolve()
+            # Find all inner "src/*/src/*" package roots
+            pkg_src_dirs = sorted(root.glob("src/*/src"))
+            for d in pkg_src_dirs:
+                p = str(d.resolve())
+                if p not in sys.path:
+                    sys.path.insert(0, p)
+
+            modules = []
+            for d in pkg_src_dirs:
+                # Every immediate child dir in src/*/src that contains __init__.py is a module
+                for mod_dir in d.iterdir():
+                    if mod_dir.is_dir() and (mod_dir / "__init__.py").exists():
+                        modules.append(mod_dir.name)
+
+            print("Discovered packages:", modules)
+            failures = []
             for m in modules:
                 try:
                     importlib.import_module(m)
                 except Exception as e:
-                    raise SystemExit(f"Failed to import {m}: {e}")
-            print("OK")
+                    failures.append((m, repr(e)))
+
+            if failures:
+                for m, err in failures:
+                    print(f"Failed to import {m}: {err}")
+                raise SystemExit(1)
+            print("All discovered packages import successfully.")
             PY
 
   report_summary:
     executor: py312
     steps:
-      - attach_workspace:
-          at: .
+      - attach_workspace: { at: . }
       - run:
           name: Summarize results (Ruff / MyPy / Pytest / Coverage)
           command: |
@@ -137,7 +158,7 @@ jobs:
             echo "• MyPy: ran with mypy.ini in job mypy_strict_checks"
             echo "• Pytests: junit -> test-results/junit.xml"
             echo "• Coverage: coverage.xml (gate at 85%)"
-            echo "• Imports: package_import_smoke"
+            echo "• Imports: package_import_smoke (auto-discovered)"
             echo "==================="
 
   deploy_health_check_200:
@@ -145,8 +166,7 @@ jobs:
     environment:
       SERVICE_HEALTH_URL: "https://ospsd-hw2-final-demo.onrender.com/health"
     steps:
-      - attach_workspace:
-          at: .
+      - attach_workspace: { at: . }
       - run:
           name: Health check /health returns 200
           command: |
