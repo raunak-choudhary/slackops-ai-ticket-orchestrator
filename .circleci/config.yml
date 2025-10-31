@@ -82,29 +82,28 @@ jobs:
           name: Import smoke test
           command: |
             uv run python - <<'PY'
-            import importlib
-            for mod in ["slack_api", "slack_impl", "slack_service"]:
-                importlib.import_module(mod)
-            print("ok")
-            PY
+import importlib
+for mod in ["slack_api", "slack_impl", "slack_service"]:
+    importlib.import_module(mod)
+print("ok")
+PY
 
   report_summary:
     docker: [ { image: cimg/python:3.12 } ]
     steps:
       - attach_workspace: { at: . }
       - run:
-          name: Summarize results
+          name: Summarize results (no heredoc)
+          shell: /bin/bash -eo pipefail
           command: |
             echo "==== TEST SUMMARY ====" > summary.txt
             if [ -f coverage/coverage.xml ]; then
               rate=$(grep -o 'line-rate="[^"]*"' coverage/coverage.xml | head -1 | sed 's/.*="//; s/"//')
-              python - <<PY
-rate = float("${rate}")
-print(f"Line coverage: {rate*100:.2f}%")
-PY
+              pct=$(awk "BEGIN {print $rate*100}")
+              printf "Line coverage: %.2f%%\n" "$pct" >> summary.txt
             else
-              echo "No coverage file found"
-            fi >> summary.txt
+              echo "No coverage file found" >> summary.txt
+            fi
             echo "JUnit at test-results/junit.xml" >> summary.txt
       - store_artifacts:
           path: summary.txt
@@ -112,7 +111,6 @@ PY
   deploy_health_check_200:
     docker: [ { image: cimg/python:3.12 } ]
     environment:
-      # Set RENDER_HEALTH_URL in CircleCI project settings
       RENDER_HEALTH_URL: ""
     steps:
       - run:
@@ -148,168 +146,13 @@ workflows:
       - package_import_smoke:
           requires: [bootstrap_env]
       - report_summary:
-          requires: [unit_tests_pytest, ruff_lint, mypy_strict_checks, coverage_enforce_85, package_import_smoke]
+          requires:
+            - unit_tests_pytest
+            - ruff_lint
+            - mypy_strict_checks
+            - coverage_enforce_85
+            - package_import_smoke
       - deploy_health_check_200:
-          # Only run on main or when you explicitly set the env var; tweak as you like
-          requires: [report_summary]
-          filters:
-            branches:
-              only:
-                - main
-                - feature/slack-client-and-ci-raunak
-version: 2.1
-
-jobs:
-  bootstrap_env:
-    docker:
-      - image: cimg/python:3.12
-    resource_class: medium
-    steps:
-      - checkout
-      - run: python -V && pip -V
-      - run:
-          name: Install uv
-          command: |
-            pip install --upgrade pip
-            pip install uv
-      - restore_cache:
-          keys:
-            - v1-uv-cache-{{ checksum "pyproject.toml" }}-{{ checksum "uv.lock" }}
-            - v1-uv-cache-
-      - run:
-          name: Sync deps
-          command: |
-            uv sync --all-packages --dev
-            uv run python -m pip install -e src/slack_api -e src/slack_impl -e src/slack_service
-      - save_cache:
-          key: v1-uv-cache-{{ checksum "pyproject.toml" }}-{{ checksum "uv.lock" }}
-          paths:
-            - ~/.cache/pip
-            - .venv
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .
-
-  ruff_lint:
-    docker: [ { image: cimg/python:3.12 } ]
-    steps:
-      - attach_workspace: { at: . }
-      - run: uv run ruff check .
-
-  mypy_strict_checks:
-    docker: [ { image: cimg/python:3.12 } ]
-    steps:
-      - attach_workspace: { at: . }
-      - run: uv run mypy src tests
-
-  unit_tests_pytest:
-    docker: [ { image: cimg/python:3.12 } ]
-    steps:
-      - attach_workspace: { at: . }
-      - run: mkdir -p test-results coverage
-      - run:
-          name: Run pytest with coverage + junit
-          command: |
-            uv run pytest -q --cov=src --cov-report=xml:coverage/coverage.xml \
-              --junitxml=test-results/junit.xml
-      - store_artifacts:
-          path: test-results
-      - store_artifacts:
-          path: coverage
-      - persist_to_workspace:
-          root: .
-          paths:
-            - test-results
-            - coverage
-
-  coverage_enforce_85:
-    docker: [ { image: cimg/python:3.12 } ]
-    steps:
-      - attach_workspace: { at: . }
-      - run:
-          name: Enforce 85% coverage
-          command: |
-            uv run pytest -q --cov=src --cov-report=term --cov-fail-under=85 -k "not skip_coverage_recheck" || \
-            (echo "Coverage is below 85%"; exit 1)
-
-  package_import_smoke:
-    docker: [ { image: cimg/python:3.12 } ]
-    steps:
-      - attach_workspace: { at: . }
-      - run:
-          name: Import smoke test
-          command: |
-            uv run python - <<'PY'
-            import importlib
-            for mod in ["slack_api", "slack_impl", "slack_service"]:
-                importlib.import_module(mod)
-            print("ok")
-            PY
-
-  report_summary:
-    docker: [ { image: cimg/python:3.12 } ]
-    steps:
-      - attach_workspace: { at: . }
-      - run:
-          name: Summarize results
-          command: |
-            echo "==== TEST SUMMARY ====" > summary.txt
-            if [ -f coverage/coverage.xml ]; then
-              rate=$(grep -o 'line-rate="[^"]*"' coverage/coverage.xml | head -1 | sed 's/.*="//; s/"//')
-              python - <<PY
-rate = float("${rate}")
-print(f"Line coverage: {rate*100:.2f}%")
-PY
-            else
-              echo "No coverage file found"
-            fi >> summary.txt
-            echo "JUnit at test-results/junit.xml" >> summary.txt
-      - store_artifacts:
-          path: summary.txt
-
-  deploy_health_check_200:
-    docker: [ { image: cimg/python:3.12 } ]
-    environment:
-      # Set RENDER_HEALTH_URL in CircleCI project settings
-      RENDER_HEALTH_URL: ""
-    steps:
-      - run:
-          name: Wait for /health 200
-          command: |
-            if [ -z "$RENDER_HEALTH_URL" ]; then
-              echo "RENDER_HEALTH_URL not set"; exit 1
-            fi
-            echo "Pinging $RENDER_HEALTH_URL/health"
-            for i in $(seq 1 20); do
-              code=$(curl -s -o /dev/null -w "%{http_code}" "$RENDER_HEALTH_URL/health")
-              echo "Attempt $i -> $code"
-              if [ "$code" = "200" ]; then
-                echo "Health OK"; exit 0
-              fi
-              sleep 5
-            done
-            echo "Health check failed"; exit 1
-
-workflows:
-  version: 2
-  hw2_pipeline:
-    jobs:
-      - bootstrap_env
-      - ruff_lint:
-          requires: [bootstrap_env]
-      - mypy_strict_checks:
-          requires: [bootstrap_env]
-      - unit_tests_pytest:
-          requires: [bootstrap_env]
-      - coverage_enforce_85:
-          requires: [unit_tests_pytest]
-      - package_import_smoke:
-          requires: [bootstrap_env]
-      - report_summary:
-          requires: [unit_tests_pytest, ruff_lint, mypy_strict_checks, coverage_enforce_85, package_import_smoke]
-      - deploy_health_check_200:
-          # Only run on main or when you explicitly set the env var; tweak as you like
           requires: [report_summary]
           filters:
             branches:
