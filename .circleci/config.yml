@@ -1,261 +1,138 @@
 version: 2.1
 
-jobs:
-  # ---------------------------------------------------------
-  # Job 1: Setup Environment and Install Dependencies
-  # ---------------------------------------------------------
-  build:
+executors:
+  py312:
     docker:
-      - image: cimg/python:3.12
-    steps:
-      - checkout
+      - image: cimg/python:3.12.5
 
+commands:
+  install-uv:
+    steps:
       - run:
-          name: "Install UV and Add to Path"
+          name: Install uv
           command: |
             curl -LsSf https://astral.sh/uv/install.sh | sh
-            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> $BASH_ENV
             source $BASH_ENV
-            uv --version
+      - restore_cache:
+          keys:
+            - v1-uv-cache-{{ arch }}-{{ checksum "uv.lock" }}
+            - v1-uv-cache-{{ arch }}
 
+  sync-and-editables:
+    steps:
       - run:
-          name: "Create Virtual Env & Install All Dependencies via UV"
+          name: Sync environment and install all 8 packages
           command: |
-            uv venv --python 3.12
-            source .venv/bin/activate
-            uv sync --all-packages --extra dev --verbose
+            source $BASH_ENV
+            uv sync --all-packages --dev
+            # HW1 scope
+            uv pip install -e src/email_api
+            uv pip install -e src/gmail_impl
+            uv pip install -e src/mail_client_service
+            uv pip install -e src/mail_client_adapter
+            # HW2 scope
+            uv pip install -e src/slack_api
+            uv pip install -e src/slack_impl
+            uv pip install -e src/slack_service
+            uv pip install -e src/slack_adapter
 
-      - run:
-          name: "Install Local Packages (email_api, gmail_impl, slack)"
-          command: |
-            source .venv/bin/activate
-            echo "Installing local packages from src directory..."
-            cd src
-            for dir in email_api gmail_impl slack_api slack_impl slack_service; do
-              if [ -d "$dir" ]; then
-                echo "Installing $dir..."
-                uv pip install -e "./$dir"
-              else
-                echo "Skipping missing directory: $dir"
-              fi
-            done
-            cd ..
-
-      - run:
-          name: "Verify Installation"
-          command: |
-            source .venv/bin/activate
-            uv tree || true
-            ruff --version
-            pip install -e src/gmail_impl && pip install -e src/mail_client_adapter && pip install -e src/mail_client_service && pip install -e src/slack_api            pytest --version
-            mypy --version
-
-      - run:
-          name: "Ensure OpenAPI Client Exists"
-          command: |
-            source .venv/bin/activate
-            echo "Checking for clients/specs/openapi.json..."
-            if [ ! -f clients/specs/openapi.json ]; then
-              echo "Generating OpenAPI spec..."
-              uv run python scripts/export_openapi.py
-            fi
-            echo "Checking for generated client..."
-            if [ ! -d clients/python/mail_client_service_client ]; then
-              echo "Generating Python client from spec..."
-              uv run openapi-python-client generate \
-                --path clients/specs/openapi.json \
-                --output clients/python --overwrite
-            fi
-
+jobs:
+  build:
+    executor: py312
+    steps:
+      - checkout
+      - install-uv
+      - sync-and-editables
       - persist_to_workspace:
           root: .
           paths:
             - .
 
-  # ---------------------------------------------------------
-  # Job 2: Local Precheck (Ruff + MyPy + Unit Tests)
-  # ---------------------------------------------------------
-  precheck:
-    docker:
-      - image: cimg/python:3.12
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: "Run Local Precommit Checks"
-          command: |
-            chmod +x scripts/precheck.sh || true
-            ./scripts/precheck.sh
-
-  # ---------------------------------------------------------
-  # Job 3: Linting
-  # ---------------------------------------------------------
   lint:
-    docker:
-      - image: cimg/python:3.12
+    executor: py312
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: "Run Ruff Linter"
+          name: Ruff Linter
           command: |
-            source .venv/bin/activate
-            ruff check .
+            source $BASH_ENV
+            uv run ruff check .
 
-  # ---------------------------------------------------------
-  # Job 4: Unit Tests + Coverage + MyPy
-  # ---------------------------------------------------------
-  unit_test:
-    docker:
-      - image: cimg/python:3.12
+  typecheck:
+    executor: py312
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: "Prepare for Unit Tests"
+          name: MyPy Strict Type Check
           command: |
-            source .venv/bin/activate
-            mkdir -p test-results/unit
-      - run:
-          name: "Run Unit Tests with Coverage"
-          command: |
-            source .venv/bin/activate
-            pip install -e src/gmail_impl && pip install -e src/mail_client_adapter && pip install -e src/mail_client_service && pip install -e src/slack_api            pytest src/    \
-               
-      - run:
-          name: "Run Static Type Checks (mypy)"
-          command: |
-            source .venv/bin/activate
-            uv add types-requests
-            uv run mypy --config-file mypy.ini \
+            source $BASH_ENV
+            uv run mypy \
               -p email_api \
               -p gmail_impl \
-              -p mail_client_adapter \
               -p mail_client_service \
+              -p mail_client_adapter \
               -p slack_api \
               -p slack_impl \
-              -p slack_service
+              -p slack_service \
+              -p slack_adapter \
+              tests
+
+  test:
+    executor: py312
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Pytest with Coverage Gate
+          command: |
+            source $BASH_ENV
+            mkdir -p test-results
+            uv run pytest --cov=src --cov-report=xml:coverage.xml \
+              --junitxml=test-results/junit.xml --cov-fail-under=85
       - store_test_results:
-          path: test-results/unit
+          path: test-results
       - store_artifacts:
           path: coverage.xml
-      - store_artifacts:
-          path: test-results/unit
+      - save_cache:
+          key: v1-uv-cache-{{ arch }}-{{ checksum "uv.lock" }}
+          paths:
+            - ~/.cache/uv
+            - .venv
 
-  # ---------------------------------------------------------
-  # Job 5: CircleCI Non-Local Tests
-  # ---------------------------------------------------------
-  circleci_test:
-    docker:
-      - image: cimg/python:3.12
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: "Prepare for CircleCI Tests"
-          command: |
-            source .venv/bin/activate
-            mkdir -p test-results/circleci
-      - run:
-          name: "Run All Non-local Tests"
-          command: |
-            source .venv/bin/activate
-            pip install -e src/gmail_impl && pip install -e src/mail_client_adapter && pip install -e src/mail_client_service && pip install -e src/slack_api            pytest src/ tests/ -m "not local_credentials" \
-               -v  
-      - store_test_results:
-          path: test-results/circleci
-      - store_artifacts:
-          path: test-results/circleci
-
-  # ---------------------------------------------------------
-  # Job 6: Integration Tests (Gmail API)
-  # ---------------------------------------------------------
-  integration_test:
-    docker:
-      - image: cimg/python:3.12
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: "Check Environment Variables"
-          command: |
-            if [ -z "$GMAIL_CLIENT_ID" ] || [ -z "$GMAIL_CLIENT_SECRET" ] || [ -z "$GMAIL_REFRESH_TOKEN" ]; then
-              echo "⚠️ Missing Gmail API credentials. Integration tests skipped."
-            else
-              echo "✅ All Gmail API credentials present."
-            fi
-      - run:
-          name: "Run Integration Tests"
-          command: |
-            source .venv/bin/activate
-            mkdir -p test-results/integration
-            pip install -e src/gmail_impl && pip install -e src/mail_client_adapter && pip install -e src/mail_client_service && pip install -e src/slack_api            pytest -m "integration and not local_credentials" \
-               -v --no-cov
-      - store_test_results:
-          path: test-results/integration
-      - store_artifacts:
-          path: test-results/integration
-
-  # ---------------------------------------------------------
-  # Job 7: Summary Report
-  # ---------------------------------------------------------
   report_summary:
-    docker:
-      - image: cimg/base:stable
+    executor: py312
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: "Report Results"
+          name: Summary
           command: |
-            echo "---- Unit Tests ----"
-            [ -f test-results/unit/junit.xml ] && echo "✅ Unit results found." || echo "❌ Missing unit results."
-            echo "---- CircleCI Tests ----"
-            [ -f test-results/circleci/junit.xml ] && echo "✅ CircleCI results found." || echo "❌ Missing CircleCI results."
-            echo "---- Integration Tests ----"
-            [ -f test-results/integration/junit.xml ] && echo "✅ Integration results found." || echo "ℹ️ Integration skipped."
+            echo "---- Lint ----"
+            echo "✅ Ruff check passed."
+            echo "---- Type Check ----"
+            echo "✅ MyPy strict mode passed."
+            echo "---- Tests ----"
+            [ -f test-results/junit.xml ] && echo "✅ Pytest results found." || echo "❌ Missing results."
             echo "---- Coverage ----"
-            [ -f coverage.xml ] && echo "✅ Coverage file found." || echo "❌ No coverage.xml."
+            [ -f coverage.xml ] && echo "✅ Coverage.xml exists (≥85%)." || echo "❌ Missing coverage file."
 
-# ---------------------------------------------------------
-# Workflows
-# ---------------------------------------------------------
 workflows:
-  build_and_test:
+  hw2_pipeline:
     jobs:
       - build:
           filters:
             branches:
               only:
+                - feature/slack-client-and-ci-raunak
                 - hw2
-      - precheck:
-          requires: [build]
-      - lint:
-          requires: [precheck]
-      - unit_test:
-          requires: [build]
-      - circleci_test:
-          requires: [unit_test]
-      - report_summary:
-          requires: [unit_test, circleci_test]
-
-  full_integration:
-    jobs:
-      - build:
-          filters:
-            branches:
-              only:
-                - main
-                - develop
-                - kamen-requierd-fixes
       - lint:
           requires: [build]
-      - unit_test:
-          requires: [build]
-      - circleci_test:
-          requires: [unit_test]
-      - integration_test:
-          requires: [circleci_test]
-          context: gmail-client
+      - typecheck:
+          requires: [lint]
+      - test:
+          requires: [typecheck]
       - report_summary:
-          requires: [unit_test, circleci_test, integration_test]
+          requires: [test]
