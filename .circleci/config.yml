@@ -79,32 +79,29 @@ jobs:
     steps:
       - attach_workspace: { at: . }
       - run:
-          name: Import smoke test
-          command: |
-            uv run python - <<'PY'
-import importlib
-for mod in ["slack_api", "slack_impl", "slack_service"]:
-    importlib.import_module(mod)
-print("ok")
-PY
+          name: Import smoke test (no heredoc)
+          command: >
+            uv run python -c "import importlib,sys;
+            [importlib.import_module(m) for m in ['slack_api','slack_impl','slack_service']];
+            print('ok')"
 
   report_summary:
     docker: [ { image: cimg/python:3.12 } ]
     steps:
       - attach_workspace: { at: . }
       - run:
-          name: Summarize results (no heredoc)
+          name: Summarize results (bash only)
           shell: /bin/bash -eo pipefail
           command: |
-            echo "==== TEST SUMMARY ====" > summary.txt
+            echo '==== TEST SUMMARY ====' > summary.txt
             if [ -f coverage/coverage.xml ]; then
               rate=$(grep -o 'line-rate="[^"]*"' coverage/coverage.xml | head -1 | sed 's/.*="//; s/"//')
               pct=$(awk "BEGIN {print $rate*100}")
-              printf "Line coverage: %.2f%%\n" "$pct" >> summary.txt
+              printf 'Line coverage: %.2f%%\n' "$pct" >> summary.txt
             else
-              echo "No coverage file found" >> summary.txt
+              echo 'No coverage file found' >> summary.txt
             fi
-            echo "JUnit at test-results/junit.xml" >> summary.txt
+            echo 'JUnit at test-results/junit.xml' >> summary.txt
       - store_artifacts:
           path: summary.txt
 
