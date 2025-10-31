@@ -16,6 +16,25 @@ dependencies = [
   "fastapi>=0.110",
 ]
 
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "mypy>=1.10",
+  "ruff>=0.6",
+]
+
+# ---- setuptools: src/ layout & typed package marker ----
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["slack_adapter*"]
+
+[tool.setuptools.package-data]
+slack_adapter = ["py.typed"]
+
+# ---- mypy (package-local) ----
 [tool.mypy]
 python_version = "3.12"
 strict = true
@@ -29,8 +48,14 @@ warn_unused_ignores = true
 warn_return_any = true
 show_error_codes = true
 namespace_packages = true
-plugins = []
+explicit_package_bases = true
 
+# The generated OpenAPI client is brought into sys.path by tests; treat it as external.
+[[tool.mypy.overrides]]
+module = ["slack_service_client", "slack_service_client.*"]
+ignore_missing_imports = true
+
+# ---- Ruff ----
 [tool.ruff]
 line-length = 100
 target-version = "py312"
@@ -38,6 +63,7 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "W", "C90"]
 
+# ---- Pytest ----
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]

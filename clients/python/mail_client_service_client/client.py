@@ -1,9 +1,9 @@
 import ssl
 from types import TracebackType
-from typing import Any, Optional, Type
+from typing import Any
 
-from attrs import define, evolve, field
 import httpx
+from attrs import define, evolve, field
 
 
 @define
@@ -15,12 +15,8 @@ class Client:
     _cookies: dict[str, str] = field(factory=dict, kw_only=True, alias="cookies")
     _headers: dict[str, str] = field(factory=dict, kw_only=True, alias="headers")
     _timeout: httpx.Timeout | None = field(default=None, kw_only=True, alias="timeout")
-    _verify_ssl: str | bool | ssl.SSLContext = field(
-        default=True, kw_only=True, alias="verify_ssl"
-    )
-    _follow_redirects: bool = field(
-        default=False, kw_only=True, alias="follow_redirects"
-    )
+    _verify_ssl: str | bool | ssl.SSLContext = field(default=True, kw_only=True, alias="verify_ssl")
+    _follow_redirects: bool = field(default=False, kw_only=True, alias="follow_redirects")
     _httpx_args: dict[str, Any] = field(factory=dict, kw_only=True, alias="httpx_args")
     _client: httpx.Client | None = field(default=None, init=False)
     _async_client: httpx.AsyncClient | None = field(default=None, init=False)
@@ -73,9 +69,9 @@ class Client:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         self.get_httpx_client().__exit__(exc_type, exc_val, exc_tb)
 
@@ -104,14 +100,15 @@ class Client:
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         await self.get_async_httpx_client().__aexit__(exc_type, exc_val, exc_tb)
 
 
 # ---------- AuthenticatedClient ----------
+
 
 @define
 class AuthenticatedClient(Client):
@@ -121,9 +118,7 @@ class AuthenticatedClient(Client):
 
     def get_httpx_client(self) -> httpx.Client:
         if self._client is None:
-            self._headers[self.auth_header_name] = (
-                f"{self.prefix} {self.token}" if self.prefix else self.token
-            )
+            self._headers[self.auth_header_name] = f"{self.prefix} {self.token}" if self.prefix else self.token
             self._client = httpx.Client(
                 base_url=self._base_url,
                 cookies=self._cookies,
@@ -137,9 +132,7 @@ class AuthenticatedClient(Client):
 
     def get_async_httpx_client(self) -> httpx.AsyncClient:
         if self._async_client is None:
-            self._headers[self.auth_header_name] = (
-                f"{self.prefix} {self.token}" if self.prefix else self.token
-            )
+            self._headers[self.auth_header_name] = f"{self.prefix} {self.token}" if self.prefix else self.token
             self._async_client = httpx.AsyncClient(
                 base_url=self._base_url,
                 cookies=self._cookies,

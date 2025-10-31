@@ -13,5 +13,6 @@ from mail_client_adapter.adapter import ServiceAdapter, ServiceBackedClient  # n
 
 
 def test_adapter_exists():
-    assert ServiceAdapter
-    assert ServiceBackedClient
+    # mypy: avoid truthiness checks on callables
+    assert callable(ServiceAdapter)
+    assert callable(ServiceBackedClient)

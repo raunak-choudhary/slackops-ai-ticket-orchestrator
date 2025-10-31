@@ -25,11 +25,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> (
-    DeleteMessageMessagesMessageIdDeleteResponseDeleteMessageMessagesMessageIdDelete
-    | HTTPValidationError
-    | None
-):
+) -> DeleteMessageMessagesMessageIdDeleteResponseDeleteMessageMessagesMessageIdDelete | HTTPValidationError | None:
     if response.status_code == 200:
         response_200 = DeleteMessageMessagesMessageIdDeleteResponseDeleteMessageMessagesMessageIdDelete.from_dict(
             response.json()
@@ -49,10 +45,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[
-    DeleteMessageMessagesMessageIdDeleteResponseDeleteMessageMessagesMessageIdDelete
-    | HTTPValidationError
-]:
+) -> Response[DeleteMessageMessagesMessageIdDeleteResponseDeleteMessageMessagesMessageIdDelete | HTTPValidationError]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -65,10 +58,7 @@ def sync_detailed(
     message_id: str,
     *,
     client: AuthenticatedClient | Client,
-) -> Response[
-    DeleteMessageMessagesMessageIdDeleteResponseDeleteMessageMessagesMessageIdDelete
-    | HTTPValidationError
-]:
+) -> Response[DeleteMessageMessagesMessageIdDeleteResponseDeleteMessageMessagesMessageIdDelete | HTTPValidationError]:
     """Delete Message
 
      Delete a message.
@@ -98,11 +88,7 @@ def sync(
     message_id: str,
     *,
     client: AuthenticatedClient | Client,
-) -> (
-    DeleteMessageMessagesMessageIdDeleteResponseDeleteMessageMessagesMessageIdDelete
-    | HTTPValidationError
-    | None
-):
+) -> DeleteMessageMessagesMessageIdDeleteResponseDeleteMessageMessagesMessageIdDelete | HTTPValidationError | None:
     """Delete Message
 
      Delete a message.
@@ -127,10 +113,7 @@ async def asyncio_detailed(
     message_id: str,
     *,
     client: AuthenticatedClient | Client,
-) -> Response[
-    DeleteMessageMessagesMessageIdDeleteResponseDeleteMessageMessagesMessageIdDelete
-    | HTTPValidationError
-]:
+) -> Response[DeleteMessageMessagesMessageIdDeleteResponseDeleteMessageMessagesMessageIdDelete | HTTPValidationError]:
     """Delete Message
 
      Delete a message.
@@ -158,11 +141,7 @@ async def asyncio(
     message_id: str,
     *,
     client: AuthenticatedClient | Client,
-) -> (
-    DeleteMessageMessagesMessageIdDeleteResponseDeleteMessageMessagesMessageIdDelete
-    | HTTPValidationError
-    | None
-):
+) -> DeleteMessageMessagesMessageIdDeleteResponseDeleteMessageMessagesMessageIdDelete | HTTPValidationError | None:
     """Delete Message
 
      Delete a message.

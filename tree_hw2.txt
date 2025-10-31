@@ -1,0 +1,280 @@
+.
+├── .circleci
+│   └── config.yml
+├── .coverage
+├── .coveragerc
+├── .dockerignore
+├── .DS_Store
+├── .github
+│   ├── ISSUE_TEMPLATE
+│   │   ├── bug_report.md
+│   │   └── feature_request.md
+│   └── pull_request_template.md
+├── .gitignore
+├── .pytest_cache
+│   ├── .gitignore
+│   ├── CACHEDIR.TAG
+│   ├── README.md
+│   └── v
+│       └── cache
+│           ├── lastfailed
+│           └── nodeids
+├── .python-version
+├── .ruff.toml
+├── clients
+│   ├── __init__.py
+│   ├── python
+│   │   ├── __init__.py
+│   │   ├── .gitignore
+│   │   ├── mail_client_service_client
+│   │   │   ├── __init__.py
+│   │   │   ├── api
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── messages
+│   │   │   │       ├── __init__.py
+│   │   │   │       ├── delete_message_messages_message_id_delete.py
+│   │   │   │       ├── get_message_messages_message_id_get.py
+│   │   │   │       ├── list_messages_messages_get.py
+│   │   │   │       └── mark_as_read_messages_message_id_mark_as_read_post.py
+│   │   │   ├── client.py
+│   │   │   ├── errors.py
+│   │   │   ├── models
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── delete_message_messages_message_id_delete_response_delete_message_messages_message_id_delete.py
+│   │   │   │   ├── get_message_messages_message_id_get_response_get_message_messages_message_id_get.py
+│   │   │   │   ├── http_validation_error.py
+│   │   │   │   ├── list_messages_messages_get_response_200_item.py
+│   │   │   │   ├── mark_as_read_messages_message_id_mark_as_read_post_response_mark_as_read_messages_message_id_mark_as_read_post.py
+│   │   │   │   └── validation_error.py
+│   │   │   ├── pyproject.toml
+│   │   │   └── types.py
+│   │   ├── pyproject.toml
+│   │   ├── README.md
+│   │   └── slack_chat_service_hw2_client
+│   │       ├── __init__.py
+│   │       ├── api
+│   │       │   ├── __init__.py
+│   │       │   └── default
+│   │       │       ├── __init__.py
+│   │       │       ├── health_health_get.py
+│   │       │       ├── list_channels_channels_get.py
+│   │       │       └── post_message_messages_post.py
+│   │       ├── client.py
+│   │       ├── errors.py
+│   │       ├── models
+│   │       │   ├── __init__.py
+│   │       │   ├── health_health_get_response_health_health_get.py
+│   │       │   ├── http_validation_error.py
+│   │       │   ├── list_channels_channels_get_response_200_item.py
+│   │       │   ├── post_message_body.py
+│   │       │   ├── post_message_messages_post_response_post_message_messages_post.py
+│   │       │   └── validation_error.py
+│   │       ├── py.typed
+│   │       ├── pyproject.toml
+│   │       └── types.py
+│   └── specs
+│       ├── openapi.json
+│       └── slack_service_openapi.json
+├── CONTRIBUTING.md
+├── coverage.xml
+├── Design.md
+├── Dockerfile
+├── docs
+│   ├── architecture
+│   │   ├── dependency-injection.md
+│   │   ├── design-philosophy.md
+│   │   └── testing.md
+│   ├── getting-started
+│   │   └── index.md
+│   ├── index.md
+│   └── reference
+│       ├── email-api.md
+│       └── gmail-impl.md
+├── file_structure.docx
+├── file_structure.txt
+├── infra
+│   └── render.yaml
+├── LICENSE
+├── main.py
+├── mkdocs.yml
+├── mypy.ini
+├── project_structure.txt
+├── pyproject.toml
+├── README.md
+├── scripts
+│   ├── __init__.py
+│   ├── export_openapi.py
+│   ├── precheck.sh
+│   └── sqlite_init.sql
+├── src
+│   ├── .DS_Store
+│   ├── email_api
+│   │   ├── __init__.py
+│   │   ├── .DS_Store
+│   │   ├── client.py
+│   │   ├── py.typed
+│   │   ├── pyproject.toml
+│   │   ├── README.md
+│   │   ├── src
+│   │   │   └── email_api
+│   │   │       ├── __init__.py
+│   │   │       └── client.py
+│   │   └── tests
+│   │       └── test_api.py
+│   ├── gmail_impl
+│   │   ├── __init__.py
+│   │   ├── gmail_client.py
+│   │   ├── py.typed
+│   │   ├── pyproject.toml
+│   │   ├── README.md
+│   │   ├── setup.py
+│   │   ├── src
+│   │   │   └── gmail_impl
+│   │   └── tests
+│   │       ├── __init__.py
+│   │       └── test_gmail_client.py
+│   ├── mail_client_adapter
+│   │   ├── .DS_Store
+│   │   ├── pyproject.toml
+│   │   ├── setup.py
+│   │   ├── src
+│   │   │   ├── .DS_Store
+│   │   │   └── mail_client_adapter
+│   │   │       ├── __init__.py
+│   │   │       ├── adapter.py
+│   │   │       ├── backed_client.py
+│   │   │       └── mapping.py
+│   │   └── tests
+│   │       ├── test_adapter_service_and_client_cov.py
+│   │       ├── test_adapter_unit.py
+│   │       ├── test_adapterclient_contract.py
+│   │       └── test_servicebacked_client_cov.py
+│   ├── mail_client_service
+│   │   ├── __init__.py
+│   │   ├── app.py
+│   │   ├── pyproject.toml
+│   │   ├── README.md
+│   │   ├── routes
+│   │   │   ├── __init__.py
+│   │   │   └── messages.py
+│   │   ├── setup.py
+│   │   ├── src
+│   │   │   └── mail_client_service
+│   │   │       ├── .DS_Store
+│   │   │       └── routes
+│   │   │           └── .DS_Store
+│   │   └── tests
+│   │       ├── __init__.py
+│   │       ├── conftest.py
+│   │       ├── test_errors.py
+│   │       ├── test_messages_routes.py
+│   │       └── test_messages.py
+│   ├── pyproject.toml
+│   ├── slack_adapter
+│   │   ├── .DS_Store
+│   │   ├── .pytest_cache
+│   │   │   ├── .gitignore
+│   │   │   ├── CACHEDIR.TAG
+│   │   │   ├── README.md
+│   │   │   └── v
+│   │   │       └── cache
+│   │   │           ├── lastfailed
+│   │   │           └── nodeids
+│   │   ├── pyproject.toml
+│   │   ├── README.md
+│   │   ├── setup.py
+│   │   ├── src
+│   │   │   ├── .DS_Store
+│   │   │   └── slack_adapter
+│   │   │       ├── __init__.py
+│   │   │       ├── adapter.py
+│   │   │       └── py.typed
+│   │   ├── tests
+│   │   │   ├── conftest.py
+│   │   │   ├── test_adapter_client_cov.py
+│   │   │   ├── test_adapter_client_integration.py
+│   │   │   └── test_adapter_contract.py
+│   │   └── uv.lock
+│   ├── slack_api
+│   │   ├── .DS_Store
+│   │   ├── .pytest_cache
+│   │   │   ├── .gitignore
+│   │   │   ├── CACHEDIR.TAG
+│   │   │   ├── README.md
+│   │   │   └── v
+│   │   │       └── cache
+│   │   │           └── nodeids
+│   │   ├── pyproject.toml
+│   │   ├── README.md
+│   │   ├── setup.py
+│   │   ├── src
+│   │   │   └── slack_api
+│   │   │       ├── __init__.py
+│   │   │       ├── client.py
+│   │   │       ├── errors.py
+│   │   │       ├── py.typed
+│   │   │       ├── token_store.py
+│   │   │       ├── types.py
+│   │   │       ├── utils.py
+│   │   │       └── validators.py
+│   │   └── tests
+│   │       ├── test_contract_imports.py
+│   │       ├── test_protocol_compliance.py
+│   │       ├── test_types_roundtrip.py
+│   │       ├── test_utils.py
+│   │       └── test_validators.py
+│   ├── slack_impl
+│   │   ├── .DS_Store
+│   │   ├── .pytest_cache
+│   │   │   ├── .gitignore
+│   │   │   ├── CACHEDIR.TAG
+│   │   │   ├── README.md
+│   │   │   └── v
+│   │   │       └── cache
+│   │   │           ├── lastfailed
+│   │   │           └── nodeids
+│   │   ├── pyproject.toml
+│   │   ├── README.md
+│   │   ├── setup.py
+│   │   ├── src
+│   │   │   └── slack_impl
+│   │   │       ├── __init__.py
+│   │   │       ├── oauth.py
+│   │   │       ├── py.typed
+│   │   │       ├── slack_client.py
+│   │   │       └── token_store.py
+│   │   └── tests
+│   │       ├── test_channels.py
+│   │       ├── test_health.py
+│   │       ├── test_post_message.py
+│   │       └── test_token_store.py
+│   └── slack_service
+│       ├── .pytest_cache
+│       │   ├── .gitignore
+│       │   ├── CACHEDIR.TAG
+│       │   ├── README.md
+│       │   └── v
+│       │       └── cache
+│       │           └── nodeids
+│       ├── pyproject.toml
+│       ├── README.md
+│       ├── setup.py
+│       ├── src
+│       │   └── slack_service
+│       │       ├── __init__.py
+│       │       ├── app.py
+│       │       └── py.typed
+│       └── tests
+│           ├── test_channels_service.py
+│           ├── test_health_service.py
+│           ├── test_openapi.py
+│           └── test_post_message_service.py
+├── tests
+│   ├── e2e
+│   │   └── test_email_workflows.py
+│   └── integration
+│       └── test_gmail_integration.py
+├── tree_hw2.txt
+└── uv.lock
+
+74 directories, 204 files
