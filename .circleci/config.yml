@@ -83,6 +83,9 @@ jobs:
           name: MyPy Strict
           command: |
             source "$BASH_ENV"
+            # Ensure mypy is installed in this CI environment
+            uv pip install mypy
+            # Run per-package checks
             uv run python -m mypy \
               -p email_api \
               -p gmail_impl \
