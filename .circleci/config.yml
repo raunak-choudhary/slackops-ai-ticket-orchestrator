@@ -11,14 +11,17 @@ commands:
       - run:
           name: Init shell env
           command: |
+            set -e
             touch "$BASH_ENV"
             echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
             source "$BASH_ENV"
+
   install-uv:
     steps:
       - run:
           name: Install uv
           command: |
+            set -e
             curl -LsSf https://astral.sh/uv/install.sh | sh
             echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
             source "$BASH_ENV"
@@ -26,11 +29,13 @@ commands:
           keys:
             - v1-uv-cache-{{ arch }}-{{ checksum "uv.lock" }}
             - v1-uv-cache-{{ arch }}
+
   sync-and-editables:
     steps:
       - run:
-          name: Sync env and install all packages (HW1 + HW2)
+          name: Sync env + install all 8 packages (HW1 + HW2)
           command: |
+            set -e
             source "$BASH_ENV"
             rm -rf .venv
             uv sync --all-packages --dev
@@ -46,7 +51,28 @@ commands:
             uv pip install -e src/slack_adapter
 
 jobs:
-  lint:
+  precheck:
+    executor: py312
+    steps:
+      - checkout
+      - setup-env
+      - install-uv
+      - run:
+          name: Sanity (python + uv)
+          command: |
+            set -e
+            source "$BASH_ENV"
+            python --version
+            uv --version
+      - sync-and-editables
+      - run:
+          name: Dry-run list installed
+          command: |
+            set -e
+            source "$BASH_ENV"
+            uv pip list
+
+  ruff_lint:
     executor: py312
     steps:
       - checkout
@@ -54,12 +80,13 @@ jobs:
       - install-uv
       - sync-and-editables
       - run:
-          name: Ruff Linter
+          name: Ruff Lint
           command: |
+            set -e
             source "$BASH_ENV"
             uv run ruff check .
 
-  typecheck:
+  mypy_strict_checks:
     executor: py312
     steps:
       - checkout
@@ -67,8 +94,9 @@ jobs:
       - install-uv
       - sync-and-editables
       - run:
-          name: Install mypy (ensure present) + run strict checks
+          name: Ensure mypy + run strict type checks
           command: |
+            set -e
             source "$BASH_ENV"
             uv pip install mypy
             uv run python -m mypy \
@@ -82,7 +110,7 @@ jobs:
               -p slack_adapter
             uv run python -m mypy tests
 
-  test:
+  unit_test:
     executor: py312
     steps:
       - checkout
@@ -90,12 +118,29 @@ jobs:
       - install-uv
       - sync-and-editables
       - run:
-          name: Pytest with coverage gate
+          name: Pytest (unit-focused, fast)
           command: |
+            set -e
+            source "$BASH_ENV"
+            uv run pytest -q src
+
+  coverage_test:
+    executor: py312
+    steps:
+      - checkout
+      - setup-env
+      - install-uv
+      - sync-and-editables
+      - run:
+          name: Pytest with coverage gate (≥85%)
+          command: |
+            set -e
             source "$BASH_ENV"
             mkdir -p test-results
-            uv run pytest --cov=src --cov-report=xml:coverage.xml \
-              --junitxml=test-results/junit.xml --cov-fail-under=85
+            uv run pytest --cov=src \
+              --cov-report=xml:coverage.xml \
+              --junitxml=test-results/junit.xml \
+              --cov-fail-under=85
       - store_test_results:
           path: test-results
       - store_artifacts:
@@ -105,6 +150,43 @@ jobs:
           paths:
             - ~/.cache/uv
 
+  circleci_test:
+    executor: py312
+    steps:
+      - checkout
+      - setup-env
+      - install-uv
+      - sync-and-editables
+      - run:
+          name: Repo-level smoke (imports)
+          command: |
+            set -e
+            source "$BASH_ENV"
+            uv run python - <<'PY'
+import importlib, sys
+mods = [
+  "email_api",
+  "gmail_impl",
+  "mail_client_service",
+  "mail_client_adapter",
+  "slack_api",
+  "slack_impl",
+  "slack_service",
+  "slack_adapter",
+]
+failed = []
+for m in mods:
+    try:
+        importlib.import_module(m)
+    except Exception as e:
+        failed.append((m, repr(e)))
+if failed:
+    for m, err in failed:
+        print(f"[IMPORT FAIL] {m}: {err}", file=sys.stderr)
+    sys.exit(1)
+print("All package imports OK.")
+PY
+
   report_summary:
     executor: py312
     steps:
@@ -113,17 +195,27 @@ jobs:
           name: Summary
           command: |
             echo "---- CI Summary ----"
-            echo "✅ Ruff"
-            echo "✅ MyPy"
-            echo "✅ Pytest + coverage ≥85%"
+            echo "✅ precheck (uv + python ok)"
+            echo "✅ ruff_lint"
+            echo "✅ mypy_strict_checks"
+            echo "✅ unit_test"
+            echo "✅ coverage_test (gate ≥85%)"
+            echo "✅ circleci_test (imports)"
+            echo "All good for HW1 + HW2."
 
 workflows:
   hw2_pipeline:
     jobs:
-      - lint
-      - typecheck:
-          requires: [lint]
-      - test:
-          requires: [typecheck]
+      - precheck
+      - ruff_lint:
+          requires: [precheck]
+      - mypy_strict_checks:
+          requires: [ruff_lint]
+      - unit_test:
+          requires: [mypy_strict_checks]
+      - coverage_test:
+          requires: [unit_test]
+      - circleci_test:
+          requires: [coverage_test]
       - report_summary:
-          requires: [test]
+          requires: [circleci_test]
