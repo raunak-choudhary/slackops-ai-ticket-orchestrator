@@ -12,8 +12,6 @@ authors = [{ name = "Team 4" }]
 license = { text = "MIT" }
 dependencies = [
   "httpx>=0.27",
-  # Tests import the FastAPI app for in-memory integration; keep as a soft dep here
-  "fastapi>=0.110",
 ]
 
 [project.optional-dependencies]
@@ -21,6 +19,7 @@ dev = [
   "pytest>=8.0",
   "mypy>=1.10",
   "ruff>=0.6",
+  "fastapi>=0.110",
 ]
 
 # ---- setuptools: src/ layout & typed package marker ----
