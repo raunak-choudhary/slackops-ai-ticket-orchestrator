@@ -25,18 +25,18 @@ where = ["src"]
 include = ["slack_service*"]
 
 # ✅ Ruff: move rules under `lint.*`
-[tool.ruff]
-line-length = 100
-target-version = "py312"
+# [tool.ruff]
+# line-length = 100
+# target-version = "py312"
 
-[tool.ruff.lint]
-select = ["E", "F", "I", "UP"]
-ignore = []
+# [tool.ruff.lint]
+# select = ["E", "F", "I", "UP"]
+# ignore = []
 
-[tool.mypy]
-python_version = "3.12"
-strict = true
-warn_unused_configs = true
+# [tool.mypy]
+# python_version = "3.12"
+# strict = true
+# warn_unused_configs = true
 # If you ever need to, you can toggle:
 # ignore_missing_imports = true
 
