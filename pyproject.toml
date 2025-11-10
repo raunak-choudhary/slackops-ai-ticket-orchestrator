@@ -28,11 +28,8 @@ dependencies = [
   "fastapi[standard]>=0.118.0",
   "httpx>=0.28.1",
   "uvicorn>=0.37.0",
-  "python-dotenv>=1.1.1",
   # Google / Email (HW1)
   "google-auth>=2.25.0",
-  "google-auth-oauthlib>=1.1.0",
-  "google-api-python-client>=2.100.0",
 ]
 
 [tool.uv.sources]
@@ -46,21 +43,21 @@ slack-service = { workspace = true }
 slack-adapter = { workspace = true }
 
 # ---------------- Optional Dependency Groups ----------------
-[project.optional-dependencies]
-dev = [
-  "pytest>=8.0.0",
-  "pytest-cov>=6.2.1",
-  "pytest-mock>=3.12.0",
-  "mypy>=1.10.0",
-  "ruff>=0.12.7",
-  "coverage[toml]>=7.0.0",
-  "httpx>=0.27.0",
-  "types-setuptools",
-]
-email = ["email-api>=0.1.0"]
-gmail = ["gmail-impl>=0.1.0"]
-service = ["mail-client-service>=0.1.0"]
-slack = ["slack-api>=0.1.0"]
+# [project.optional-dependencies]
+# dev = [
+#   "pytest>=8.0.0",
+#   "pytest-cov>=6.2.1",
+#   "pytest-mock>=3.12.0",
+#   "mypy>=1.10.0",
+#   "ruff>=0.12.7",
+#   "coverage[toml]>=7.0.0",
+#   "httpx>=0.27.0",
+#   "types-setuptools",
+# ]
+# email = ["email-api>=0.1.0"]
+# gmail = ["gmail-impl>=0.1.0"]
+# service = ["mail-client-service>=0.1.0"]
+# slack = ["slack-api>=0.1.0"]
 
 [dependency-groups]
 dev = [
@@ -68,8 +65,11 @@ dev = [
   "pytest>=8.4.1",
   "pytest-cov>=6.2.1",
   "ruff>=0.12.7",
+  "mypy>=1.10.0",
   "types-setuptools",
 ]
+slack = ["slack-api>=0.1.0"]
+
 
 # ---------------- Ruff (strict + unified) ----------------
 [tool.ruff]
@@ -79,7 +79,7 @@ fix = true
 src = ["src"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "W", "C90"]
+select = ["ALL"]
 ignore = [
   "COM812",  # Conflicts with ruff formatter
   "ISC001",  # Conflicts with ruff formatter
