@@ -1,26 +1,27 @@
 from __future__ import annotations
-
-from typing import Iterable, Protocol
-
+from abc import ABC, abstractmethod
+from typing import Iterable
 from .types import Channel, Message
 
 
-class ChatClient(Protocol):
-    """Protocol for a Slack-like chat client.
+class ChatClient(ABC):
+    """Abstract base class for a Slack-like chat client.
 
-    Concrete implementations (e.g., slack_impl.SlackClient, adapters) should
-    satisfy this interface. Using a Protocol keeps us decoupled from any base
-    classes and friendly to static typing.
+    Concrete implementations (e.g., slack_impl.SlackClient, adapters)
+    should subclass this and implement all abstract methods.
     """
 
-    def health(self) -> bool:  # pragma: no cover - exercised via fakes/adapters
+    @abstractmethod
+    def health(self) -> bool:
         """Return True if the underlying service is healthy."""
-        ...
+        pass
 
+    @abstractmethod
     def list_channels(self) -> Iterable[Channel]:
         """List accessible channels."""
-        ...
+        pass
 
+    @abstractmethod
     def post_message(self, channel_id: str, text: str) -> Message:
         """Post a message to a channel and return the created message."""
-        ...
+        pass
