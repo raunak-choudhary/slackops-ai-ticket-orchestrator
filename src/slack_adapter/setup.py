@@ -1,3 +1,5 @@
+"""Packaging metadata for slack_adapter."""
+
 from setuptools import find_packages, setup
 
 setup(

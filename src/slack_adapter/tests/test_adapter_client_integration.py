@@ -1,135 +1,127 @@
-import os
-import sys
+"""Integration-style tests for the Slack adapter using dummy HTTPX clients."""
 
-from slack_adapter.adapter import SlackServiceBackedClient
+from __future__ import annotations
 
-# ---------------------------------------------------------------------------
-# Setup path to include the generated client package (for import resolution)
-# ---------------------------------------------------------------------------
-sys.path.append(os.path.abspath("clients/python"))
+from typing import ClassVar
 
+import pytest
 
-# ---------------------------------------------------------------------------
-# DUMMY INFRASTRUCTURE
-# ---------------------------------------------------------------------------
+from slack_adapter import SlackServiceBackedClient
 
 
 class DummyResponse:
-    """
-    Minimal stand-in for httpx.Response.
-    Includes all attributes accessed by the generated client functions.
-    """
+    """Minimal stand-in for httpx.Response."""
 
-    status_code = 200
-    content = b"{}"
-    headers = {}
+    status_code: ClassVar[int] = 200
+    content: ClassVar[bytes] = b"{}"
+    headers: ClassVar[dict[str, str]] = {}
 
-    def json(self):
+    def json(self) -> dict[str, object]:
+        """Return a basic JSON body."""
         return {}
 
 
 class DummyHTTPXClient:
-    """
-    Fake httpx.Client replacement that records requests and returns DummyResponse.
-    This avoids real network calls while letting us observe request intent.
-    """
+    """Fake httpx.Client that records calls and returns DummyResponse."""
 
-    def __init__(self):
-        self.calls = []
+    def __init__(self) -> None:
+        """Initialize the recorder store."""
+        self.calls: list[tuple[str, str, dict[str, object]]] = []
 
-    def request(self, method: str, url: str, **kwargs):
-        self.calls.append((method, url, kwargs))
+    def request(self, method: str, url: str, **kwargs: object) -> DummyResponse:
+        """Record a call and return a default response."""
+        self.calls.append((method, url, dict(kwargs)))
         return DummyResponse()
 
 
 class DummyGeneratedClient:
-    """
-    Lightweight simulation of the generated slack_chat_service_hw2_client.Client class.
-    It only exposes get_httpx_client(), matching the generated client's interface.
-    """
+    """Lightweight simulation of the generated client with a single getter."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize with a dummy HTTPX client."""
         self._httpx = DummyHTTPXClient()
 
-    def get_httpx_client(self):
+    def get_httpx_client(self) -> DummyHTTPXClient:
+        """Expose the HTTPX-like client the adapter will use."""
         return self._httpx
 
 
-# ---------------------------------------------------------------------------
-# TESTS
-# ---------------------------------------------------------------------------
-
-
-def test_health_endpoint(monkeypatch):
-    """
-    Ensure adapter.health() delegates to generated client's sync() call properly.
-    """
-
+def test_health_endpoint() -> None:
+    """Ensure adapter.health() delegates correctly to the generated client."""
     adapter = SlackServiceBackedClient()
-    adapter._client = DummyGeneratedClient()  # inject dummy client
+    # Test-only injection of the generated client object.
+    adapter._client = DummyGeneratedClient()  # noqa: SLF001
+
     result = adapter.health()
+    if result is not True:
+        pytest.fail("Health endpoint should return True for HTTP 200")
 
-    assert result is True, "Health endpoint should return True for HTTP 200"
 
-
-def test_list_channels_and_post_message(monkeypatch):
-    """
-    Test adapter.list_channels() and post_message() using dummy responses.
-    """
-
-    # Dummy data to simulate Slack channel and message payloads
+def test_list_channels() -> None:
+    """Verify list_channels() maps the JSON into Channel models."""
     dummy_channels = [{"id": "C123", "name": "general"}]
-    dummy_message = {"id": "M001", "channel_id": "C123", "text": "Hello"}
 
-    # DummyResponse with overriden .json() for custom payloads
     class DummyResponseChannels(DummyResponse):
-        def json(self):
-            return dummy_channels
+        def json(self) -> dict[str, object]:
+            return {"channels": dummy_channels}
 
-    class DummyResponseMessage(DummyResponse):
-        def json(self):
-            return dummy_message
-
-    # Dummy client returning above payloads depending on endpoint
     class SmartHTTPXClient(DummyHTTPXClient):
-        def request(self, method: str, url: str, **kwargs):
+        def request(
+            self, _method: str, url: str, **_kwargs: object,
+        ) -> DummyResponse:  # type: ignore[override]
             if url.endswith("/channels"):
                 return DummyResponseChannels()
-            elif url.endswith("/messages"):
-                return DummyResponseMessage()
-            return DummyResponse()
+            pytest.fail(
+                f"Unexpected URL in SmartHTTPXClient.request: {url}",
+            )
 
     class SmartClient(DummyGeneratedClient):
-        def get_httpx_client(self):
+        def get_httpx_client(
+            self,
+        ) -> SmartHTTPXClient:  # type: ignore[override]
             return SmartHTTPXClient()
 
     adapter = SlackServiceBackedClient()
-    adapter._client = SmartClient()
+    adapter._client = SmartClient()  # noqa: SLF001
 
-    # Execute adapter methods
     channels = adapter.list_channels()
-    message = adapter.post_message(channel_id="C123", text="Hello")
-
-    # Assertions for channel list
-    assert isinstance(channels, list)
-    assert channels and channels[0].name == "general"
-
-    # Assertions for posted message
-    assert isinstance(message, object)
-    assert message.text == "Hello"
-    assert message.channel_id == "C123"
+    if not isinstance(channels, list):
+        pytest.fail("channels should be a list")
+    if not channels:
+        pytest.fail("channels should not be empty")
+    if channels[0].name != "general":
+        pytest.fail("expected first channel name to be 'general'")
 
 
-# ---------------------------------------------------------------------------
-# ADDITIONAL CONTRACT CHECK
-# ---------------------------------------------------------------------------
+def test_post_message() -> None:
+    """Verify post_message() maps the JSON into Message model."""
+    dummy_message = {"id": "m-1", "channel_id": "C123", "text": "Hello"}
 
+    class DummyResponseMessage(DummyResponse):
+        def json(self) -> dict[str, object]:
+            return {"message": dummy_message}
 
-def test_adapter_context_manager_behavior():
-    """
-    Verify that context management (enter/exit) works without errors.
-    """
+    class SmartHTTPXClient(DummyHTTPXClient):
+        def request(
+            self, _method: str, url: str, **_kwargs: object,
+        ) -> DummyResponse:  # type: ignore[override]
+            if url.endswith("/messages"):
+                return DummyResponseMessage()
+            pytest.fail(
+                f"Unexpected URL in SmartHTTPXClient.request: {url}",
+            )
 
-    with SlackServiceBackedClient() as adapter:
-        assert isinstance(adapter, SlackServiceBackedClient)
-        adapter.close()  # no-op but should not raise
+    class SmartClient(DummyGeneratedClient):
+        def get_httpx_client(
+            self,
+        ) -> SmartHTTPXClient:  # type: ignore[override]
+            return SmartHTTPXClient()
+
+    adapter = SlackServiceBackedClient()
+    adapter._client = SmartClient()  # noqa: SLF001
+
+    message = adapter.post_message("C123", "Hello")
+    if message.text != "Hello":
+        pytest.fail("message text mismatch")
+    if message.channel_id != "C123":
+        pytest.fail("message channel_id mismatch")

@@ -299,3 +299,4 @@ venv/
 clients/specs/openapi.json
 clients/python/
 src/mail_client_service_client/
+pr_feedback/

@@ -1,36 +1,29 @@
 # ---------------- Root Workspace Configuration ----------------
+
 [tool.uv.workspace]
 members = [
-  # ---------- HW1: Mail Client ----------
+  # HW1: Mail Client
   "src/email_api",
   "src/gmail_impl",
   "src/mail_client_service",
   "clients/python/mail_client_service_client",
   "src/mail_client_adapter",
 
-  # ---------- HW2: Slack Chat Service ----------
+  # HW2: Slack Chat Service
   "src/slack_api",
   "src/slack_impl",
   "src/slack_service",
   "src/slack_adapter",
 ]
 
-# ---------------- Project Metadata ----------------
+# ---------------- Project Metadata (meta package) ----------------
 [project]
 name = "ospsd-team4-fall2025"
 version = "0.2.0"
 description = "Unified workspace for OSPSD Team 4 — HW1 (Email) + HW2 (Slack Chat Service)"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-  # Core shared deps
-  "attrs>=25.3.0",
-  "fastapi[standard]>=0.118.0",
-  "httpx>=0.28.1",
-  "uvicorn>=0.37.0",
-  # Google / Email (HW1)
-  "google-auth>=2.25.0",
-]
+# Intentionally no runtime dependencies at root (per TA guidance).
 
 [tool.uv.sources]
 email-api = { workspace = true }
@@ -42,23 +35,7 @@ slack-impl = { workspace = true }
 slack-service = { workspace = true }
 slack-adapter = { workspace = true }
 
-# ---------------- Optional Dependency Groups ----------------
-# [project.optional-dependencies]
-# dev = [
-#   "pytest>=8.0.0",
-#   "pytest-cov>=6.2.1",
-#   "pytest-mock>=3.12.0",
-#   "mypy>=1.10.0",
-#   "ruff>=0.12.7",
-#   "coverage[toml]>=7.0.0",
-#   "httpx>=0.27.0",
-#   "types-setuptools",
-# ]
-# email = ["email-api>=0.1.0"]
-# gmail = ["gmail-impl>=0.1.0"]
-# service = ["mail-client-service>=0.1.0"]
-# slack = ["slack-api>=0.1.0"]
-
+# ---------------- Dev Tooling (UV-style) ----------------
 [dependency-groups]
 dev = [
   "openapi-python-client>=0.27.0",
@@ -66,10 +43,10 @@ dev = [
   "pytest-cov>=6.2.1",
   "ruff>=0.12.7",
   "mypy>=1.10.0",
+  "coverage[toml]>=7.0.0",
+  "httpx>=0.27.0",
   "types-setuptools",
 ]
-slack = ["slack-api>=0.1.0"]
-
 
 # ---------------- Ruff (strict + unified) ----------------
 [tool.ruff]
@@ -77,36 +54,47 @@ target-version = "py312"
 line-length = 100
 fix = true
 src = ["src"]
+# exclude noisy cache/metadata paths at repo root
+extend-exclude = [".pytest_cache", "*.egg-info"]
 
 [tool.ruff.lint]
+# TA requirement: keep ALL enabled
 select = ["ALL"]
+# Minimal global ignores for formatter/pydocstyle mutual exclusivities
 ignore = [
-  "COM812",  # Conflicts with ruff formatter
-  "ISC001",  # Conflicts with ruff formatter
-  "D203", "D213",  # pydocstyle mutual exclusions
+  "COM812",  # Conflicts with Ruff formatter
+  "ISC001",  # Conflicts with Ruff formatter
+  "D203",    # Mutually exclusive with D211
+  "D213",    # Mutually exclusive with D212
 ]
-
-[tool.ruff.lint.per-file-ignores]
-"**/test_*.py" = [
-  "ANN001","ARG002","INP001","PLC0415","PLR2004","S101","SLF001","S603",
-  "PTH100","PTH118","PTH120","I001"
-]
-"**/tests/**/conftest.py" = [
-  "I001","PLC0415","PTH100","PTH118","PTH120",
-  "PT001","B009","UP035"
-]
-"main.py" = ["T201","PLR2004"]
-"src/mail_client_service/routes/messages.py" = ["B008"]
-
-[tool.ruff.lint.pydocstyle]
-convention = "google"
 
 [tool.ruff.lint.isort]
 force-sort-within-sections = true
 known-first-party = [
   "email_api", "gmail_impl",
-  "slack_api", "slack_impl", "slack_service", "slack_adapter"
+  "slack_api", "slack_impl", "slack_service", "slack_adapter",
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+# Tests are allowed pragmatic patterns: asserts, minimal typing, relaxed docstrings, etc.
+[tool.ruff.lint.per-file-ignores]
+"src/slack_adapter/tests/*.py" = [
+  "D100","D101","D102","D103","D200","D205",   # docstrings
+  "S101",                                      # plain asserts in tests
+  "PT018",                                     # combined assertions
+  "ANN001","ANN003","ANN201","ANN202","ANN204",# missing annotations
+  "ARG001","ARG002",                           # unused test args
+  "TRY003","EM101","BLE001",                   # exception-msg/test ergonomics
+  "PTH100","PLC0415","RUF012","SLF001","TC001" # misc nits common in tests
+]
+"**/tests/**/conftest.py" = [
+  "D100","I001","PLC0415","PTH100","PTH118","PTH120",
+]
+
+# Example: route file that uses Depends(...) defaults
+"src/mail_client_service/routes/messages.py" = ["B008"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -114,7 +102,7 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 
-# ---------------- mypy (strict, unified, fixed) ----------------
+# ---------------- MyPy (strict, unified) ----------------
 [tool.mypy]
 python_version = "3.12"
 strict = true
@@ -130,6 +118,14 @@ no_implicit_optional = true
 disallow_any_generics = true
 show_error_codes = true
 
+# IMPORTANT: keep ONLY the top-level src and clients on path to avoid dup modules.
+mypy_path = [
+  "src",
+  "clients",
+  "clients/python",
+]
+
+# Scope analysis to inner package roots (prevents scanning tools/venv, etc.)
 files = [
   "src/email_api/src",
   "src/mail_client_adapter/src",
@@ -140,65 +136,40 @@ files = [
   "src/mail_client_service/src",
 ]
 
-# IMPORTANT: keep ONLY the top-level src and clients on path.
-# Do NOT include per-package inner roots like "src/slack_api/src"
-# or MyPy will see the same file under two module names.
-mypy_path = [
-  "src",
-  "clients",
-  "clients/python", 
-]
-
 # Third-party & generated clients: ignore missing stubs
-[[tool.mypy.overrides]]
-module = [
-  "slack_chat_service_hw2_client",
-  "slack_chat_service_hw2_client.*",
-]
-ignore_missing_imports = true
-
 [[tool.mypy.overrides]]
 module = [
   "googleapiclient.*",
   "google_auth_oauthlib.*",
   "httpx.*",
+  "mail_client_service_client",
+  "mail_client_service_client.*",
+  "slack_chat_service_hw2_client",
+  "slack_chat_service_hw2_client.*",
   "slack_service_client",
   "slack_service_client.*",
 ]
 ignore_missing_imports = true
 
-# Generated OpenAPI client (Mail) — ignore typing inside
+# Generated Mail client: ignore typing inside
 [[tool.mypy.overrides]]
-module = [
-  "mail_client_service_client",
-  "mail_client_service_client.*",
-]
+module = ["mail_client_service_client", "mail_client_service_client.*"]
 ignore_errors = true
 
-[[tool.mypy.overrides]]
-module = ["slack_chat_service_hw2_client.*"]
-ignore_missing_imports = true
-
-# Tests: relax typing
+# Tests: relax typing rules
 [[tool.mypy.overrides]]
 module = [
   "tests",
-  "tests.*",
-  "mail_client_service.tests",
-  "mail_client_service.tests.*",
-  "mail_client_adapter.tests",
-  "mail_client_adapter.tests.*",
-  "gmail_impl.tests",
-  "gmail_impl.tests.*",
-  "slack_adapter.tests",
-  "slack_adapter.tests.*",
-  "slack_service.tests",
-  "slack_service.tests.*",
+  "email_api.tests", "email_api.tests.*",
+  "mail_client_adapter.tests", "mail_client_adapter.tests.*",
+  "gmail_impl.tests", "gmail_impl.tests.*",
+  "slack_adapter.tests", "slack_adapter.tests.*",
+  "slack_service.tests", "slack_service.tests.*",
 ]
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
 
-# ---------------- Pytest ----------------
+# ---------------- Pytest (root) ----------------
 [tool.pytest.ini_options]
 addopts = "-ra -q"
 testpaths = ["src", "tests"]

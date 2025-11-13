@@ -1,0 +1,426 @@
+.
+├── __pycache__
+│   └── main.cpython-312.pyc
+├── clients
+│   ├── __init__.py
+│   ├── python
+│   │   ├── __init__.py
+│   │   ├── mail_client_service_client
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   ├── client.cpython-312.pyc
+│   │   │   │   ├── errors.cpython-312.pyc
+│   │   │   │   └── types.cpython-312.pyc
+│   │   │   ├── api
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   └── __init__.cpython-312.pyc
+│   │   │   │   └── messages
+│   │   │   │       ├── __init__.py
+│   │   │   │       ├── __pycache__
+│   │   │   │       │   ├── __init__.cpython-312.pyc
+│   │   │   │       │   ├── delete_message_messages_message_id_delete.cpython-312.pyc
+│   │   │   │       │   ├── get_message_messages_message_id_get.cpython-312.pyc
+│   │   │   │       │   ├── list_messages_messages_get.cpython-312.pyc
+│   │   │   │       │   └── mark_as_read_messages_message_id_mark_as_read_post.cpython-312.pyc
+│   │   │   │       ├── delete_message_messages_message_id_delete.py
+│   │   │   │       ├── get_message_messages_message_id_get.py
+│   │   │   │       ├── list_messages_messages_get.py
+│   │   │   │       └── mark_as_read_messages_message_id_mark_as_read_post.py
+│   │   │   ├── client.py
+│   │   │   ├── errors.py
+│   │   │   ├── models
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   │   ├── delete_message_messages_message_id_delete_response_delete_message_messages_message_id_delete.cpython-312.pyc
+│   │   │   │   │   ├── get_message_messages_message_id_get_response_get_message_messages_message_id_get.cpython-312.pyc
+│   │   │   │   │   ├── http_validation_error.cpython-312.pyc
+│   │   │   │   │   ├── list_messages_messages_get_response_200_item.cpython-312.pyc
+│   │   │   │   │   ├── mark_as_read_messages_message_id_mark_as_read_post_response_mark_as_read_messages_message_id_mark_as_read_post.cpython-312.pyc
+│   │   │   │   │   └── validation_error.cpython-312.pyc
+│   │   │   │   ├── delete_message_messages_message_id_delete_response_delete_message_messages_message_id_delete.py
+│   │   │   │   ├── get_message_messages_message_id_get_response_get_message_messages_message_id_get.py
+│   │   │   │   ├── http_validation_error.py
+│   │   │   │   ├── list_messages_messages_get_response_200_item.py
+│   │   │   │   ├── mark_as_read_messages_message_id_mark_as_read_post_response_mark_as_read_messages_message_id_mark_as_read_post.py
+│   │   │   │   └── validation_error.py
+│   │   │   ├── pyproject.toml
+│   │   │   └── types.py
+│   │   ├── pyproject.toml
+│   │   ├── README.md
+│   │   └── slack_chat_service_hw2_client
+│   │       ├── __init__.py
+│   │       ├── __pycache__
+│   │       │   ├── __init__.cpython-312.pyc
+│   │       │   └── client.cpython-312.pyc
+│   │       ├── api
+│   │       │   ├── __init__.py
+│   │       │   └── default
+│   │       │       ├── __init__.py
+│   │       │       ├── health_health_get.py
+│   │       │       ├── list_channels_channels_get.py
+│   │       │       └── post_message_messages_post.py
+│   │       ├── client.py
+│   │       ├── errors.py
+│   │       ├── models
+│   │       │   ├── __init__.py
+│   │       │   ├── health_health_get_response_health_health_get.py
+│   │       │   ├── http_validation_error.py
+│   │       │   ├── list_channels_channels_get_response_200_item.py
+│   │       │   ├── post_message_body.py
+│   │       │   ├── post_message_messages_post_response_post_message_messages_post.py
+│   │       │   └── validation_error.py
+│   │       ├── py.typed
+│   │       ├── pyproject.toml
+│   │       ├── slack_chat_service_hw2_client.egg-info
+│   │       │   ├── dependency_links.txt
+│   │       │   ├── PKG-INFO
+│   │       │   ├── SOURCES.txt
+│   │       │   └── top_level.txt
+│   │       └── types.py
+│   └── specs
+│       ├── openapi.json
+│       └── slack_service_openapi.json
+├── CONTRIBUTING.md
+├── coverage.xml
+├── Design.md
+├── Dockerfile
+├── docs
+│   ├── architecture
+│   │   ├── dependency-injection.md
+│   │   ├── design-philosophy.md
+│   │   └── testing.md
+│   ├── getting-started
+│   │   └── index.md
+│   ├── index.md
+│   └── reference
+│       ├── email-api.md
+│       └── gmail-impl.md
+├── file_structure.docx
+├── file_structure.txt
+├── infra
+│   └── render.yaml
+├── LICENSE
+├── main.py
+├── mkdocs.yml
+├── mypy.ini
+├── new_output.txt
+├── pr_feedback
+│   └── pr_9_raw.json
+├── project_structure.txt
+├── pyproject.toml
+├── README.md
+├── scripts
+│   ├── __init__.py
+│   ├── ci
+│   │   └── health_check.sh
+│   ├── export_openapi.py
+│   ├── precheck.sh
+│   └── sqlite_init.sql
+├── src
+│   ├── email_api
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   └── client.cpython-312.pyc
+│   │   ├── client.py
+│   │   ├── py.typed
+│   │   ├── pyproject.toml
+│   │   ├── README.md
+│   │   ├── src
+│   │   │   └── email_api
+│   │   │       ├── __init__.py
+│   │   │       ├── __pycache__
+│   │   │       │   ├── __init__.cpython-312.pyc
+│   │   │       │   └── client.cpython-312.pyc
+│   │   │       └── client.py
+│   │   └── tests
+│   │       ├── __pycache__
+│   │       │   ├── test_api.cpython-312-pytest-8.4.2.pyc
+│   │       │   └── test_client_cov.cpython-312-pytest-8.4.2.pyc
+│   │       ├── test_api.py
+│   │       └── test_client_cov.py
+│   ├── gmail_impl
+│   │   ├── py.typed
+│   │   ├── pyproject.toml
+│   │   ├── README.md
+│   │   ├── setup.py
+│   │   ├── src
+│   │   │   └── gmail_impl
+│   │   │       ├── __init__.py
+│   │   │       ├── __pycache__
+│   │   │       │   ├── __init__.cpython-312.pyc
+│   │   │       │   └── gmail_client.cpython-312.pyc
+│   │   │       └── gmail_client.py
+│   │   ├── tests
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   ├── test_gmail_client_cov.cpython-312-pytest-8.4.2.pyc
+│   │   │   │   └── test_gmail_client.cpython-312-pytest-8.4.2.pyc
+│   │   │   ├── test_gmail_client_cov.py
+│   │   │   └── test_gmail_client.py
+│   │   └── uv.lock
+│   ├── mail_client_adapter
+│   │   ├── mail_client_adapter.egg-info
+│   │   │   ├── dependency_links.txt
+│   │   │   ├── PKG-INFO
+│   │   │   ├── requires.txt
+│   │   │   ├── SOURCES.txt
+│   │   │   └── top_level.txt
+│   │   ├── pyproject.toml
+│   │   ├── setup.py
+│   │   ├── src
+│   │   │   ├── mail_client_adapter
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   │   ├── adapter.cpython-312.pyc
+│   │   │   │   │   ├── backed_client.cpython-312.pyc
+│   │   │   │   │   └── mapping.cpython-312.pyc
+│   │   │   │   ├── adapter.py
+│   │   │   │   ├── backed_client.py
+│   │   │   │   └── mapping.py
+│   │   │   └── mail_client_adapter.egg-info
+│   │   │       ├── dependency_links.txt
+│   │   │       ├── PKG-INFO
+│   │   │       ├── requires.txt
+│   │   │       ├── SOURCES.txt
+│   │   │       └── top_level.txt
+│   │   └── tests
+│   │       ├── __pycache__
+│   │       │   ├── test_adapter_service_and_client_cov.cpython-312-pytest-8.4.2.pyc
+│   │       │   ├── test_adapter_unit.cpython-312-pytest-8.4.2.pyc
+│   │       │   ├── test_adapterclient_contract.cpython-312-pytest-8.4.2.pyc
+│   │       │   └── test_servicebacked_client_cov.cpython-312-pytest-8.4.2.pyc
+│   │       ├── test_adapter_service_and_client_cov.py
+│   │       ├── test_adapter_unit.py
+│   │       ├── test_adapterclient_contract.py
+│   │       └── test_servicebacked_client_cov.py
+│   ├── mail_client_service
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   └── app.cpython-312.pyc
+│   │   ├── app.py
+│   │   ├── mail_client_service.egg-info
+│   │   │   ├── dependency_links.txt
+│   │   │   ├── PKG-INFO
+│   │   │   ├── requires.txt
+│   │   │   ├── SOURCES.txt
+│   │   │   └── top_level.txt
+│   │   ├── pyproject.toml
+│   │   ├── README.md
+│   │   ├── routes
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   └── messages.cpython-312.pyc
+│   │   │   └── messages.py
+│   │   ├── setup.py
+│   │   ├── src
+│   │   │   ├── mail_client_service
+│   │   │   │   └── routes
+│   │   │   └── mail_client_service.egg-info
+│   │   │       ├── dependency_links.txt
+│   │   │       ├── PKG-INFO
+│   │   │       ├── requires.txt
+│   │   │       ├── SOURCES.txt
+│   │   │       └── top_level.txt
+│   │   └── tests
+│   │       ├── __init__.py
+│   │       ├── __pycache__
+│   │       │   ├── __init__.cpython-312.pyc
+│   │       │   ├── conftest.cpython-312-pytest-8.4.2.pyc
+│   │       │   ├── test_errors.cpython-312-pytest-8.4.2.pyc
+│   │       │   ├── test_messages_routes.cpython-312-pytest-8.4.2.pyc
+│   │       │   └── test_messages.cpython-312-pytest-8.4.2.pyc
+│   │       ├── conftest.py
+│   │       ├── test_errors.py
+│   │       ├── test_messages_routes.py
+│   │       └── test_messages.py
+│   ├── ospsd_team4_fall2025.egg-info
+│   │   ├── dependency_links.txt
+│   │   ├── PKG-INFO
+│   │   ├── requires.txt
+│   │   ├── SOURCES.txt
+│   │   └── top_level.txt
+│   ├── pyproject.toml
+│   ├── slack_adapter
+│   │   ├── pyproject.toml
+│   │   ├── README.md
+│   │   ├── setup.py
+│   │   ├── src
+│   │   │   ├── slack_adapter
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   │   └── adapter.cpython-312.pyc
+│   │   │   │   ├── adapter.py
+│   │   │   │   └── py.typed
+│   │   │   └── slack_adapter.egg-info
+│   │   │       ├── dependency_links.txt
+│   │   │       ├── PKG-INFO
+│   │   │       ├── requires.txt
+│   │   │       ├── SOURCES.txt
+│   │   │       └── top_level.txt
+│   │   ├── tests
+│   │   │   ├── __pycache__
+│   │   │   │   ├── conftest.cpython-312-pytest-8.4.2.pyc
+│   │   │   │   ├── test_adapter_client_cov.cpython-312-pytest-8.4.2.pyc
+│   │   │   │   ├── test_adapter_client_integration.cpython-312-pytest-8.4.2.pyc
+│   │   │   │   ├── test_adapter_contract.cpython-312-pytest-8.4.2.pyc
+│   │   │   │   ├── test_adapter_cov.cpython-312-pytest-8.4.2.pyc
+│   │   │   │   └── test_adapter_more_cov.cpython-312-pytest-8.4.2.pyc
+│   │   │   ├── conftest.py
+│   │   │   ├── test_adapter_client_cov.py
+│   │   │   ├── test_adapter_client_integration.py
+│   │   │   ├── test_adapter_contract.py
+│   │   │   ├── test_adapter_cov.py
+│   │   │   └── test_adapter_more_cov.py
+│   │   └── uv.lock
+│   ├── slack_api
+│   │   ├── pyproject.toml
+│   │   ├── README.md
+│   │   ├── setup.py
+│   │   ├── slack_api.egg-info
+│   │   │   ├── dependency_links.txt
+│   │   │   ├── PKG-INFO
+│   │   │   ├── SOURCES.txt
+│   │   │   └── top_level.txt
+│   │   ├── src
+│   │   │   ├── slack_api
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   │   ├── client.cpython-312.pyc
+│   │   │   │   │   ├── errors.cpython-312.pyc
+│   │   │   │   │   ├── types.cpython-312.pyc
+│   │   │   │   │   ├── utils.cpython-312.pyc
+│   │   │   │   │   └── validators.cpython-312.pyc
+│   │   │   │   ├── client.py
+│   │   │   │   ├── errors.py
+│   │   │   │   ├── py.typed
+│   │   │   │   ├── token_store.py
+│   │   │   │   ├── types.py
+│   │   │   │   ├── utils.py
+│   │   │   │   └── validators.py
+│   │   │   └── slack_api.egg-info
+│   │   │       ├── dependency_links.txt
+│   │   │       ├── PKG-INFO
+│   │   │       ├── SOURCES.txt
+│   │   │       └── top_level.txt
+│   │   └── tests
+│   │       ├── __pycache__
+│   │       │   ├── test_contract_imports.cpython-312-pytest-8.4.2.pyc
+│   │       │   ├── test_protocol_compliance.cpython-312-pytest-8.4.2.pyc
+│   │       │   ├── test_types_roundtrip.cpython-312-pytest-8.4.2.pyc
+│   │       │   ├── test_utils.cpython-312-pytest-8.4.2.pyc
+│   │       │   └── test_validators.cpython-312-pytest-8.4.2.pyc
+│   │       ├── test_contract_imports.py
+│   │       ├── test_protocol_compliance.py
+│   │       ├── test_types_roundtrip.py
+│   │       ├── test_utils.py
+│   │       └── test_validators.py
+│   ├── slack_impl
+│   │   ├── pyproject.toml
+│   │   ├── README.md
+│   │   ├── setup.py
+│   │   ├── slack_impl.egg-info
+│   │   │   ├── dependency_links.txt
+│   │   │   ├── PKG-INFO
+│   │   │   ├── SOURCES.txt
+│   │   │   └── top_level.txt
+│   │   ├── src
+│   │   │   ├── slack_impl
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   │   ├── oauth.cpython-312.pyc
+│   │   │   │   │   ├── slack_client.cpython-312.pyc
+│   │   │   │   │   └── token_store.cpython-312.pyc
+│   │   │   │   ├── oauth.py
+│   │   │   │   ├── py.typed
+│   │   │   │   ├── slack_client.py
+│   │   │   │   └── token_store.py
+│   │   │   └── slack_impl.egg-info
+│   │   │       ├── dependency_links.txt
+│   │   │       ├── PKG-INFO
+│   │   │       ├── requires.txt
+│   │   │       ├── SOURCES.txt
+│   │   │       └── top_level.txt
+│   │   └── tests
+│   │       ├── __pycache__
+│   │       │   ├── test_channels.cpython-312-pytest-8.4.2.pyc
+│   │       │   ├── test_health.cpython-312-pytest-8.4.2.pyc
+│   │       │   ├── test_oauth_cov.cpython-312-pytest-8.4.2.pyc
+│   │       │   ├── test_post_message.cpython-312-pytest-8.4.2.pyc
+│   │       │   ├── test_slack_client_cov.cpython-312-pytest-8.4.2.pyc
+│   │       │   ├── test_slack_client_online_cov.cpython-312-pytest-8.4.2.pyc
+│   │       │   └── test_token_store.cpython-312-pytest-8.4.2.pyc
+│   │       ├── test_channels.py
+│   │       ├── test_health.py
+│   │       ├── test_oauth_cov.py
+│   │       ├── test_post_message.py
+│   │       ├── test_slack_client_cov.py
+│   │       ├── test_slack_client_online_cov.py
+│   │       └── test_token_store.py
+│   └── slack_service
+│       ├── pyproject.toml
+│       ├── README.md
+│       ├── setup.py
+│       ├── slack_service.egg-info
+│       │   ├── dependency_links.txt
+│       │   ├── PKG-INFO
+│       │   ├── requires.txt
+│       │   ├── SOURCES.txt
+│       │   └── top_level.txt
+│       ├── src
+│       │   ├── slack_service
+│       │   │   ├── __init__.py
+│       │   │   ├── __pycache__
+│       │   │   │   ├── __init__.cpython-312.pyc
+│       │   │   │   └── app.cpython-312.pyc
+│       │   │   ├── app.py
+│       │   │   ├── py.typed
+│       │   │   └── routes
+│       │   │       ├── __init__.py
+│       │   │       ├── __pycache__
+│       │   │       │   ├── __init__.cpython-312.pyc
+│       │   │       │   ├── channels.cpython-312.pyc
+│       │   │       │   └── messages.cpython-312.pyc
+│       │   │       ├── channels.py
+│       │   │       └── messages.py
+│       │   └── slack_service.egg-info
+│       │       ├── dependency_links.txt
+│       │       ├── PKG-INFO
+│       │       ├── requires.txt
+│       │       ├── SOURCES.txt
+│       │       └── top_level.txt
+│       ├── tests
+│       │   ├── __pycache__
+│       │   │   ├── test_channels_service.cpython-312-pytest-8.4.2.pyc
+│       │   │   ├── test_health_service.cpython-312-pytest-8.4.2.pyc
+│       │   │   ├── test_openapi.cpython-312-pytest-8.4.2.pyc
+│       │   │   └── test_post_message_service.cpython-312-pytest-8.4.2.pyc
+│       │   ├── test_channels_service.py
+│       │   ├── test_health_service.py
+│       │   ├── test_openapi.py
+│       │   └── test_post_message_service.py
+│       └── uv.lock
+├── test-results
+│   └── junit.xml
+├── tests
+│   ├── e2e
+│   │   ├── __pycache__
+│   │   │   └── test_email_workflows.cpython-312-pytest-8.4.2.pyc
+│   │   └── test_email_workflows.py
+│   └── integration
+│       ├── __pycache__
+│       │   └── test_gmail_integration.cpython-312-pytest-8.4.2.pyc
+│       └── test_gmail_integration.py
+└── uv.lock
+
+100 directories, 324 files

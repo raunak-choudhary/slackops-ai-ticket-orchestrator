@@ -58,9 +58,34 @@ ignore_missing_imports = true
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+# exclude noisy cache/metadata paths (package-local)
+extend-exclude = [".pytest_cache", "*.egg-info"]
 
 [tool.ruff.lint]
+# TA requirement: keep ALL enabled
 select = ["ALL"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["slack_adapter", "slack_api"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+# Tests are allowed pragmatic patterns: asserts, minimal typing, relaxed docstrings, etc.
+[tool.ruff.lint.per-file-ignores]
+"src/slack_adapter/tests/**.py" = [
+  "ANN",     # missing type annotations in tests
+  "ARG",     # unused args (e.g., monkeypatch)
+  "D",       # docstring rules in tests
+  "EM101",   # string literal in exceptions (okay in tests)
+  "PLC0415", # import not at top (test helpers)
+  "PTH",     # pathlib suggestions in tests
+  "PT018",   # “assertion should be broken down”
+  "S101",    # assert used
+  "SLF001",  # private member access in tests
+  "TC002",   # move 3rd-party import into typing-only block
+  "TRY003",  # long messages in exceptions
+]
 
 # ---- Pytest ----
 [tool.pytest.ini_options]
