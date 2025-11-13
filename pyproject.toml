@@ -14,6 +14,7 @@ members = [
   "src/slack_impl",
   "src/slack_service",
   "src/slack_adapter",
+  "clients/python/slack_service_client",
 ]
 
 # ---------------- Project Metadata (meta package) ----------------
@@ -24,6 +25,7 @@ description = "Unified workspace for OSPSD Team 4 — HW1 (Email) + HW2 (Slack C
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "python-dotenv>=1.2.1",
     "slack-sdk>=3.37.0",
 ]
 # Intentionally no runtime dependencies at root (per TA guidance).
@@ -49,6 +51,8 @@ dev = [
   "coverage[toml]>=7.0.0",
   "httpx>=0.27.0",
   "types-setuptools",
+  "fastapi>=0.121.1",
+  "uvicorn>=0.38.0",
 ]
 
 # ---------------- Ruff (strict + unified) ----------------
