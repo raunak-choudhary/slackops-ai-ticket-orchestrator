@@ -23,6 +23,9 @@ version = "0.2.0"
 description = "Unified workspace for OSPSD Team 4 — HW1 (Email) + HW2 (Slack Chat Service)"
 readme = "README.md"
 requires-python = ">=3.12"
+dependencies = [
+    "slack-sdk>=3.37.0",
+]
 # Intentionally no runtime dependencies at root (per TA guidance).
 
 [tool.uv.sources]

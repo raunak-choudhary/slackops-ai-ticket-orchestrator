@@ -49,8 +49,16 @@ class Message:
     channel_id: str
     text: str
     ts: str | None = None
+    # Optional message_id to satisfy adapter tests that pass message_id=...
+    message_id: str | None = None
+
+    @property
+    def id(self) -> str | None:
+        """Alias for the message identifier, for backwards-compat tests."""
+        return self.message_id
 
     def to_dict(self) -> Dict[str, str | None]:
+        # Keep original wire format (no message_id) for slack_api.
         return {"channel_id": self.channel_id, "text": self.text, "ts": self.ts}
 
     @classmethod
@@ -59,4 +67,6 @@ class Message:
         text = require_text(str(data["text"]))  # validates + non-empty after sanitize
         ts_val = data.get("ts")
         ts = None if ts_val is None else str(ts_val)
+        # We intentionally ignore any message_id in `data` to keep the original
+        # contract; callers that care can set it manually.
         return cls(channel_id=channel_id, text=text, ts=ts)

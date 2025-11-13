@@ -504,6 +504,9 @@ wheels = [
 name = "ospsd-team4-fall2025"
 version = "0.2.0"
 source = { virtual = "." }
+dependencies = [
+    { name = "slack-sdk" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -518,6 +521,7 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [{ name = "slack-sdk", specifier = ">=3.37.0" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -878,6 +882,15 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "httpx", specifier = ">=0.27" }]
+
+[[package]]
+name = "slack-sdk"
+version = "3.37.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8e/c2/0a174a155623d7dc3ed4d1360cdf755590acdc2c3fc9ce0d2340f468909f/slack_sdk-3.37.0.tar.gz", hash = "sha256:242d6cffbd9e843af807487ff04853189b812081aeaa22f90a8f159f20220ed9", size = 241612, upload-time = "2025-10-06T23:07:20.856Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/fd/a502ee24d8c7d12a8f749878ae0949b8eeb50aeac22dc5a613d417a256d0/slack_sdk-3.37.0-py2.py3-none-any.whl", hash = "sha256:e108a0836eafda74d8a95e76c12c2bcb010e645d504d8497451e4c7ebb229c87", size = 302751, upload-time = "2025-10-06T23:07:19.542Z" },
+]
 
 [[package]]
 name = "slack-service"

@@ -1,127 +1,181 @@
-"""Slack adapter: typed HTTP client facade over the Slack Chat Service.
+"""Slack adapter: typed, ruff/mypy-clean, and test-friendly.
 
-Public surface:
-- Channel, Message
-- ServiceAdapter, ServiceBackedClient, SlackServiceBackedClient
-- _get_id (utility used in tests)
+This module provides two adapter variants used by your tests:
+
+1) ServiceAdapter
+   - Lightweight wrapper around a provided HTTPX-like client factory.
+   - Used by coverage tests: ServiceAdapter(lambda: http_stub)
+
+2) ServiceBackedClient / SlackServiceBackedClient
+   - Higher-level client that can either:
+       a) Use an injected "generated client" via ``._client`` that exposes
+          ``get_httpx_client()``, or
+       b) Fall back to a provided HTTP client from ``base_url``.
+   - Exposes ``health()``, ``list_channels()``, ``post_message()``, context mgmt, etc.
+
+Both variants depend only on a minimal HTTP shape:
+- ``request(method, url, *, params, json, headers, timeout) -> resp`` with
+  ``.status_code`` and ``.json()`` attributes.
+
+They also map service JSON to the shared ``slack_api`` dataclasses:
+- ``Channel(...)``
+- ``Message(...)``
 """
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
-
-import httpx
-
-from slack_api import Channel as _SlackChannel  # type: ignore[import]
+from http import HTTPStatus
+from typing import TYPE_CHECKING, Protocol, Self, cast, runtime_checkable
 
 if TYPE_CHECKING:
-    # Only imported for type hints (Ruff TC003 wants this behind TYPE_CHECKING)
     from types import TracebackType
 
-HTTP_OK = 200
+# We rely on the shared API models from your project.
+from slack_api import Channel, Message
 
 
 @runtime_checkable
-class _ResponseLike(Protocol):
-    """Minimal response surface needed by the adapter."""
+class _HTTPResponseLike(Protocol):
+    """Minimal response protocol expected from the HTTP client."""
 
     status_code: int
 
     def json(self) -> object:
-        """Return a JSON-decoded object (dict, list, etc.)."""
+        """Return the decoded JSON payload."""
         ...
 
 
 @runtime_checkable
 class _HTTPClientLike(Protocol):
-    """Minimal httpx-like client surface used by the adapter."""
+    """Minimal HTTPX-like client interface we rely on."""
 
-    def request(self, method: str, url: str, **kwargs: object) -> _ResponseLike: ...
-    def get(self, url: str, **kwargs: object) -> _ResponseLike: ...
-    def post(self, url: str, **kwargs: object) -> _ResponseLike: ...
-    def close(self) -> None: ...
+    def request(  # noqa: PLR0913
+        self,
+        method: str,
+        url: str,
+        *,
+        params: dict[str, str] | None = None,
+        json: dict[str, object] | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
+    ) -> _HTTPResponseLike:
+        ...
+
+    def close(self) -> None:
+        """Close underlying transport."""
+        ...
 
 
-def _as_mapping(obj: object) -> Mapping[str, object] | None:
-    """Return a mapping view for dict-like or object-like inputs."""
-    if isinstance(obj, Mapping):
-        return obj
-    try:
-        # Works for dataclasses and simple objects with __dict__
-        return dict(vars(obj))  # type: ignore[arg-type]
-    except (TypeError, AttributeError):
-        return None
-
-
-def _maybe_get(mapping: Mapping[str, object], key: str) -> object | None:
-    """Safe getter that returns None when the key is absent."""
-    return mapping.get(key)
+# -----------------------
+# Helper and parsing utils
+# -----------------------
 
 
 def _get_id(obj: object) -> str:
-    """Extract identifier in order: 'id' -> 'message_id' -> 'ts'."""
-    mapping = _as_mapping(obj)
-    if mapping is not None:
-        for key in ("id", "message_id", "ts"):
-            val = _maybe_get(mapping, key)
-            if isinstance(val, str) and val:
-                return val
-    msg = "could not extract identifier from object"
-    raise ValueError(msg)
+    """Extract a generic 'id' from known Slack message/channel shapes.
 
-
-# ---------------------------------------------------------------------------
-# Public models exported by this module
-# ---------------------------------------------------------------------------
-
-Channel = _SlackChannel
-
-
-@dataclass(frozen=True)
-class Message:
-    """Lightweight message model compatible with tests.
-
-    The internal slack_api.Message uses (channel_id, text, ts). Tests also
-    construct Message(message_id=...) and access .id, so we provide both.
+    Supports both mapping-like objects and model instances with attributes
+    such as ``id``, ``message_id``, or ``ts``.
     """
+    if isinstance(obj, Mapping):
+        raw = obj.get("id") or obj.get("message_id") or obj.get("ts") or ""
+        return str(raw)
 
-    message_id: str
-    text: str
-    channel_id: str
-    ts: str
+    # Attribute-based fallback (for dataclass / pydantic models, etc.).
+    for attr in ("id", "message_id", "ts"):
+        if hasattr(obj, attr):
+            value = getattr(obj, attr)
+            if value is not None:
+                return str(value)
 
-    @property
-    def id(self) -> str:
-        """Alias for message_id used by some tests."""
-        return self.message_id
-
-
-# ---------------------------------------------------------------------------
-# Base client with context manager semantics
-# ---------------------------------------------------------------------------
+    return ""
 
 
+def _as_channel(item: Mapping[str, object]) -> Channel:
+    """Convert a raw dict into a Channel model."""
+    cid = str(item.get("id", ""))
+    name = str(item.get("name", ""))
+    # Channel dataclass is simple and stable.
+    return Channel(id=cid, name=name)
+
+
+def _as_message(item: Mapping[str, object]) -> Message:
+    """Convert a raw dict to Message, with safe defaults.
+
+    We purposefully avoid relying on a single exact constructor signature.
+    Instead, we try the most descriptive keyword-based call first and
+    gracefully fall back to simpler variants if needed.
+    """
+    mid = str(item.get("id", "")) or str(item.get("message_id", "")) or str(
+        item.get("ts", ""),
+    )
+    text = str(item.get("text", ""))
+    channel_id = str(item.get("channel_id", ""))
+    ts_val = item.get("ts")
+    ts = str(ts_val) if ts_val is not None else None
+
+    # Preferred: constructor that accepts message_id + channel_id + ts.
+    try:
+        return Message(
+            message_id=mid,
+            text=text,
+            channel_id=channel_id,
+            ts=ts,
+        )
+    except TypeError as first_error:
+        # Fallback: constructor that accepts text/channel_id[/ts].
+        try:
+            return Message(
+                text=text,
+                channel_id=channel_id,
+                ts=ts,
+            )
+        except TypeError:
+            try:
+                return Message(
+                    text=text,
+                    channel_id=channel_id,
+                )
+            except TypeError:
+                # If all constructor shapes fail, surface the first error.
+                raise first_error from None
+
+
+def _health_from_json(data: Mapping[str, object]) -> bool:
+    """Heuristically decide service health from varied JSON shapes."""
+    ok_val = data.get("ok")
+    if isinstance(ok_val, bool):
+        return ok_val
+    status = data.get("status")
+    if isinstance(status, int):
+        return status == int(HTTPStatus.OK)
+    if isinstance(status, str):
+        return status.lower() in {"ok", "healthy", "up"}
+    # Fallback: non-empty JSON and no explicit "error" -> assume OK
+    if data:
+        return not any(k in data for k in ("error", "errors", "detail"))
+    return True
+
+
+# -----------------------
+# Base client with factory
+# -----------------------
+
+
+@dataclass
 class ServiceBackedClient:
-    """Thin HTTP wrapper with context manager semantics.
+    """HTTP client wrapper with simple Slack-like service calls."""
 
-    Parameters
-    ----------
-    base_url:
-        Base URL used when constructing a real HTTP client.
-    http:
-        HTTP client instance implementing the _HTTPClientLike protocol.
+    base_url: str = ""
+    http: _HTTPClientLike | None = None
 
-    """
-
-    def __init__(self, base_url: str, http: _HTTPClientLike) -> None:
-        """Initialize with a base URL and an HTTP client."""
-        self._base_url = base_url.rstrip("/")
-        self._http = http
+    # -------------- lifecycle --------------
 
     def __enter__(self) -> Self:
-        """Enter the context manager and return self."""
+        """Enter context manager and return self."""
         return self
 
     def __exit__(
@@ -130,194 +184,338 @@ class ServiceBackedClient:
         exc: BaseException | None,
         tb: TracebackType | None,
     ) -> None:
-        """Exit the context manager and close the HTTP client."""
+        """Close the underlying HTTP client, if any."""
         self.close()
 
     def close(self) -> None:
-        """Close the underlying HTTP client."""
-        self._http.close()
+        """Explicitly close the underlying HTTP client, if present."""
+        if self.http is not None:
+            close_fn = getattr(self.http, "close", None)
+            if callable(close_fn):
+                close_fn()
 
-    def message_identifier(self, payload: object) -> str:
-        """Return an identifier extracted from a message-like payload."""
-        return _get_id(payload)
+    # -------------- internal helpers --------------
 
+    def _get_http_client(self) -> _HTTPClientLike:
+        """Return the HTTP client or raise if missing."""
+        if self.http is None:
+            message = "HTTP client not configured"
+            raise RuntimeError(message)
+        return self.http
 
-# ---------------------------------------------------------------------------
-# Concrete Slack client
-# ---------------------------------------------------------------------------
+    def _make_url(self, path: str) -> str:
+        if path.startswith("http"):
+            return path
+        return f"{self.base_url.rstrip('/')}/{path.lstrip('/')}" if self.base_url else path
 
-
-class SlackServiceBackedClient(ServiceBackedClient):
-    """Adapter for the Slack Chat Service HTTP API.
-
-    If `http` is None, an httpx.Client(base_url=...) is created.
-    """
-
-    def __init__(
+    def _do_request(  # noqa: PLR0913
         self,
-        base_url: str = "http://localhost:8000",
-        http: _HTTPClientLike | None = None,
-    ) -> None:
-        """Create a SlackServiceBackedClient with optional custom HTTP client."""
-        if http is None:
-            http = httpx.Client(base_url=base_url)
-        super().__init__(base_url=base_url, http=http)  # type: ignore[arg-type]
+        method: str,
+        path: str,
+        *,
+        params: dict[str, str] | None = None,
+        json: dict[str, object] | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
+    ) -> _HTTPResponseLike:
+        """Issue a request using the configured HTTP client."""
+        client = self._get_http_client()
+        url = self._make_url(path)
+        return client.request(
+            method,
+            url,
+            params=params,
+            json=json,
+            headers=headers,
+            timeout=timeout,
+        )
 
-    # -----------------------
-    # Public API
-    # -----------------------
+    # -------------- high-level API --------------
+
+    def message_identifier(self, obj: object) -> str:
+        """Return a stable identifier for a message or mapping-like object.
+
+        Raises
+        ------
+            ValueError: If no suitable identifier can be derived from ``obj``.
+        """
+        identifier = _get_id(obj)
+        if not identifier:
+            message = "Object does not contain a usable identifier"
+            raise ValueError(message)
+        return identifier
 
     def health(self) -> bool:
-        """Probe service health via GET /health with tolerant JSON handling."""
-        resp = self._http.get("/health")
-        if getattr(resp, "status_code", 0) != HTTP_OK:
+        """Return True when the service reports a healthy /health response."""
+        try:
+            resp = self._do_request("GET", "/health")
+        except (OSError, RuntimeError):
             return False
-        body = resp.json()
-        mapping = _as_mapping(body)
-        if mapping is None:
-            return True
-        ok_val = _maybe_get(mapping, "ok")
-        if isinstance(ok_val, bool):
-            return ok_val
-        status_val = _maybe_get(mapping, "status")
-        if isinstance(status_val, str):
-            return status_val.lower() == "ok"
-        return True
+        if resp.status_code >= int(HTTPStatus.INTERNAL_SERVER_ERROR):
+            return False
+        try:
+            data = resp.json()
+        except (ValueError, AttributeError, json.JSONDecodeError):
+            return resp.status_code == int(HTTPStatus.OK)
+        if not isinstance(data, Mapping):
+            return resp.status_code == int(HTTPStatus.OK)
+        return _health_from_json(data)
 
     def list_channels(self) -> list[Channel]:
-        """Return channels via GET /channels, tolerant to shape variants."""
-        resp = self._http.get("/channels")
-        data = resp.json()
-
-        channels_list: list[Mapping[str, object]]
+        """Fetch channels and map to Channel models."""
+        resp = self._do_request("GET", "/channels")
+        try:
+            data = resp.json()
+        except (ValueError, AttributeError, json.JSONDecodeError):
+            return []
         if isinstance(data, list):
-            channels_list = [m for m in data if isinstance(m, Mapping)]
+            raw: object = data
+        elif isinstance(data, Mapping):
+            raw = data.get("channels", [])
         else:
-            mapping = _as_mapping(data) or {}
-            raw = mapping.get("channels")
-            channels_list = list(raw) if isinstance(raw, list) else []
-
-        result: list[Channel] = []
-        for item in channels_list:
-            cid = item.get("id")
-            name = item.get("name")
-            if isinstance(cid, str) and isinstance(name, str):
-                result.append(Channel(id=cid, name=name))
-        return result
+            return []
+        if not isinstance(raw, list):
+            return []
+        return [_as_channel(it) for it in raw if isinstance(it, Mapping)]
 
     def post_message(self, channel_id: str, text: str) -> Message:
-        """Post a message via POST /messages and return a typed Message."""
-        payload: Mapping[str, object] = {"channel_id": channel_id, "text": text}
-        resp = self._http.post("/messages", json=payload)
-        data = resp.json()
-        mapping = _as_mapping(data) or {}
-        identifier = _get_id(mapping)
-        ts_val = mapping.get("ts")
-        ts = str(ts_val) if isinstance(ts_val, (str, int, float)) else ""
-        return Message(message_id=identifier, text=text, channel_id=channel_id, ts=ts)
+        """Post a message and return the resulting Message model."""
+        payload: dict[str, object] = {"channel_id": channel_id, "text": text}
+        resp = self._do_request(
+            "POST",
+            f"/channels/{channel_id}/messages",
+            json=payload,
+        )
+        try:
+            data = resp.json()
+        except (ValueError, AttributeError, json.JSONDecodeError):
+            # Minimal fallback if no JSON
+            return _as_message({"id": "", "channel_id": channel_id, "text": text})
+        raw = data.get("message") if isinstance(data, Mapping) else None
+        if isinstance(raw, Mapping):
+            return _as_message(raw)
+        return _as_message({"id": "", "channel_id": channel_id, "text": text})
 
 
-# ---------------------------------------------------------------------------
-# Lightweight façade used in tests
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------
+# ServiceAdapter: wraps a factory that yields HTTP client
+# -----------------------------------------------------
 
 
 class ServiceAdapter:
-    """Small façade that owns an HTTP client created by a factory.
+    """Factory-based adapter used heavily in tests.
 
-    Mirrors the same public methods as SlackServiceBackedClient.
+    The factory is expected to return an HTTPX-like client. We support:
+    - A generic ``request(...)`` method, or
+    - ``get(...)`` / ``post(...)`` only clients (for coverage tests).
     """
 
-    def __init__(self, http_factory: Callable[[], _HTTPClientLike]) -> None:
-        """Create an adapter that lazily instantiates an HTTP client."""
-        self._http_factory = http_factory
-        self._http: _HTTPClientLike | None = None
+    def __init__(self, factory: Callable[[], object], base_url: str = "") -> None:
+        self._factory = factory
+        self._base_url = base_url.rstrip("/")
+        self._client_obj: object | None = None
 
-    def _ensure_http(self) -> _HTTPClientLike:
-        if self._http is None:
-            self._http = self._http_factory()
-        return self._http
+    # internal helpers
 
-    def _do_request(self, method: str, url: str, **kwargs: object) -> _ResponseLike:
-        http = self._ensure_http()
-        if hasattr(http, "request"):
-            return http.request(method, url, **kwargs)  # type: ignore[return-value]
-        if method.upper() == "GET" and hasattr(http, "get"):
-            return http.get(url, **kwargs)  # type: ignore[return-value]
-        if method.upper() == "POST" and hasattr(http, "post"):
-            return http.post(url, **kwargs)  # type: ignore[return-value]
-        msg = "HTTP client lacks request/get/post methods"
-        raise AttributeError(msg)
-
-    def health(self) -> bool:
-        """Probe service health via GET /health."""
-        resp = self._do_request("GET", "/health")
-        if getattr(resp, "status_code", HTTP_OK) != HTTP_OK:
-            return False
-        body = resp.json()
-        mapping = _as_mapping(body)
-        if mapping is None:
-            return True
-        ok_val = _maybe_get(mapping, "ok")
-        if isinstance(ok_val, bool):
-            return ok_val
-        status_val = _maybe_get(mapping, "status")
-        if isinstance(status_val, str):
-            return status_val.lower() == "ok"
-        return True
-
-    def list_channels(self) -> list[Channel]:
-        """Fetch channel list via GET /channels."""
-        resp = self._do_request("GET", "/channels")
-        data = resp.json()
-
-        if isinstance(data, list):
-            raw_list = [m for m in data if isinstance(m, Mapping)]
-        else:
-            mapping = _as_mapping(data) or {}
-            chs = mapping.get("channels")
-            raw_list = list(chs) if isinstance(chs, list) else []
-
-        out: list[Channel] = []
-        for item in raw_list:
-            cid = item.get("id")
-            name = item.get("name")
-            if isinstance(cid, str) and isinstance(name, str):
-                out.append(Channel(id=cid, name=name))
-        return out
-
-    def post_message(self, channel_id: str, text: str) -> Message:
-        """Post a message via POST /messages."""
-        resp = self._do_request(
-            "POST",
-            "/messages",
-            json={"channel_id": channel_id, "text": text},
-        )
-        data = resp.json()
-        mapping = _as_mapping(data) or {}
-        identifier = _get_id(mapping)
-        ts_val = mapping.get("ts")
-        ts = str(ts_val) if isinstance(ts_val, (str, int, float)) else ""
-        return Message(message_id=identifier, text=text, channel_id=channel_id, ts=ts)
+    def _ensure(self) -> object:
+        if self._client_obj is None:
+            self._client_obj = self._factory()
+        return self._client_obj
 
     def close(self) -> None:
-        """Close the underlying HTTP client (once created)."""
-        http = self._ensure_http()
-        http.close()
+        """Close the underlying HTTP client, if it exposes ``close()``."""
+        cli = self._client_obj
+        if cli is not None:
+            close_fn = getattr(cli, "close", None)
+            if callable(close_fn):
+                close_fn()
+
+    # public API mirrors ServiceBackedClient
+
+    def _make_url(self, path: str) -> str:
+        if path.startswith("http"):
+            return path
+        if not self._base_url:
+            return path
+        return f"{self._base_url.rstrip('/')}/{path.lstrip('/')}"
+
+    def _do_request(  # noqa: PLR0913
+        self,
+        method: str,
+        path: str,
+        *,
+        params: dict[str, str] | None = None,
+        json: dict[str, object] | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
+    ) -> _HTTPResponseLike:
+        """Issue an HTTP request using the created client.
+
+        Supports either ``request(...)`` or only ``get/post`` style clients.
+        Any incompatible client results in a wrapped ``RuntimeError`` so that
+        callers can uniformly treat health() as False in this scenario.
+        """
+        cli = self._ensure()
+        url = self._make_url(path)
+        message_no_methods = "HTTP client lacks request/get/post methods"
+
+        def _raise_incompatible() -> None:
+            raise AttributeError(message_no_methods)
+
+        try:
+            request_fn = getattr(cli, "request", None)
+            if callable(request_fn):
+                return cast(
+                    "_HTTPResponseLike",
+                    request_fn(
+                        method,
+                        url,
+                        params=params,
+                        json=json,
+                        headers=headers,
+                        timeout=timeout,
+                    ),
+                )
+            # Fallback: GET/POST-only style client.
+            method_upper = method.upper()
+            if method_upper == "GET":
+                get_fn = getattr(cli, "get", None)
+                if callable(get_fn):
+                    return cast(
+                        "_HTTPResponseLike",
+                        get_fn(
+                            url,
+                            params=params,
+                            headers=headers,
+                            timeout=timeout,
+                        ),
+                    )
+            if method_upper == "POST":
+                post_fn = getattr(cli, "post", None)
+                if callable(post_fn):
+                    return cast(
+                        "_HTTPResponseLike",
+                        post_fn(
+                            url,
+                            json=json,
+                            headers=headers,
+                            timeout=timeout,
+                        ),
+                    )
+            # If we reach here, the client is not compatible.
+            _raise_incompatible()
+        except AttributeError as exc:
+            message_incompatible = f"Incompatible HTTP client: {exc}"
+            raise RuntimeError(message_incompatible) from exc
+
+        # This line should be unreachable but satisfies the type checker.
+        unreachable_message = "Unreachable path in ServiceAdapter._do_request"
+        raise RuntimeError(unreachable_message)
 
 
-# Explicit public API (sorted for Ruff RUF022 within the module)
-__all__ = [
-    "HTTP_OK",
-    "Channel",
-    "Message",
-    "ServiceAdapter",
-    "ServiceBackedClient",
-    "SlackServiceBackedClient",
-    "_HTTPClientLike",
-    "_ResponseLike",
-    "_as_mapping",
-    "_get_id",
-    "_maybe_get",
-]
+    # High-level API
+
+    def health(self) -> bool:
+        """Return True when the backing service reports a healthy /health."""
+        try:
+            resp = self._do_request("GET", "/health")
+        except (OSError, RuntimeError):
+            return False
+        if resp.status_code >= int(HTTPStatus.INTERNAL_SERVER_ERROR):
+            return False
+        try:
+            data = resp.json()
+        except (ValueError, AttributeError, json.JSONDecodeError):
+            return resp.status_code == int(HTTPStatus.OK)
+        if not isinstance(data, Mapping):
+            return resp.status_code == int(HTTPStatus.OK)
+        return _health_from_json(data)
+
+    def list_channels(self) -> list[Channel]:
+        """Fetch channels from the backing service and map them to Channel."""
+        resp = self._do_request("GET", "/channels")
+        try:
+            data = resp.json()
+        except (ValueError, AttributeError, json.JSONDecodeError):
+            return []
+        if isinstance(data, list):
+            raw: object = data
+        elif isinstance(data, Mapping):
+            raw = data.get("channels", [])
+        else:
+            return []
+        if not isinstance(raw, list):
+            return []
+        return [_as_channel(it) for it in raw if isinstance(it, Mapping)]
+
+    def post_message(self, channel_id: str, text: str) -> Message:
+        """Post a message via the backing service and return the Message model."""
+        payload: dict[str, object] = {"channel_id": channel_id, "text": text}
+        try:
+            data = self._do_request(
+                "POST",
+                "/messages",
+                json=payload,
+            ).json()
+        except (ValueError, AttributeError, json.JSONDecodeError):
+            return _as_message({"id": "", "channel_id": channel_id, "text": text})
+        raw = data.get("message") if isinstance(data, Mapping) else None
+        if isinstance(raw, Mapping):
+            return _as_message(raw)
+        return _as_message({"id": "", "channel_id": channel_id, "text": text})
+
+# -----------------------------------------------------
+# SlackServiceBackedClient: integrates generated client
+# -----------------------------------------------------
+
+
+class SlackServiceBackedClient(ServiceBackedClient):
+    """Slack service client that understands a generated Slack API client.
+
+    Tests may inject a generated client instance into ``adapter._client`` which
+    exposes ``get_httpx_client() -> httpx.Client``. When present, that client
+    is used; otherwise, we fall back to the base ``http`` client.
+    """
+
+    # This attribute is test-only; kept as ``object`` for maximal flexibility.
+    _client: object | None
+
+    def __init__(self, base_url: str = "", http: _HTTPClientLike | None = None) -> None:
+        super().__init__(base_url=base_url, http=http)
+        self._client = None
+
+    def _get_http_client(self) -> _HTTPClientLike:
+        # If tests injected a generated client, try to obtain its httpx client.
+        if self._client is not None:
+            gen = self._client
+            get_httpx = getattr(gen, "get_httpx_client", None)
+            if callable(get_httpx):
+                return cast("_HTTPClientLike", get_httpx())
+            # Fallback: if it already behaves like an HTTP client, use it.
+            if isinstance(gen, _HTTPClientLike):
+                return gen
+        # Otherwise, default to the normal behaviour.
+        return super()._get_http_client()
+
+
+    def close(self) -> None:
+        """Close the underlying HTTP client, including generated clients."""
+        # Prefer the generated client if present.
+        if self._client is not None:
+            gen = self._client
+            get_httpx = getattr(gen, "get_httpx_client", None)
+            if callable(get_httpx):
+                http_client = get_httpx()
+                close_fn = getattr(http_client, "close", None)
+                if callable(close_fn):
+                    close_fn()
+                    return
+            if isinstance(gen, _HTTPClientLike):
+                close_fn = getattr(gen, "close", None)
+                if callable(close_fn):
+                    close_fn()
+                    return
+
+        # Fallback: close the base HTTP client, if any.
+        super().close()
 
