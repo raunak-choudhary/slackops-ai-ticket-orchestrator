@@ -1,3 +1,7 @@
+"""Extra coverage tests for ServiceBackedClient and SlackServiceBackedClient."""
+
+# ruff: noqa: S101
+
 from __future__ import annotations
 
 from slack_adapter import (  # type: ignore[import]
