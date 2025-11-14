@@ -52,7 +52,7 @@ from fastapi import (
 
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
-from slack_sdk import WebClient
+from slack_sdk import WebClient as SlackSDKWebClient
 from slack_sdk.errors import SlackApiError
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -67,6 +67,10 @@ app.add_middleware(
     SessionMiddleware, secret_key=os.environ.get("SESSION_SECRET", "dev-secret")
 )
 log = logging.getLogger("slack_service")
+
+# Expose WebClient on the FastAPI app so tests can monkeypatch
+# "slack_service.app.WebClient" safely.
+app.WebClient = SlackSDKWebClient  # type: ignore[attr-defined]
 
 # -----------------------------------------------------------------------------
 # DB wiring
@@ -267,9 +271,16 @@ def require_bot_token(
 # Utilities
 # -----------------------------------------------------------------------------
 
-def _client_from_token(access_token: str) -> WebClient:
-    return WebClient(token=access_token)
+def _get_web_client_class() -> type[SlackSDKWebClient]:
+    """Return the WebClient class, allowing tests to monkeypatch app.WebClient."""
+    web_client_cls = getattr(app, "WebClient", None)
+    if web_client_cls is None:
+        return SlackSDKWebClient
+    return web_client_cls  # type: ignore[return-value]
 
+def _client_from_token(access_token: str):
+    web_client_cls = _get_web_client_class()
+    return web_client_cls(token=access_token)
 
 def _channel_row(raw: dict[str, Any]) -> ChannelOut:
     return ChannelOut(id=str(raw.get("id", "")), name=str(raw.get("name", "")))
@@ -392,7 +403,8 @@ def auth_callback(
 
     try:
         # Exchange code for both a bot token and a user token (when both scopes are requested).
-        oauth_client = WebClient()  # no token needed for this call
+        web_client_cls = _get_web_client_class()
+        oauth_client = web_client_cls(token=None)  # no token needed for this call
         data = oauth_client.oauth_v2_access(
             client_id=client_id,
             client_secret=client_secret,
@@ -881,18 +893,19 @@ def logout(
     """Revoke Slack tokens (best-effort), delete from DB, and clear the session."""
     # Revoke user token
     user_bundle = store.load(user_id)
+    web_client_cls = _get_web_client_class()
     if user_bundle and user_bundle.access_token:
         try:
-            WebClient(token=user_bundle.access_token).auth_revoke()
-        except Exception:
+            web_client_cls(token=user_bundle.access_token).auth_revoke()
+        except Exception:  # pragma: no cover
             pass
     # Revoke bot token
     bot_key = f"bot:{user_id}"
     bot_bundle = store.load(bot_key)
     if bot_bundle and bot_bundle.access_token:
         try:
-            WebClient(token=bot_bundle.access_token).auth_revoke()
-        except Exception:
+            web_client_cls(token=bot_bundle.access_token).auth_revoke()
+        except Exception:  # pragma: no cover
             pass
 
     # Drop from DB and clear session

@@ -74,3 +74,48 @@ def test_exchange_code_for_tokens_success(monkeypatch: pytest.MonkeyPatch) -> No
     result = asyncio.run(exchange_code_for_tokens("the-code", redirect_uri=None))
     assert getattr(result, "access_token", "") == "xoxb-abc"
     assert getattr(result, "token_type", "") == "Bearer"
+
+def test_exchange_code_for_tokens_error_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Provide required env variables
+    monkeypatch.setenv("SLACK_CLIENT_ID", "CID123")
+    monkeypatch.setenv("SLACK_CLIENT_SECRET", "SECRET456")
+    monkeypatch.setenv("SLACK_REDIRECT_URI", "https://app.example/cb")
+
+    # Dummy httpx AsyncClient that simulates Slack returning ok=False
+    class DummyResp:
+        def __init__(self) -> None:
+            self._payload = {
+                "ok": False,
+                "error": "invalid_code",
+            }
+
+        def raise_for_status(self) -> None:
+            # HTTP-level success, but Slack-level failure
+            return
+
+        def json(self):
+            return self._payload
+
+    class DummyAsyncClient:
+        def __init__(self, *args, **kwargs) -> None:
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def post(self, url, data=None):
+            # Simulate posting to Slack OAuth token endpoint
+            assert "client_id" in data and "client_secret" in data and "code" in data
+            return DummyResp()
+
+    # Inject our dummy httpx module so the inner import in oauth.py uses it
+    dummy_httpx_mod = types.ModuleType("httpx")
+    dummy_httpx_mod.AsyncClient = DummyAsyncClient  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "httpx", dummy_httpx_mod)
+
+    # When Slack says ok=False, we expect some kind of exception
+    with pytest.raises(Exception):
+        asyncio.run(exchange_code_for_tokens("bad-code", redirect_uri=None))
