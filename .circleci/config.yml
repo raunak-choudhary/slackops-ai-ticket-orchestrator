@@ -92,7 +92,7 @@ jobs:
       - run:
           name: Enforce 85% coverage
           command: |
-            python - << 'PY'
+            python - \<< 'PY'
             import os
             import sys
             import xml.etree.ElementTree as ET
@@ -124,7 +124,7 @@ jobs:
       - run:
           name: Import smoke (auto-discovered top-level packages)
           command: |
-            uv run python - << 'PY'
+            uv run python - \<< 'PY'
             import sys
             import pathlib
             import importlib
