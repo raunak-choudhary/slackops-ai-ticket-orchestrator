@@ -1,7 +1,3 @@
-# ruff: noqa: INP001, S101
-
-"""Extra coverage for ServiceBackedClient and SlackServiceBackedClient."""
-
 from __future__ import annotations
 
 from slack_adapter import (  # type: ignore[import]
