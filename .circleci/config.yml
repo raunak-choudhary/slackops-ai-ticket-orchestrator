@@ -38,9 +38,9 @@ jobs:
             pip install uv
             uv --version
       - run:
-          name: Ruff lint (ignore INP001 for tests)
+          name: Ruff lint
           command: |
-            uv run ruff check . --ignore INP001
+            uv run ruff check .
 
   mypy_strict_checks:
     executor: py312
