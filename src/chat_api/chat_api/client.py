@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterator, List
+from typing import List
 from .types import Channel, ChatMessage
 
 

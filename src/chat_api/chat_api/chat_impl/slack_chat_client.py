@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
