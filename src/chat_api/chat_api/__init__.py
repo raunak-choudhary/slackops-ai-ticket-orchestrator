@@ -1,6 +1,4 @@
-from .client import ChatClient
-from .types import Channel, ChatMessage
-from .chat_impl import SlackChatClient
+from .chat_interface import ChatInterface
+from .message import Message
 
-__all__ = ["ChatClient", "Channel", "ChatMessage", "SlackChatClient"]
-
+__all__ = ["ChatInterface", "Message"]
