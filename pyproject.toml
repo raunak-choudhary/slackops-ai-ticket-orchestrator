@@ -1,189 +1,24 @@
-# ---------------- Root Workspace Configuration ----------------
-
-[tool.uv.workspace]
-members = [
-  # HW1: Mail Client
-  "src/email_api",
-  "src/gmail_impl",
-  "src/mail_client_service",
-  "clients/python/mail_client_service_client",
-  "src/mail_client_adapter",
-
-  # HW2: Slack Chat Service
-  "src/slack_api",
-  "src/slack_impl",
-  "src/slack_service",
-  "src/slack_adapter",
-  "clients/python/slack_service_client",
-]
-
-# ---------------- Project Metadata (meta package) ----------------
 [project]
-name = "ospsd-team4-fall2025"
-version = "0.2.0"
-description = "Unified workspace for OSPSD Team 4 — HW1 (Email) + HW2 (Slack Chat Service)"
-readme = "README.md"
-requires-python = ">=3.12"
+name = "slack-ai-service"
+version = "0.1.0"
+description = "Slack AI integration layer for S2"
+requires-python = ">=3.10"
 dependencies = [
-    "python-dotenv>=1.2.1",
-    "slack-sdk>=3.37.0",
-]
-# Intentionally no runtime dependencies at root (per TA guidance).
-
-[tool.uv.sources]
-email-api = { workspace = true }
-gmail-impl = { workspace = true }
-mail-client-service = { workspace = true }
-mail-client-adapter = { workspace = true }
-slack-api = { workspace = true }
-slack-impl = { workspace = true }
-slack-service = { workspace = true }
-slack-adapter = { workspace = true }
-
-# ---------------- Dev Tooling (UV-style) ----------------
-[dependency-groups]
-dev = [
-  "openapi-python-client>=0.27.0",
-  "pytest>=8.4.1",
-  "pytest-cov>=6.2.1",
-  "ruff>=0.12.7",
-  "mypy>=1.10.0",
-  "coverage[toml]>=7.0.0",
-  "httpx>=0.27.0",
-  "types-setuptools",
-  "fastapi>=0.121.1",
-  "uvicorn>=0.38.0",
+  "fastapi",
+  "uvicorn",
+  "pydantic",
+  "requests",
+  "openai",
+  "python-dotenv",
 ]
 
-# ---------------- Ruff (strict + unified) ----------------
-[tool.ruff]
-target-version = "py312"
-line-length = 100
-fix = true
-src = ["src"]
-# exclude noisy cache/metadata paths at repo root
-extend-exclude = [".pytest_cache", "*.egg-info"]
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
-[tool.ruff.lint]
-# TA requirement: keep ALL enabled
-select = ["ALL"]
-# Minimal global ignores for formatter/pydocstyle mutual exclusivities
-ignore = [
-  "COM812",  # Conflicts with Ruff formatter
-  "ISC001",  # Conflicts with Ruff formatter
-  "D203",    # Mutually exclusive with D211
-  "D213",    # Mutually exclusive with D212
-]
+[tool.setuptools]
+package-dir = {"" = "."}
 
-[tool.ruff.lint.isort]
-force-sort-within-sections = true
-known-first-party = [
-  "email_api", "gmail_impl",
-  "slack_api", "slack_impl", "slack_service", "slack_adapter",
-]
-
-[tool.ruff.lint.pydocstyle]
-convention = "google"
-
-# Tests are allowed pragmatic patterns: asserts, minimal typing, relaxed docstrings, etc.
-[tool.ruff.lint.per-file-ignores]
-"src/slack_adapter/tests/*.py" = [
-  "D100","D101","D102","D103","D200","D205",   # docstrings
-  "S101",                                      # plain asserts in tests
-  "PT018",                                     # combined assertions
-  "ANN001","ANN003","ANN201","ANN202","ANN204",# missing annotations
-  "ARG001","ARG002",                           # unused test args
-  "TRY003","EM101","BLE001",                   # exception-msg/test ergonomics
-  "PTH100","PLC0415","RUF012","SLF001","TC001" # misc nits common in tests
-]
-"**/tests/**/conftest.py" = [
-  "D100","I001","PLC0415","PTH100","PTH118","PTH120",
-]
-
-# Example: route file that uses Depends(...) defaults
-"src/mail_client_service/routes/messages.py" = ["B008"]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false
-line-ending = "auto"
-
-# ---------------- MyPy (strict, unified) ----------------
-[tool.mypy]
-python_version = "3.12"
-strict = true
-namespace_packages = true
-explicit_package_bases = true
-warn_unused_configs = true
-warn_return_any = true
-warn_unused_ignores = true
-warn_redundant_casts = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-no_implicit_optional = true
-disallow_any_generics = true
-show_error_codes = true
-
-# IMPORTANT: keep ONLY the top-level src and clients on path to avoid dup modules.
-mypy_path = [
-  "src",
-  "clients",
-  "clients/python",
-]
-
-# Scope analysis to inner package roots (prevents scanning tools/venv, etc.)
-files = [
-  "src/email_api/src",
-  "src/mail_client_adapter/src",
-  "src/slack_api/src",
-  "src/slack_impl/src",
-  "src/slack_service/src",
-  "src/slack_adapter/src",
-  "src/mail_client_service/src",
-]
-
-# Third-party & generated clients: ignore missing stubs
-[[tool.mypy.overrides]]
-module = [
-  "googleapiclient.*",
-  "google_auth_oauthlib.*",
-  "httpx.*",
-  "mail_client_service_client",
-  "mail_client_service_client.*",
-  "slack_chat_service_hw2_client",
-  "slack_chat_service_hw2_client.*",
-  "slack_service_client",
-  "slack_service_client.*",
-]
-ignore_missing_imports = true
-
-# Generated Mail client: ignore typing inside
-[[tool.mypy.overrides]]
-module = ["mail_client_service_client", "mail_client_service_client.*"]
-ignore_errors = true
-
-# Tests: relax typing rules
-[[tool.mypy.overrides]]
-module = [
-  "tests",
-  "email_api.tests", "email_api.tests.*",
-  "mail_client_adapter.tests", "mail_client_adapter.tests.*",
-  "gmail_impl.tests", "gmail_impl.tests.*",
-  "slack_adapter.tests", "slack_adapter.tests.*",
-  "slack_service.tests", "slack_service.tests.*",
-]
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-
-# ---------------- Pytest (root) ----------------
-[tool.pytest.ini_options]
-addopts = "-ra -q"
-testpaths = ["src", "tests"]
-pythonpath = ["src", "clients/python"]
-markers = [
-  "unit: marks tests as unit tests",
-  "integration: marks tests as integration tests",
-  "e2e: marks tests as end-to-end tests",
-  "local_credentials: tests that need locally configured credentials",
-]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["slack_ai_service*"]
