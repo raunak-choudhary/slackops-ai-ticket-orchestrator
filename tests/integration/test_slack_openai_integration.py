@@ -1,8 +1,7 @@
-from chat_api.chat_api.message import Message
 from chat_api.chat_api.chat_interface import ChatInterface
-from ai_impl import OpenAIClient
-from slack_service.ai_router import poll_and_respond_with_ai
 from chat_api.chat_api.message import Message
+from ai_impl.ai_impl.openai_client import OpenAIClient
+from slack_service.ai_router import poll_and_respond_with_ai
 
 
 class ConcreteMessage(Message):
@@ -23,9 +22,14 @@ class ConcreteMessage(Message):
     def sender_id(self) -> str:
         return self._sender_id
 
+
 class FakeChatClient(ChatInterface):
+    """
+    Minimal ChatInterface implementation used only for integration testing.
+    """
+
     def __init__(self):
-        self.sent_messages = []
+        self.sent_messages: list[tuple[str, str]] = []
 
     def send_message(self, channel_id: str, content: str) -> bool:
         self.sent_messages.append((channel_id, content))
@@ -45,10 +49,28 @@ class FakeChatClient(ChatInterface):
 
 
 def test_slack_to_openai_to_slack_flow(monkeypatch):
-    fake_chat = FakeChatClient()
-    ai_client = OpenAIClient()
+    """
+    End-to-end integration test:
+    Chat -> AI -> Chat
 
-    # inject env var safely
+    OpenAI is mocked to ensure:
+    - No real network calls
+    - Test is CI-safe
+    """
+
+    fake_chat = FakeChatClient()
+
+    # Create OpenAIClient instance WITHOUT calling __init__
+    ai_client = OpenAIClient.__new__(OpenAIClient)
+
+    # Mock AI response
+    monkeypatch.setattr(
+        OpenAIClient,
+        "generate_response",
+        lambda *_args, **_kwargs: "Hello! This is a mocked AI response.",
+    )
+
+    # Required by router
     monkeypatch.setenv("SLACK_CHANNEL_ID", "C_TEST")
 
     poll_and_respond_with_ai(
@@ -58,7 +80,8 @@ def test_slack_to_openai_to_slack_flow(monkeypatch):
     )
 
     assert len(fake_chat.sent_messages) == 1
-    channel, content = fake_chat.sent_messages[0]
-    assert channel == "C_TEST"
+    channel_id, content = fake_chat.sent_messages[0]
+
+    assert channel_id == "C_TEST"
     assert isinstance(content, str)
-    assert len(content) > 0
+    assert "mocked" in content

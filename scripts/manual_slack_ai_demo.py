@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from ai_impl import OpenAIClient
 from slack_service.ai_router import poll_and_respond_with_ai
-from chat_api.chat_interface import ChatInterface
-from chat_api.message import Message
+from chat_api import ChatInterface, Message
+
 
 class TerminalMessage(Message):
     def __init__(self, id: str, content: str, sender_id: str) -> None:
@@ -21,13 +23,14 @@ class TerminalMessage(Message):
     def sender_id(self) -> str:
         return self._sender_id
 
+
 class TerminalChatClient(ChatInterface):
     """Minimal chat client for manual terminal testing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.sent_messages: list[str] = []
 
-    def get_messages(self, channel_id: str, limit: int = 10):
+    def get_messages(self, channel_id: str, limit: int = 10) -> list[Message]:
         user_input = input("\nType a Slack message: ")
         return [
             TerminalMessage(
@@ -37,17 +40,19 @@ class TerminalChatClient(ChatInterface):
             )
         ]
 
-    def send_message(self, channel_id: str, content: str):
+    def send_message(self, channel_id: str, content: str) -> bool:
         print("\n🤖 AI Response:")
         print(content)
         self.sent_messages.append(content)
+        return True
 
-    def delete_message(self, channel_id: str, message_id: str) -> None:
+    def delete_message(self, channel_id: str, message_id: str) -> bool:
         # No-op for terminal demo
         print(f"[terminal] delete_message called for {message_id}")
+        return True
 
 
-def main():
+def main() -> None:
     chat_client = TerminalChatClient()
     ai_client = OpenAIClient()
 
@@ -64,4 +69,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

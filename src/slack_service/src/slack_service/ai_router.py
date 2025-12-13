@@ -1,7 +1,7 @@
 import os
 
-from ai_api import AIInterface
-from chat_api.chat_interface import ChatInterface
+from ai_api.ai_api.ai_interface import AIInterface
+from chat_api.chat_api.chat_interface import ChatInterface
 
 
 def route_message_to_ai(

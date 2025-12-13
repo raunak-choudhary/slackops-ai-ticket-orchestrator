@@ -25,6 +25,8 @@ description = "Unified workspace for OSPSD Team 4 — HW1 (Email) + HW2 (Slack C
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "google-generativeai>=0.8.5",
+    "openai>=2.11.0",
     "python-dotenv>=1.2.1",
     "slack-sdk>=3.37.0",
 ]
