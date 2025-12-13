@@ -1,112 +1,224 @@
-# Slack Service Package
+# OSPSD — Homework 3 (Submission 2) Update
+## Standardized Chat + Multi‑AI Integration (Slack, OpenAI, Gemini)
 
-This package exposes the **Slack Chat API** as a **FastAPI microservice**.
-
-It imports the concrete implementation from `slack_impl` and provides
-network-accessible endpoints for:
-
-- `GET /channels` — list all channels
-- `GET /channels/{id}/messages` — retrieve messages in a channel
-- `POST /channels/{id}/messages` — send a new message
-- `DELETE /channels/{id}/messages/{ts}` — delete a message (optional)
-
-Additional Features:
-- `/health` endpoint for CircleCI and Render deployment verification
-- OAuth 2.0 authentication flow endpoints
-- SQLite token store integration for local development
-
-**Deployment:**  
-This service is deployed via Render with automatic build triggers from CircleCI.
-Environment variables (`SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, etc.) are managed securely.
 ---
 
-# HW2 - Slack API Chat Service
+## 1. Repository Purpose (Evaluator‑First Overview)
 
-## Overview
-For Homework 2, our team extended the OSPD architecture to design and deploy a **Slack Chat Service** following the same modular structure as in HW1 — consisting of API, Implementation, FastAPI Service, and Adapter layers. This microservice wraps the official Slack API, exposing endpoints for channels, messages, and authentication via OAuth 2.0.
+This repository demonstrates **Homework 3 – Submission 2** for the **Open Source Product‑Scale Development (OSPSD)** course.
 
-The system achieves **location transparency** through Dependency Injection (DI) across all layers, enabling seamless swapping between local and remote implementations.
+The primary evaluation target for **Submission‑2** is **AI vertical integration**, verified through **integration tests**.
 
-## Core Modules
+**What matters for grading:**
+- Standardized APIs as the single source of truth
+- Clean backend integration (no UI required)
+- Real communication with AI providers
+- Tests that prove the system works end‑to‑end
 
-### 1. slack_api
-- Defines the abstract interface for Slack operations (channels, messages, users).
-- Independent of external Slack SDKs — pure contract definitions.
-- Includes data validation and schema consistency tests.
+No frontend, no hosted deployment, and no real‑time websocket system are required.
 
-### 2. slack_impl
-- Implements the `slack_api` interface.
-- Integrates with the **Slack Web API** and implements a complete **OAuth 2.0 authentication flow**.
-- OAuth tokens are securely stored in a **SQLite database** using a lightweight token store (`token_store.py`).
-- The `slack_client.py` module wraps all core Slack API operations, including:
-  - Listing channels
-  - Fetching messages
-  - Posting messages with sanitization
-  - Health checks and offline fallbacks
+---
 
-### 3. slack_service
-- Built using **FastAPI**, providing network-accessible endpoints:
-  - `GET /channels` — list all available Slack channels.
-  - `GET /channels/{id}/messages` — retrieve messages for a given channel.
-  - `POST /channels/{id}/messages` — send a new message to a Slack channel.
-  - `/health` — operational check for Render and CircleCI builds.
-  - `/auth` and `/callback` — handle OAuth 2.0 flow (user authorization and token exchange).
-- Deployed publicly on Render at:  
-  **[https://ospsd-hw2-final-demo.onrender.com/docs](https://ospsd-hw2-final-demo.onrender.com/docs)**
+## 2. Minimal Context from HW2 (Retained for Continuity)
 
-### 4. slack_adapter
-- Wraps the auto-generated OpenAPI client for the deployed Slack service.
-- Implements the same interface as `slack_api`, providing transparent remote usage.
-- Enables `main.py` to switch between local (impl) and remote (adapter) modes via DI.
+Homework 2 introduced the **Chat vertical**, using **Slack** as the platform.
 
-## Testing and Coverage
-Comprehensive testing was performed across unit, integration, and service layers.  
-Command used:
-```bash
-uv run pytest -q --cov=src --cov-report=xml --junitxml=test-results/junit.xml
+From HW2, the following components are retained and reused:
+
+- **Standardized Chat API (`chat_api`)**
+  - Defines the minimal chat contract:
+    - `send_message`
+    - `get_messages`
+    - `delete_message`
+- **Slack implementation stack**
+  - `slack_api` – low‑level Slack Web API wrapper
+  - `slack_impl` – OAuth, token storage, Slack calls
+  - `slack_adapter` – adapter implementing `ChatInterface`
+  - `slack_service` – FastAPI service (used internally)
+
+HW2 deployment details (Render, OAuth redirect URLs, etc.) are **not required** for HW3 grading and are intentionally de‑emphasized.
+
+Slack is treated purely as a **chat transport**, not a UI.
+
+---
+
+## 3. HW3 Submission‑2 Focus: AI Vertical Integration
+
+Homework 3 (Submission‑2) builds on the Chat vertical by introducing a **standardized AI vertical**.
+
+### Goals Achieved
+- Introduced a **standardized AI API**
+- Implemented **multiple AI providers**
+- Proved provider‑agnostic routing
+- Verified real integrations using tests
+
+The resulting backend flow is:
+
 ```
-**Results:**
-- Total tests executed: 69 (with 2 email-related tests skipped)
-- Total coverage: **90.06%**
-- Coverage threshold (85%) successfully met.
-- Slack tests include:
-  - `src/slack_api/tests/` → Contract & Type Validation Tests
-  - `src/slack_impl/tests/` → OAuth, Token Store, Health, Channel, and Post Message tests
-  - `src/slack_service/tests/` → FastAPI Endpoint Tests
-  - `src/slack_adapter/tests/` → Integration & Adapter Contract Tests
+Chat → AI → Chat
+```
 
-## CI/CD Pipeline (CircleCI)
-A fully automated **9-job CircleCI pipeline** ensures reliability and maintainability.  
-Each job passes successfully (9/9 green checks).
+Slack acts as the interface.  
+AI providers are interchangeable.
 
-**Pipeline Jobs:**
-1. `precheck` — initial environment setup
-2. `ruff_lint` — style and formatting check using Ruff
-3. `mypy_strict_checks` — strict type checking for all Slack packages
-4. `pytest_coverage` — unit and integration tests with 85%+ coverage enforcement
-5. `build` — packaging and dependency validation via `uv`
-6. `report_summary` — collect test artifacts and coverage XML
-7. `deployment_health_check` — validates `/health` endpoint returns 200 OK post-deploy
-8. `circleci_test` — consolidated CI sanity check
-9. `auto_deploy_render` — triggers automatic deployment to Render
+---
 
-## Deployment (Render)
-The service is deployed on Render with the following configuration:
-- **Platform:** Render Web Service (Python 3.12.12 + uv)
-- **URL:** [https://ospsd-hw2-final-demo.onrender.com/docs](https://ospsd-hw2-final-demo.onrender.com/docs)
-- **Environment Variables:** managed via Render Secrets (e.g., `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`)
-- **Database:** Local SQLite initialized via `scripts/sqlite_init.sql`
-- **Health Endpoint:** `/health` returns 200 OK
+## 4. Architecture Overview
 
-## Dependency Injection (DI) Validation
-Each Slack component was verified for correct DI linkage:
-- `slack_api` ↔ `slack_impl` ↔ `slack_service` ↔ `slack_adapter`
-- The same contract class can be injected into `main.py` for both local (impl) and remote (adapter) modes.
-- DI verification confirmed **green** across all modules.
+### Chat Vertical
+- `chat_api` – standardized chat contract
+- `slack_api` – Slack platform client
+- `slack_impl` – Slack OAuth & Web API implementation
+- `slack_adapter` – implements `ChatInterface`
+- `slack_service` – routing & polling logic
 
-## Summary
-✅ Slack Chat Service implemented and deployed successfully.  
-✅ OAuth 2.0 integrated with secure SQLite token management.  
-✅ Ruff, MyPy strict, and Pytest (90.06% coverage) passed.  
-✅ 9/9 CircleCI jobs successful.  
-✅ Public deployment verified on Render with operational `/health` endpoint.
+### AI Vertical (HW3)
+- `ai_api` – standardized AI interface (`AIInterface`)
+- `ai_impl`
+  - `OpenAIClient`
+  - `GeminiClient`
+
+### Integration Layer
+- `slack_service/ai_router.py`
+  - Polls messages
+  - Extracts AI commands
+  - Invokes `AIInterface`
+  - Sends response back via `ChatInterface`
+
+The router contains **no provider‑specific logic**.
+
+---
+
+## 5. Installation Instructions (For TAs / Evaluators)
+
+### 5.1 Requirements
+- Python **3.12+**
+- Dependency manager: **uv**
+
+Install `uv` if needed:
+```bash
+pip install uv
+```
+
+### 5.2 Install All Dependencies
+From the repository root:
+```bash
+uv sync
+```
+
+This installs all internal packages in editable mode:
+- chat_api
+- slack_api
+- slack_impl
+- slack_adapter
+- slack_service
+- ai_api
+- ai_impl
+
+---
+
+## 6. AI SDK Dependencies
+
+Real integration tests require the following SDKs (already included via `uv`):
+
+| Provider | SDK |
+|--------|-----|
+| OpenAI | `openai` |
+| Gemini | `google-generativeai` |
+
+---
+
+## 7. Environment Variables
+
+Create a `.env` file at the repository root:
+
+```env
+OPENAI_API_KEY=sk-...
+GEMINI_API_KEY=AIza...
+SLACK_CHANNEL_ID=C...
+```
+
+**Important notes:**
+- Secrets are never committed
+- Tests automatically **skip** if keys are missing
+- This behavior is intentional and CI‑safe
+
+To export locally:
+```bash
+export $(grep -v '^#' .env | xargs)
+```
+
+---
+
+## 8. HW3 Integration Tests (Primary Grading Artifact)
+
+### 8.1 Run All Tests
+```bash
+uv run pytest
+```
+
+Expected behavior:
+- Chat API tests pass
+- AI provider tests pass **or skip safely**
+- No failures due to missing secrets
+
+---
+
+### 8.2 Chat API Integration Tests
+- `test_chat_send_message.py`
+- `test_chat_get_messages.py`
+- `test_chat_delete_message.py`
+
+Each standardized chat method is tested independently.
+
+---
+
+### 8.3 Real AI Provider Integration Tests
+
+**OpenAI**
+```bash
+uv run pytest tests/integration/test_openai_real_integration.py
+```
+
+**Gemini**
+```bash
+uv run pytest tests/integration/test_gemini_real_integration.py
+```
+
+Both tests:
+- Call the provider for real
+- Skip automatically if API keys are missing
+- Are safe for CI execution
+
+---
+
+### 8.4 Slack → AI → Chat Integration
+```bash
+uv run pytest tests/integration/test_slack_openai_integration.py
+```
+
+This test proves:
+- Polling‑based chat retrieval
+- AI invocation
+- Response routing back to chat
+
+---
+
+### 8.5 AI Provider Substitution Test (Best‑Attempt)
+```bash
+uv run pytest tests/integration/test_slack_gemini_provider_selection.py
+```
+
+This test proves:
+- `ai_router` depends only on `AIInterface`
+- Gemini can replace OpenAI without router changes
+
+---
+## 9. Notes for Evaluators
+
+- Slack is the interaction surface
+- Polling is used (explicitly approved by TA)
+- No frontend or deployment required
+- Integration tests are the authoritative proof
+
+---
