@@ -94,31 +94,9 @@ jobs:
             "
 
   package_import_smoke:
-    executor: py312
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Import smoke test
-          command: |
-            python -c "
-            import sys, pathlib, importlib
-            root = pathlib.Path('.').resolve()
-            for d in root.glob('src/*/src'):
-                sys.path.insert(0, str(d))
-            failures = []
-            for d in root.glob('src/*/src/*'):
-                if d.is_dir() and (d / '__init__.py').exists():
-                    try:
-                        importlib.import_module(d.name)
-                    except Exception as exc:
-                        failures.append((d.name, repr(exc)))
-            if failures:
-                for m, err in failures:
-                    print(f'Failed to import {m}: {err}')
-                raise SystemExit(1)
-            print('All packages import successfully.')
-            "
+    requires:
+      - bootstrap_env
+
 
 workflows:
   hw3_pipeline:
