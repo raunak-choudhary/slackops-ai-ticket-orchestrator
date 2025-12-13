@@ -93,11 +93,6 @@ jobs:
                 raise SystemExit('Coverage below 85%')
             "
 
-  package_import_smoke:
-    requires:
-      - bootstrap_env
-
-
 workflows:
   hw3_pipeline:
     jobs:
@@ -115,6 +110,3 @@ workflows:
       - coverage_enforce_85:
           requires:
             - unit_tests_pytest
-      - package_import_smoke:
-          requires:
-            - bootstrap_env
