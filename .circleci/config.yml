@@ -32,22 +32,15 @@ jobs:
       - run:
           name: Verify required environment variables
           command: |
-            python - << 'PY'
+            python -c "
             import os, sys
-
-            required = [
-                "OPENAI_API_KEY",
-                "GEMINI_API_KEY",
-                "SLACK_CHANNEL_ID",
-            ]
-
+            required = ['OPENAI_API_KEY', 'GEMINI_API_KEY', 'SLACK_CHANNEL_ID']
             missing = [v for v in required if not os.getenv(v)]
             if missing:
-                print("Missing required environment variables:", missing)
+                print('Missing required environment variables:', missing)
                 sys.exit(1)
-
-            print("Environment contract satisfied:", required)
-            PY
+            print('Environment contract satisfied:', required)
+            "
 
   ruff_lint:
     executor: py312
@@ -91,17 +84,14 @@ jobs:
       - run:
           name: Enforce 85% coverage
           command: |
-            python - << 'PY'
+            python -c "
             import xml.etree.ElementTree as ET
-
-            tree = ET.parse("coverage.xml")
-            coverage = float(tree.getroot().attrib["line-rate"]) * 100
-
-            print(f"Total coverage: {coverage:.2f}%")
-
+            tree = ET.parse('coverage.xml')
+            coverage = float(tree.getroot().attrib['line-rate']) * 100
+            print(f'Total coverage: {coverage:.2f}%')
             if coverage < 85.0:
-                raise SystemExit("Coverage below 85%")
-            PY
+                raise SystemExit('Coverage below 85%')
+            "
 
   package_import_smoke:
     executor: py312
@@ -111,30 +101,24 @@ jobs:
       - run:
           name: Import smoke test
           command: |
-            uv run python - << 'PY'
-            import sys
-            import pathlib
-            import importlib
-
-            root = pathlib.Path(".").resolve()
-            for d in root.glob("src/*/src"):
+            python -c "
+            import sys, pathlib, importlib
+            root = pathlib.Path('.').resolve()
+            for d in root.glob('src/*/src'):
                 sys.path.insert(0, str(d))
-
             failures = []
-            for d in root.glob("src/*/src/*"):
-                if d.is_dir() and (d / "__init__.py").exists():
+            for d in root.glob('src/*/src/*'):
+                if d.is_dir() and (d / '__init__.py').exists():
                     try:
                         importlib.import_module(d.name)
                     except Exception as exc:
                         failures.append((d.name, repr(exc)))
-
             if failures:
                 for m, err in failures:
-                    print(f"Failed to import {m}: {err}")
+                    print(f'Failed to import {m}: {err}')
                 raise SystemExit(1)
-
-            print("All packages import successfully.")
-            PY
+            print('All packages import successfully.')
+            "
 
 workflows:
   hw3_pipeline:
