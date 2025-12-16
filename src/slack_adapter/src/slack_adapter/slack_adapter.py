@@ -76,7 +76,7 @@ class SlackServiceClient(ChatInterface):
                 limit=limit,
             )
 
-            if not isinstance(response, MessagesResponse):
+            if response is None or not hasattr(response, "messages"):
                 return []
 
             return [
@@ -90,6 +90,7 @@ class SlackServiceClient(ChatInterface):
 
         except Exception as exc:
             raise ConnectionError(f"Failed to fetch messages: {exc}") from exc
+
 
     def delete_message(self, channel_id: str, message_id: str) -> bool:
         try:
