@@ -18,7 +18,6 @@ from slack_service_api_client.api.default import (
 )
 
 from slack_service_api_client.models.post_message_in import PostMessageIn
-from slack_service_api_client.models.messages_response import MessagesResponse
 from slack_service_api_client.models.members_response import MembersResponse
 
 
