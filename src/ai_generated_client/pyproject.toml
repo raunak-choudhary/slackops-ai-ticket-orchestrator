@@ -1,0 +1,22 @@
+[project]
+name = "ai-generated-client"
+version = "0.1.0"
+description = "OpenAPI-generated client for the AI service"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+
+dependencies = [
+  "httpx>=0.27.0",
+  "pydantic>=2.7.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ai_service_api_client"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
