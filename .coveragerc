@@ -1,8 +1,22 @@
 [run]
 source = src
+branch = True
+
 omit =
+    # Unit tests are never counted toward coverage
     src/**/tests/*
+
+    # Package markers
     **/__init__.py
+
+    # Auto-generated OpenAPI clients (TA-excluded)
+    src/slack_generated_client/*
+    src/slack_generated_client/**
+
+    # Virtualenv / tooling noise
+    */.venv/*
+    */site-packages/*
+    */__pycache__/*
 
 [report]
 show_missing = True

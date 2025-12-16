@@ -1,5 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "mail_client_service_client"
+name = "mail-client-service-client"
 version = "0.1.0"
 requires-python = ">=3.12"
-description = "Auto-generated client from OpenAPI spec"
+description = "Auto-generated client for Mail Client Service"
+
+[tool.setuptools]
+# Flat-layout generated client:
+# - client.py, errors.py, types.py are modules
+# - api/, models/ are packages
+package-dir = {"" = "."}
+
+py-modules = [
+  "client",
+  "errors",
+  "types",
+]
+
+packages = [
+  "api",
+  "api.messages",
+  "models",
+]
