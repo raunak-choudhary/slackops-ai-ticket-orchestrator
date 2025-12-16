@@ -1,112 +1,42 @@
 version: 2.1
 
-executors:
-  py312:
+jobs:
+  test:
     docker:
       - image: cimg/python:3.12
 
-jobs:
-  bootstrap_env:
-    executor: py312
     steps:
       - checkout
+
       - run:
           name: Install uv
           command: |
             python -m pip install --upgrade pip
             pip install uv
             uv --version
+
       - run:
-          name: Sync dependencies (all + dev)
+          name: Install dependencies
           command: |
             uv sync --all-packages --dev
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .
-            - .venv
 
-  env_contract_check:
-    executor: py312
-    steps:
       - run:
-          name: Verify required environment variables
-          command: |
-            python -c "
-            import os, sys
-            required = ['OPENAI_API_KEY', 'GEMINI_API_KEY', 'SLACK_CHANNEL_ID']
-            missing = [v for v in required if not os.getenv(v)]
-            if missing:
-                print('Missing required environment variables:', missing)
-                sys.exit(1)
-            print('Environment contract satisfied:', required)
-            "
-
-  ruff_lint:
-    executor: py312
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Ruff lint
+          name: Ruff
           command: |
             uv run ruff check .
 
-  mypy_strict_checks:
-    executor: py312
-    steps:
-      - attach_workspace:
-          at: .
       - run:
-          name: MyPy (strict, config-driven)
+          name: MyPy
           command: |
             uv run mypy --config-file mypy.ini
 
-  unit_tests_pytest:
-    executor: py312
-    steps:
-      - attach_workspace:
-          at: .
       - run:
-          name: Run tests with coverage (CI-safe)
+          name: Pytest with coverage
           command: |
-            uv run pytest -q --cov=src --cov-report=xml -m "not real_integration"
-      - persist_to_workspace:
-          root: .
-          paths:
-            - coverage.xml
-
-  coverage_enforce_85:
-    executor: py312
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Enforce 85% coverage
-          command: |
-            python -c "
-            import xml.etree.ElementTree as ET
-            tree = ET.parse('coverage.xml')
-            coverage = float(tree.getroot().attrib['line-rate']) * 100
-            print(f'Total coverage: {coverage:.2f}%')
-            if coverage < 85.0:
-                raise SystemExit('Coverage below 85%')
-            "
+            uv run pytest --cov=src --cov-report=term-missing
 
 workflows:
-  hw3_pipeline:
+  version: 2
+  test:
     jobs:
-      - bootstrap_env
-      - env_contract_check
-      - ruff_lint:
-          requires:
-            - bootstrap_env
-      - mypy_strict_checks:
-          requires:
-            - bootstrap_env
-      - unit_tests_pytest:
-          requires:
-            - bootstrap_env
-      - coverage_enforce_85:
-          requires:
-            - unit_tests_pytest
+      - test

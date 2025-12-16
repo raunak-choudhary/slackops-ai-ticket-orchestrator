@@ -1,4 +1,5 @@
 # .ruff.toml
 extend-exclude = [
     "clients/python/mail_client_service_client",
+    "src/slack_generated_client/src/slack_service_api_client",
 ]
