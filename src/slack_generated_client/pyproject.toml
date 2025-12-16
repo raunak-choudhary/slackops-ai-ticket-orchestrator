@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "slack-generated-client"
+version = "0.1.0"
+description = "Auto-generated client for Slack service"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.25.0",
+    "attrs>=23.0.0",
+    "python-dateutil>=2.8.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/slack_service_api_client"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

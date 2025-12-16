@@ -1,0 +1,405 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Slack Service API",
+    "description": "HTTP service exposing chat operations via ChatInterface",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Health check endpoint for the Slack service.\n\nThis endpoint is used by deployment systems and tests to verify\nthat the service process is running and responsive.\n\nReturns:\n    HealthResponse indicating service health.",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/channels/{channel_id}/messages": {
+      "get": {
+        "summary": "List Channel Messages",
+        "description": "Retrieve messages from a channel.\n\nThis endpoint fetches messages using the abstract chat interface.\nThe underlying provider implementation is injected via\n`slack_impl` at import time.\n\nArgs:\n    channel_id: Identifier of the channel to read messages from.\n    limit: Maximum number of messages to return (1\u2013100).\n\nReturns:\n    MessagesResponse containing the list of messages.\n\nRaises:\n    HTTPException: If message retrieval fails.",
+        "operationId": "list_channel_messages_channels__channel_id__messages_get",
+        "parameters": [
+          {
+            "name": "channel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Channel Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Post Channel Message",
+        "description": "Post a message to a channel.\n\nThis endpoint sends a message using the abstract chat interface.\nThe service does not know or care which provider is used.\n\nArgs:\n    channel_id: Identifier of the channel.\n    payload: Message content payload.\n\nReturns:\n    PostMessageResponse containing the posted message.\n\nRaises:\n    HTTPException: If sending the message fails.",
+        "operationId": "post_channel_message_channels__channel_id__messages_post",
+        "parameters": [
+          {
+            "name": "channel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Channel Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostMessageIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostMessageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/channels/{channel_id}/messages/{message_id}": {
+      "delete": {
+        "summary": "Delete Channel Message",
+        "description": "Delete a message from a channel.\n\nThis endpoint deletes a message via the abstract chat interface.\n\nArgs:\n    channel_id: Identifier of the channel.\n    message_id: Identifier of the message to delete.\n\nReturns:\n    A confirmation dictionary.\n\nRaises:\n    HTTPException: If deletion fails.",
+        "operationId": "delete_channel_message_channels__channel_id__messages__message_id__delete",
+        "parameters": [
+          {
+            "name": "channel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Channel Id"
+            }
+          },
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Message Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Delete Channel Message Channels  Channel Id  Messages  Message Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/channels/{channel_id}/members": {
+      "get": {
+        "summary": "List Channel Members",
+        "description": "List members of a channel.\n\nNOTE:\nThis endpoint assumes that the injected chat client provides\na provider-specific extension for retrieving channel members.\nIf unavailable, this method should be implemented in `slack_impl`\nand exposed via the injected client.\n\nArgs:\n    channel_id: Identifier of the channel.\n\nReturns:\n    MembersResponse containing member identifiers.\n\nRaises:\n    HTTPException: If member listing fails.",
+        "operationId": "list_channel_members_channels__channel_id__members_get",
+        "parameters": [
+          {
+            "name": "channel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Channel Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembersResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "title": "HealthResponse",
+        "description": "Response payload for the health check endpoint.\n\nAttributes:\n    ok: Indicates whether the service is healthy."
+      },
+      "MembersResponse": {
+        "properties": {
+          "members": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Members"
+          }
+        },
+        "type": "object",
+        "required": [
+          "members"
+        ],
+        "title": "MembersResponse",
+        "description": "Response payload for listing members of a channel.\n\nAttributes:\n    members: List of member identifiers."
+      },
+      "MessageOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Message identifier"
+          },
+          "channel_id": {
+            "type": "string",
+            "title": "Channel Id",
+            "description": "Channel identifier"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "description": "Message content"
+          },
+          "sender_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sender Id",
+            "description": "Sender identifier"
+          },
+          "ts": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ts",
+            "description": "Timestamp-like string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "channel_id",
+          "text"
+        ],
+        "title": "MessageOut",
+        "description": "Public representation of a message returned by the service.\n\nAttributes:\n    id: Unique message identifier (provider-defined).\n    channel_id: Channel identifier where the message belongs.\n    text: Message content as plain text.\n    sender_id: Identifier of the sender when known.\n    ts: Optional timestamp-like string for UI compatibility. If the backing\n        provider does not supply one, the service may synthesize it."
+      },
+      "MessagesResponse": {
+        "properties": {
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/MessageOut"
+            },
+            "type": "array",
+            "title": "Messages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "messages"
+        ],
+        "title": "MessagesResponse",
+        "description": "Wrapper response used when listing channel messages.\n\nAttributes:\n    messages: List of messages in the channel."
+      },
+      "PostMessageIn": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text",
+            "description": "Message content to send"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "PostMessageIn",
+        "description": "Request payload for posting a message to a channel.\n\nAttributes:\n    text: Message content to send."
+      },
+      "PostMessageResponse": {
+        "properties": {
+          "message": {
+            "$ref": "#/components/schemas/MessageOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "PostMessageResponse",
+        "description": "Response payload for posting a message to a channel.\n\nAttributes:\n    message: The posted message as returned by the service."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

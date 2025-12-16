@@ -1,64 +1,53 @@
 # Slack Service
 
-This package exposes a **FastAPI-based Slack Chat Service** for Homework 2 of the Open Source Software Product Development course (OSPSD).  
-It serves as a microservice that wraps the core Slack implementation (`slack_impl`) and the abstract API contract (`slack_api`).
+FastAPI-based HTTP service that exposes chat operations through the abstract
+`chat_api` interface using dependency injection.
 
-## 📘 Overview
+## Overview
 
-The service provides REST endpoints that mirror the `ChatClient` interface defined in `slack_api`.  
-It integrates with the `SlackClient` from `slack_impl` using dependency injection and exposes standard JSON responses.
+This service acts as a server-side adapter. It translates HTTP requests into
+calls against the provider-agnostic `ChatInterface`, with the concrete Slack
+implementation injected at import time.
 
-## 🧩 Key Features
+The service contains no Slack SDK logic, OAuth handling, token storage, or AI
+features. All provider-specific behavior lives in `slack_impl`.
 
-- `GET /health` — health check endpoint (returns `{ "ok": true }`)
-- `GET /channels` — returns two deterministic channels (`C001`, `C002`)
-- `POST /messages` — posts a message with `channel_id` and `text`, returning a JSON message object with a `ts`
-- `GET /openapi.json` — serves the auto-generated OpenAPI schema for client generation
+## Architecture
 
-## 🧠 Dependencies
+- chat_api: Interface layer (contracts only)
+- slack_impl: Slack provider implementation (injected)
+- slack_service: HTTP adapter (this component)
 
-- **fastapi >= 0.115.0**
-- **pydantic >= 2.7.0**
-- **typing-extensions >= 4.9.0**
-- Depends on local editable installs of:
-  - `slack_api`
-  - `slack_impl`
+## Key Principles
 
-## ⚙️ Development Setup
+- Provider-agnostic service layer
+- Dependency injection via import side effects
+- Thin, deterministic FastAPI routes
+- Strict typing and clean separation of concerns
+- TA-aligned structure and conventions
 
-From the repo root (not inside `src/`):
+## Running Locally
 
-```bash
-python -m pip install -e ./src/slack_api
-python -m pip install -e ./src/slack_impl
-python -m pip install -e ./src/slack_service
-```
-
-Then verify everything works:
+From the repository root:
 
 ```bash
-python -m ruff check --fix src/slack_service
-python -m mypy src/slack_service
-python -m pytest -q src/slack_service/tests
+uv sync --all-packages --dev
+uv run python -m slack_service.main
 ```
 
-## 🧪 Tests
+The service will be available at:
 
-Tests live under `src/slack_service/tests/` and include:
+- http://localhost:8000/docs
+- http://localhost:8000/openapi.json
 
-| Test File | Purpose |
-|------------|----------|
-| `test_health.py` | Checks `/health` returns `{ok: true}` |
-| `test_channels.py` | Validates `/channels` returns two deterministic channels |
-| `test_post_message.py` | Verifies `/messages` correctly returns a timestamped message |
-| `test_openapi.py` | Ensures OpenAPI document exposes the expected paths |
+## Development
 
-All tests should pass with:
+Run tests from the component root:
 
 ```bash
-pytest -q src/slack_service/tests
+pytest
 ```
 
-## 🧾 License
+## Notes
 
-This project is distributed under the **MIT License** as part of the NYU OSPSD course.
+This project is intended for academic use as part of the OSPSD coursework.

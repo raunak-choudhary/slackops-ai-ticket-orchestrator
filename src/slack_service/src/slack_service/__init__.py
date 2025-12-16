@@ -1,5 +1,4 @@
-from __future__ import annotations
+"""Slack service FastAPI application."""
 
-# Re-export FastAPI app for uvicorn convenience, e.g.:
-# uvicorn slack_service.app:app --reload
-from .app import app  # noqa: F401
+# This is a service application, not a library.
+# It's meant to be run directly, not imported.

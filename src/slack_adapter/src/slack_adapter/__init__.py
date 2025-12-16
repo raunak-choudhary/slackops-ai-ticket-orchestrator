@@ -1,22 +1,11 @@
-"""Public API surface for the slack_adapter package."""
+"""
+Slack service-backed adapter injection.
 
-from __future__ import annotations
+Importing this module injects SlackServiceClient
+as the active ChatInterface implementation.
+"""
 
-from slack_api import Channel, Message
+import chat_api
+from slack_adapter.slack_adapter import SlackServiceClient
 
-from .adapter import (
-    ServiceAdapter,
-    ServiceBackedClient,
-    SlackServiceBackedClient,
-    _get_id,
-)
-
-# Explicit public API (sorted for Ruff RUF022)
-__all__ = [
-    "Channel",
-    "Message",
-    "ServiceAdapter",
-    "ServiceBackedClient",
-    "SlackServiceBackedClient",
-    "_get_id",
-]
+chat_api.get_client = lambda: SlackServiceClient()
