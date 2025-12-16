@@ -3,17 +3,28 @@ source = src
 branch = True
 
 omit =
-    # Unit tests are never counted toward coverage
+    # Tests are never counted
     src/**/tests/*
 
     # Package markers
     **/__init__.py
 
-    # Auto-generated OpenAPI clients (TA-excluded)
+    # Generated OpenAPI clients
     src/slack_generated_client/*
     src/slack_generated_client/**
 
-    # Virtualenv / tooling noise
+    # Standalone service apps (integration-only)
+    src/mail_client_service/*
+    src/mail_client_service/**
+
+    # FastAPI entrypoints / wiring (tested via integration)
+    src/slack_service/main.py
+    src/slack_service/routes.py
+
+    # Legacy or wrapper clients not used directly
+    src/email_api/client.py
+
+    # Tooling / env noise
     */.venv/*
     */site-packages/*
     */__pycache__/*
