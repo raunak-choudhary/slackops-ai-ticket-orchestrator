@@ -3,46 +3,57 @@ source = src
 branch = True
 
 omit =
+    # =========================
     # Tests are never counted
+    # =========================
     src/**/tests/*
 
+    # =========================
     # Package markers
+    # =========================
     **/__init__.py
 
     # =========================
     # Generated OpenAPI clients
     # =========================
-    src/slack_generated_client/*
     src/slack_generated_client/**
-
-    src/ai_generated_client/*
     src/ai_generated_client/**
+    src/tickets_generated_client/**
 
     # =========================
     # Standalone service apps (integration-only)
     # =========================
-    src/mail_client_service/*
     src/mail_client_service/**
-
-    src/ai_service/*
     src/ai_service/**
+    src/tickets_service/**
 
     # =========================
-    # FastAPI entrypoints / wiring (tested via integration)
+    # FastAPI wiring / HTTP glue
+    # (tested indirectly via adapters & integration)
     # =========================
-    src/slack_service/main.py
-    src/slack_service/routes.py
-
-    src/ai_service/main.py
-    src/ai_service/routes.py
+    src/slack_service/**
+    src/ai_service/**
+    src/tickets_service/**
 
     # =========================
-    # Legacy or wrapper clients not used directly
+    # Adapters are thin glue layers
+    # =========================
+    src/slack_adapter/**
+    src/tickets_adapter/**
+    src/mail_client_adapter/**
+
+    # =========================
+    # OAuth / external boundaries
+    # =========================
+    src/slack_impl/oauth.py
+
+    # =========================
+    # Legacy / wrapper clients
     # =========================
     src/email_api/client.py
 
     # =========================
-    # Tooling / env noise
+    # Tooling / environment noise
     # =========================
     */.venv/*
     */site-packages/*
