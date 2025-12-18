@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Optional
+import os
 
 import httpx
 
@@ -43,7 +44,14 @@ def sanitize_text(text: str, max_len: int = 1000) -> str:
 
 
 class SlackClient(ChatInterface):
-    """Slack implementation of the ChatInterface protocol."""
+    """
+    Slack provider implementation for ChatInterface.
+
+    Responsibilities:
+    - Call Slack Web API endpoints for chat operations
+    - Validate Slack responses and raise on failures
+    - Emit logs for observability
+    """
 
     def __init__(
         self,
@@ -51,6 +59,12 @@ class SlackClient(ChatInterface):
         token: Optional[str] = None,
         http: Optional[httpx.Client] = None,
     ) -> None:
+        # Allow explicit injection for tests; otherwise read from environment.
+        if base_url is None:
+            base_url = os.getenv("SLACK_API_BASE_URL")
+        if token is None:
+            token = os.getenv("SLACK_BOT_TOKEN")
+
         self._offline = not (base_url and token)
         self._base_url = (base_url or "").rstrip("/")
         self._token = token or ""
@@ -65,25 +79,25 @@ class SlackClient(ChatInterface):
                 },
             )
 
+    def _require_online(self, operation: str) -> None:
+        """Ensure the client has required credentials for live Slack operations."""
+        if self._offline:
+            raise RuntimeError(
+                f"Slack client is not configured for live requests: {operation}. "
+                "Missing SLACK_API_BASE_URL and/or SLACK_BOT_TOKEN."
+            )
+
     def send_message(self, channel_id: str, content: str) -> bool:
         """Send a message to a Slack channel."""
         text = sanitize_text(content)
+        self._require_online("send_message")
 
-        if self._offline:
-            print("SLACK OFFLINE MODE — message skipped")
-            return True
-
-        payload = {
-            "channel": channel_id,
-            "text": text,
-        }
-
+        payload = {"channel": channel_id, "text": text}
         print("SLACK POST PAYLOAD:", payload)
 
         try:
             assert self._http is not None
             resp = self._http.post("/chat.postMessage", json=payload)
-
             print("SLACK STATUS:", resp.status_code)
             print("SLACK RESPONSE:", resp.json())
 
@@ -102,7 +116,9 @@ class SlackClient(ChatInterface):
             raise RuntimeError(f"Failed to send Slack message: {exc}") from exc
 
     def get_messages(self, channel_id: str, limit: int = 10) -> list[Message]:
-        if self._offline or limit <= 0:
+        """Retrieve messages from a Slack channel."""
+        self._require_online("get_messages")
+        if limit <= 0:
             return []
 
         messages: list[Message] = []
@@ -115,6 +131,9 @@ class SlackClient(ChatInterface):
             )
             resp.raise_for_status()
             data = resp.json()
+
+            if not data.get("ok", False):
+                raise RuntimeError(f"Slack rejected history request: {data}")
 
             for raw in data.get("messages", []):
                 messages.append(
@@ -131,8 +150,8 @@ class SlackClient(ChatInterface):
             raise RuntimeError(f"Failed to retrieve Slack messages: {exc}") from exc
 
     def delete_message(self, channel_id: str, message_id: str) -> bool:
-        if self._offline:
-            return True
+        """Delete a message from a Slack channel."""
+        self._require_online("delete_message")
 
         try:
             assert self._http is not None
@@ -141,14 +160,19 @@ class SlackClient(ChatInterface):
                 json={"channel": channel_id, "ts": message_id},
             )
             resp.raise_for_status()
+            data = resp.json()
+
+            if not data.get("ok", False):
+                raise RuntimeError(f"Slack rejected delete request: {data}")
+
             return True
 
         except Exception as exc:
             raise RuntimeError(f"Failed to delete Slack message: {exc}") from exc
 
     def get_channel_members(self, channel_id: str) -> list[str]:
-        if self._offline:
-            return []
+        """List Slack channel members."""
+        self._require_online("get_channel_members")
 
         try:
             assert self._http is not None
@@ -157,7 +181,12 @@ class SlackClient(ChatInterface):
                 params={"channel": channel_id},
             )
             resp.raise_for_status()
-            return list(resp.json().get("members", []))
+            data = resp.json()
+
+            if not data.get("ok", False):
+                raise RuntimeError(f"Slack rejected members request: {data}")
+
+            return list(data.get("members", []))
 
         except Exception as exc:
             raise RuntimeError(

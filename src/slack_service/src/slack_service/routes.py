@@ -1,16 +1,11 @@
 """HTTP routes for the Slack Service.
 
 This module defines all FastAPI endpoints exposed by the Slack service.
-
-Architectural principles (TA-compliant):
-- Provider-agnostic behavior uses only the abstract ChatInterface via chat_api.
-- Provider-specific behavior is explicit and isolated.
-- No soft contracts or getattr-based assumptions.
-- Error responses are stable and do not leak internals.
 """
 
 from __future__ import annotations
 
+import os
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, Path, status
@@ -46,6 +41,8 @@ def list_channel_messages(
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> MessagesResponse:
     """Retrieve messages from a channel using the abstract chat interface."""
+    print("SLACK SERVICE: list_channel_messages channel_id=", channel_id, "limit=", limit)
+
     try:
         client = chat_api.get_client()
         messages = client.get_messages(channel_id=channel_id, limit=limit)
@@ -63,13 +60,15 @@ def list_channel_messages(
             ]
         )
 
-    except RuntimeError:
+    except RuntimeError as exc:
+        print("SLACK SERVICE ERROR: list_channel_messages RuntimeError:", repr(exc))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Slack authentication failed while retrieving messages",
         )
 
-    except ConnectionError:
+    except ConnectionError as exc:
+        print("SLACK SERVICE ERROR: list_channel_messages ConnectionError:", repr(exc))
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Unable to reach Slack while retrieving messages",
@@ -85,6 +84,8 @@ def post_channel_message(
     payload: PostMessageIn,
 ) -> PostMessageResponse:
     """Post a message to a channel using the abstract chat interface."""
+    print("SLACK SERVICE: post_channel_message channel_id=", channel_id)
+
     try:
         client = chat_api.get_client()
         success = client.send_message(
@@ -108,13 +109,15 @@ def post_channel_message(
             )
         )
 
-    except RuntimeError:
+    except RuntimeError as exc:
+        print("SLACK SERVICE ERROR: post_channel_message RuntimeError:", repr(exc))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Slack authentication failed while sending message",
         )
 
-    except ConnectionError:
+    except ConnectionError as exc:
+        print("SLACK SERVICE ERROR: post_channel_message ConnectionError:", repr(exc))
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Unable to reach Slack while sending message",
@@ -129,6 +132,8 @@ def delete_channel_message(
     message_id: Annotated[str, Path(min_length=1)],
 ) -> dict[str, str]:
     """Delete a message from a channel using the abstract chat interface."""
+    print("SLACK SERVICE: delete_channel_message channel_id=", channel_id, "message_id=", message_id)
+
     try:
         client = chat_api.get_client()
         client.delete_message(
@@ -138,13 +143,15 @@ def delete_channel_message(
 
         return {"status": "deleted"}
 
-    except RuntimeError:
+    except RuntimeError as exc:
+        print("SLACK SERVICE ERROR: delete_channel_message RuntimeError:", repr(exc))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Slack authentication failed while deleting message",
         )
 
-    except ConnectionError:
+    except ConnectionError as exc:
+        print("SLACK SERVICE ERROR: delete_channel_message ConnectionError:", repr(exc))
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Unable to reach Slack while deleting message",
@@ -158,24 +165,34 @@ def delete_channel_message(
 def list_channel_members(
     channel_id: Annotated[str, Path(min_length=1)],
 ) -> MembersResponse:
-    """List members of a channel.
+    """List members of a channel using the Slack provider implementation."""
+    print("SLACK SERVICE: list_channel_members channel_id=", channel_id)
 
-    This endpoint is Slack-specific and explicitly uses the Slack provider
-    implementation. It does not rely on the abstract chat interface.
-    """
     try:
-        slack_client = SlackClient()
+        base_url = os.environ["SLACK_API_BASE_URL"]
+        token = os.environ["SLACK_BOT_TOKEN"]
+
+        slack_client = SlackClient(base_url=base_url, token=token)
         members = slack_client.get_channel_members(channel_id)
 
         return MembersResponse(members=list(members))
 
-    except RuntimeError:
+    except KeyError as exc:
+        print("SLACK SERVICE ERROR: list_channel_members missing env:", repr(exc))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Missing required Slack environment variable: {exc}",
+        )
+
+    except RuntimeError as exc:
+        print("SLACK SERVICE ERROR: list_channel_members RuntimeError:", repr(exc))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Slack authentication failed while listing channel members",
         )
 
-    except ConnectionError:
+    except ConnectionError as exc:
+        print("SLACK SERVICE ERROR: list_channel_members ConnectionError:", repr(exc))
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Unable to reach Slack while listing channel members",
