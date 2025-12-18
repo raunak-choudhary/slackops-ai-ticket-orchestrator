@@ -7,6 +7,8 @@ to the Slack FastAPI service via the auto-generated HTTP client.
 
 from __future__ import annotations
 
+import os
+
 from chat_api import ChatInterface, Message
 
 from slack_service_api_client import Client
@@ -16,7 +18,6 @@ from slack_service_api_client.api.default import (
     list_channel_messages_channels_channel_id_messages_get,
     post_channel_message_channels_channel_id_messages_post,
 )
-
 from slack_service_api_client.models.post_message_in import PostMessageIn
 from slack_service_api_client.models.members_response import MembersResponse
 
@@ -53,7 +54,11 @@ class SlackServiceMessage(Message):
 class SlackServiceClient(ChatInterface):
     """ChatInterface implementation backed by slack_service over HTTP."""
 
-    def __init__(self, base_url: str = "http://localhost:8000") -> None:
+    def __init__(self) -> None:
+        base_url = os.getenv(
+            "SLACK_SERVICE_BASE_URL",
+            "http://localhost:8000",  # safe local default
+        )
         self._client = Client(base_url=base_url)
 
     def send_message(self, channel_id: str, content: str) -> bool:
@@ -65,7 +70,7 @@ class SlackServiceClient(ChatInterface):
             )
             return response is not None
         except Exception as exc:
-            raise ConnectionError(f"Failed to send message: {exc}") from exc
+            raise ConnectionError("Failed to send message") from exc
 
     def get_messages(self, channel_id: str, limit: int = 10) -> list[Message]:
         try:
@@ -88,8 +93,7 @@ class SlackServiceClient(ChatInterface):
             ]
 
         except Exception as exc:
-            raise ConnectionError(f"Failed to fetch messages: {exc}") from exc
-
+            raise ConnectionError("Failed to fetch messages") from exc
 
     def delete_message(self, channel_id: str, message_id: str) -> bool:
         try:
@@ -102,9 +106,9 @@ class SlackServiceClient(ChatInterface):
             )
             return response is not None
         except Exception as exc:
-            raise ConnectionError(f"Failed to delete message: {exc}") from exc
+            raise ConnectionError("Failed to delete message") from exc
 
-    # Slack-specific extension (used by slack_service)
+    # Slack-specific extension
     def get_channel_members(self, channel_id: str) -> list[str]:
         try:
             response = list_channel_members_channels_channel_id_members_get.sync(
@@ -118,4 +122,4 @@ class SlackServiceClient(ChatInterface):
             return list(response.members)
 
         except Exception as exc:
-            raise ConnectionError(f"Failed to list members: {exc}") from exc
+            raise ConnectionError("Failed to list members") from exc

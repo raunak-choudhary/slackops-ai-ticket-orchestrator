@@ -1,8 +1,13 @@
 """Tests for AI API dependency injection behavior."""
 
+from __future__ import annotations
+
+import importlib
+
 import pytest
 
 import ai_api
+import ai_api.client as ai_client
 from ai_api.client import AIInterface
 
 
@@ -14,14 +19,21 @@ def test_get_client_exists() -> None:
 
 def test_get_client_raises_when_not_registered() -> None:
     """Calling get_client without a registered implementation should fail."""
+    # Reset DI state to ensure no provider has monkey-patched get_client
+    importlib.reload(ai_client)
+
     with pytest.raises(RuntimeError):
-        ai_api.get_client()
+        ai_client.get_client()
 
 
-def test_get_client_return_type_after_registration(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_get_client_return_type_after_registration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """After DI registration, get_client should return an AIInterface."""
 
     class DummyAIClient(AIInterface):
+        """Minimal dummy AI client for DI testing."""
+
         def generate_response(
             self,
             user_input: str,
@@ -30,7 +42,7 @@ def test_get_client_return_type_after_registration(monkeypatch: pytest.MonkeyPat
         ) -> str:
             return "ok"
 
-    monkeypatch.setattr(ai_api, "get_client", lambda: DummyAIClient())
+    monkeypatch.setattr(ai_client, "get_client", lambda: DummyAIClient())
 
-    client = ai_api.get_client()
+    client = ai_client.get_client()
     assert isinstance(client, AIInterface)

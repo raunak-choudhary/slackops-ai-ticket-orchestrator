@@ -1,25 +1,29 @@
-"""Pydantic models for the AI service."""
+"""
+Request and response models for the AI service.
+"""
+
+from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
-class AIRequest(BaseModel):
-    """Request model for AI generation."""
+class GenerateRequest(BaseModel):
+    """Request payload for AI generation."""
 
-    user_input: str = Field(..., description="User-provided input text")
-    system_prompt: str = Field(..., description="System prompt guiding AI behavior")
-    response_schema: dict[str, Any] | None = Field(
-        default=None,
-        description="Optional JSON schema requesting structured output",
-    )
+    user_input: str
+    system_prompt: str
+    response_schema: dict[str, Any] | None = None
 
 
-class AIResponse(BaseModel):
-    """Response model for AI generation."""
+class GenerateResponse(BaseModel):
+    """Response payload for AI generation."""
 
-    result: str | dict[str, Any] = Field(
-        ...,
-        description="AI-generated response (string or structured data)",
-    )
+    result: str | dict[str, Any]
+
+
+class HealthResponse(BaseModel):
+    """Health check response."""
+
+    status: str

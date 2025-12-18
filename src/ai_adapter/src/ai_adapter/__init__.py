@@ -1,5 +1,12 @@
-"""AI adapter package."""
+"""
+Service-backed AI adapter.
 
-from ai_adapter.ai_adapter import AIAdapter
+Explicit registration 
+is required to activate the service-backed AI client.
+"""
 
-__all__ = ["AIAdapter"]
+from __future__ import annotations
+
+from ai_adapter.ai_adapter import register
+
+__all__ = ["register"]

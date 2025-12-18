@@ -1,7 +1,9 @@
 """OpenAI implementation for the AI API.
 
-Importing this module activates dependency injection by registering
+Importing this package activates dependency injection by registering
 the OpenAI-backed AI client with the ai_api package.
+
+This mirrors the TA Gmail pattern exactly.
 """
 
 from ai_api import client as ai_client_api

@@ -11,15 +11,20 @@ members = [
     "chat-api",
     "email-api",
     "gmail-impl",
+    "jira-adapter",
+    "jira-generated-client",
+    "jira-impl",
+    "jira-service",
     "mail-client-adapter",
     "mail-client-service",
     "mail-client-service-client",
+    "modular-service-platform",
     "openai-impl",
-    "ospsd-team4-fall2025",
     "slack-adapter",
     "slack-generated-client",
     "slack-impl",
     "slack-service",
+    "tickets-api",
 ]
 
 [[package]]
@@ -431,6 +436,62 @@ wheels = [
 ]
 
 [[package]]
+name = "jira-adapter"
+version = "0.1.0"
+source = { editable = "src/jira_adapter" }
+dependencies = [
+    { name = "jira-generated-client" },
+    { name = "tickets-api" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "jira-generated-client" },
+    { name = "tickets-api" },
+]
+
+[[package]]
+name = "jira-generated-client"
+version = "0.1.0"
+source = { editable = "src/jira_generated_client" }
+
+[[package]]
+name = "jira-impl"
+version = "0.1.0"
+source = { editable = "src/jira_impl" }
+dependencies = [
+    { name = "httpx" },
+    { name = "tickets-api" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx" },
+    { name = "tickets-api" },
+]
+
+[[package]]
+name = "jira-service"
+version = "0.1.0"
+source = { editable = "src/jira_service" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "jira-impl" },
+    { name = "pydantic" },
+    { name = "tickets-api" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = ">=0.104.0" },
+    { name = "jira-impl" },
+    { name = "pydantic", specifier = ">=2.5.0" },
+    { name = "tickets-api" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.24.0" },
+]
+
+[[package]]
 name = "jiter"
 version = "0.12.0"
 source = { registry = "https://pypi.org/simple" }
@@ -476,10 +537,10 @@ requires-dist = [{ name = "httpx" }]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
+    { name = "mypy", specifier = ">=1.8.0" },
+    { name = "pytest", specifier = ">=8.0.0" },
+    { name = "pytest-cov", specifier = ">=6.0.0" },
+    { name = "ruff", specifier = ">=0.12.0" },
 ]
 
 [[package]]
@@ -541,6 +602,74 @@ sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec9
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979, upload-time = "2022-08-14T12:40:09.779Z" },
 ]
+
+[[package]]
+name = "modular-service-platform"
+version = "0.2.0"
+source = { virtual = "." }
+
+[package.optional-dependencies]
+ai = [
+    { name = "ai-api" },
+]
+chat = [
+    { name = "chat-api" },
+]
+dev = [
+    { name = "coverage" },
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "mypy" },
+    { name = "openapi-python-client" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "ruff" },
+    { name = "types-setuptools" },
+    { name = "uvicorn" },
+]
+email = [
+    { name = "email-api" },
+]
+gmail = [
+    { name = "gmail-impl" },
+]
+jira = [
+    { name = "jira-impl" },
+]
+openai = [
+    { name = "openai-impl" },
+]
+slack = [
+    { name = "slack-impl" },
+]
+tickets = [
+    { name = "tickets-api" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "ai-api", marker = "extra == 'ai'", editable = "src/ai_api" },
+    { name = "chat-api", marker = "extra == 'chat'", editable = "src/chat_api" },
+    { name = "coverage", extras = ["toml"], marker = "extra == 'dev'", specifier = ">=7.0.0" },
+    { name = "email-api", marker = "extra == 'email'", editable = "src/email_api" },
+    { name = "fastapi", marker = "extra == 'dev'", specifier = ">=0.121.0" },
+    { name = "gmail-impl", marker = "extra == 'gmail'", editable = "src/gmail_impl" },
+    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27.0" },
+    { name = "jira-impl", marker = "extra == 'jira'", editable = "src/jira_impl" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.8.0" },
+    { name = "openai-impl", marker = "extra == 'openai'", editable = "src/openai_impl" },
+    { name = "openapi-python-client", marker = "extra == 'dev'", specifier = ">=0.27.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0.0" },
+    { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.12.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12.0" },
+    { name = "slack-impl", marker = "extra == 'slack'", editable = "src/slack_impl" },
+    { name = "tickets-api", marker = "extra == 'tickets'", editable = "src/tickets_api" },
+    { name = "types-setuptools", marker = "extra == 'dev'" },
+    { name = "uvicorn", marker = "extra == 'dev'", specifier = ">=0.38.0" },
+]
+provides-extras = ["dev", "email", "gmail", "chat", "slack", "ai", "openai", "tickets", "jira"]
 
 [[package]]
 name = "mypy"
@@ -629,41 +758,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a6/61/35a15cfcf3bcf580d4ae3d7d5b1f0c14241b5f134f383bd9fc089a0d5399/openapi_python_client-0.27.1.tar.gz", hash = "sha256:8c0d8806f96992b17ca9463cc980610d8da34fa82c07e9cedc6712ce43b17786", size = 125632, upload-time = "2025-11-03T15:31:27.218Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b5/8f/4f2131a6d10a705ed1a4194284222e5d83cd1ba5a00c053647491adc7025/openapi_python_client-0.27.1-py3-none-any.whl", hash = "sha256:00afef4be940fa1693624cbce818afac63e95639bb8f7675d4a6c2a29b038ea4", size = 182668, upload-time = "2025-11-03T15:31:25.457Z" },
-]
-
-[[package]]
-name = "ospsd-team4-fall2025"
-version = "0.2.0"
-source = { virtual = "." }
-
-[package.dev-dependencies]
-dev = [
-    { name = "coverage" },
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "mypy" },
-    { name = "openapi-python-client" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-    { name = "types-setuptools" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "coverage", extras = ["toml"], specifier = ">=7.0.0" },
-    { name = "fastapi", specifier = ">=0.121.1" },
-    { name = "httpx", specifier = ">=0.27.0" },
-    { name = "mypy", specifier = ">=1.10.0" },
-    { name = "openapi-python-client", specifier = ">=0.27.0" },
-    { name = "pytest", specifier = ">=8.4.1" },
-    { name = "pytest-cov", specifier = ">=6.2.1" },
-    { name = "ruff", specifier = ">=0.12.7" },
-    { name = "types-setuptools" },
-    { name = "uvicorn", specifier = ">=0.38.0" },
 ]
 
 [[package]]
@@ -830,6 +924,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5e/f7/c933acc76f5208b3b00089573cf6a2bc26dc80a8aece8f52bb7d6b1855ca/pytest_cov-7.0.0.tar.gz", hash = "sha256:33c97eda2e049a0c5298e91f519302a1334c26ac65c1a483d6206fd458361af1", size = 54328, upload-time = "2025-09-09T10:57:02.113Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ee/49/1377b49de7d0c1ce41292161ea0f721913fa8722c19fb9c1e3aa0367eecb/pytest_cov-7.0.0-py3-none-any.whl", hash = "sha256:3b8e9558b16cc1479da72058bdecf8073661c7f57f7d3c5f22a1c23507f2d861", size = 22424, upload-time = "2025-09-09T10:57:00.695Z" },
+]
+
+[[package]]
+name = "pytest-mock"
+version = "3.15.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/68/14/eb014d26be205d38ad5ad20d9a80f7d201472e08167f0bb4361e251084a9/pytest_mock-3.15.1.tar.gz", hash = "sha256:1849a238f6f396da19762269de72cb1814ab44416fa73a8686deac10b0d87a0f", size = 34036, upload-time = "2025-09-16T16:37:27.081Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5a/cc/06253936f4a7fa2e0f48dfe6d851d9c56df896a9ab09ac019d70b760619c/pytest_mock-3.15.1-py3-none-any.whl", hash = "sha256:0a25e2eb88fe5168d535041d09a4529a188176ae608a6d249ee65abc0949630d", size = 10095, upload-time = "2025-09-16T16:37:25.734Z" },
 ]
 
 [[package]]
@@ -1087,6 +1193,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/de/1a/608df0b10b53b0beb
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a3/e0/021c772d6a662f43b63044ab481dc6ac7592447605b5b35a957785363122/starlette-0.49.3-py3-none-any.whl", hash = "sha256:b579b99715fdc2980cf88c8ec96d3bf1ce16f5a8051a7c2b84ef9b1cdecaea2f", size = 74340, upload-time = "2025-11-01T15:12:24.387Z" },
 ]
+
+[[package]]
+name = "tickets-api"
+version = "0.1.0"
+source = { editable = "src/tickets_api" }
 
 [[package]]
 name = "tqdm"

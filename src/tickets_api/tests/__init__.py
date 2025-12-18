@@ -1,1 +1,1 @@
-# noqa: D104
+"""Tests for tickets_api."""

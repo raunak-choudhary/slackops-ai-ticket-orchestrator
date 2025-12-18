@@ -10,12 +10,16 @@ def setup_function() -> None:
     importlib.reload(slack_adapter)
 
 
-def test_di_injection_returns_service_client() -> None:
+def test_di_injection_returns_service_client(monkeypatch) -> None:
+    monkeypatch.setenv("SLACK_SERVICE_BASE_URL", "http://testserver")
+
     client = chat_api.get_client()
     assert client is not None
 
 
-def test_get_messages_transforms_response() -> None:
+def test_get_messages_transforms_response(monkeypatch) -> None:
+    monkeypatch.setenv("SLACK_SERVICE_BASE_URL", "http://testserver")
+
     mock_msg = Mock()
     mock_msg.id = "m1"
     mock_msg.text = "hello"
@@ -37,7 +41,9 @@ def test_get_messages_transforms_response() -> None:
     assert messages[0].sender_id == "u1"
 
 
-def test_send_message_success() -> None:
+def test_send_message_success(monkeypatch) -> None:
+    monkeypatch.setenv("SLACK_SERVICE_BASE_URL", "http://testserver")
+
     with patch(
         "slack_adapter.slack_adapter."
         "post_channel_message_channels_channel_id_messages_post.sync",

@@ -1,153 +1,185 @@
-# ================= Root Workspace Configuration =================
+# ================= Workspace Configuration =================
 
 [tool.uv.workspace]
 members = [
-  # ---------------- HW1: Mail Client ----------------
-  "src/email_api",
-  "src/gmail_impl",
-  "src/mail_client_service",
-  "clients/python/mail_client_service_client",
-  "src/mail_client_adapter",
+    "src/email_api",
+    "src/gmail_impl",
+    "src/mail_client_service",
+    "clients/python/mail_client_service_client",
+    "src/mail_client_adapter",
 
-  # ---------------- HW2: Slack Chat Service ----------------
-  "src/chat_api",
-  "src/slack_impl",
-  "src/slack_service",
-  "src/slack_generated_client",
-  "src/slack_adapter",
+    "src/chat_api",
+    "src/slack_impl",
+    "src/slack_service",
+    "src/slack_generated_client",
+    "src/slack_adapter",
 
-  # ---------------- HW3: AI ----------------
-  "src/ai_api",
-  "src/openai_impl",
-  "src/ai_service",
-  "src/ai_adapter",
-   "src/ai_generated_client",
+    "src/ai_api",
+    "src/openai_impl",
+    "src/ai_service",
+    "src/ai_generated_client",
+    "src/ai_adapter",
+
+    "src/tickets_api",
+    "src/jira_impl",
+    "src/jira_service",
+    "src/jira_generated_client",
+    "src/jira_adapter",
 ]
 
-# ================= Meta Project =================
+# ================= Project Metadata =================
 
 [project]
-name = "ospsd-team4-fall2025"
+name = "modular-service-platform"
 version = "0.2.0"
-description = "Unified workspace for OSPSD Team 4 — HW1 + HW2 + HW3"
+description = "A modular, interface-driven platform integrating communication, AI reasoning, and ticketing services"
 readme = "README.md"
 requires-python = ">=3.12"
-
 dependencies = []
 
-# ================= UV Workspace Sources =================
-# TA-CRITICAL: prevents PyPI fallback
+# ================= Workspace Sources =================
+# Prevents accidental PyPI fallback
 
 [tool.uv.sources]
-# -------- HW1 (Email) --------
 email-api = { workspace = true }
 gmail-impl = { workspace = true }
 mail-client-service = { workspace = true }
 mail-client-adapter = { workspace = true }
 mail-client-service-client = { workspace = true }
 
-# -------- HW2 (Slack) --------
 chat-api = { workspace = true }
 slack-impl = { workspace = true }
 slack-service = { workspace = true }
 slack-adapter = { workspace = true }
 slack-generated-client = { workspace = true }
 
-# -------- HW3 (AI) --------
 ai-api = { workspace = true }
 openai-impl = { workspace = true }
 ai-service = { workspace = true }
 ai-adapter = { workspace = true }
 ai-generated-client = { workspace = true }
-# ================= Development Dependency Group =================
 
-[dependency-groups]
+tickets-api = { workspace = true }
+jira-impl = { workspace = true }
+jira-service = { workspace = true }
+jira-adapter = { workspace = true }
+jira-generated-client = { workspace = true }
+
+# ================= Optional Dependency Groups =================
+
+[project.optional-dependencies]
+
 dev = [
-  "openapi-python-client>=0.27.0",
-  "pytest>=8.4.1",
-  "pytest-cov>=6.2.1",
-  "ruff>=0.12.7",
-  "mypy>=1.10.0",
-  "coverage[toml]>=7.0.0",
-  "httpx>=0.27.0",
-  "types-setuptools",
-  "fastapi>=0.121.1",
-  "uvicorn>=0.38.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.12.0",
+    "mypy>=1.8.0",
+    "ruff>=0.12.0",
+    "coverage[toml]>=7.0.0",
+    "httpx>=0.27.0",
+    "types-setuptools",
+    "fastapi>=0.121.0",
+    "uvicorn>=0.38.0",
+    "openapi-python-client>=0.27.0",
 ]
 
-# ================= Ruff =================
+email = ["email-api>=0.1.0"]
+gmail = ["gmail-impl>=0.1.0"]
+chat = ["chat-api>=0.1.0"]
+slack = ["slack-impl>=0.1.0"]
+ai = ["ai-api>=0.1.0"]
+openai = ["openai-impl>=0.1.0"]
+tickets = ["tickets-api>=0.1.0"]
+jira = ["jira-impl>=0.1.0"]
+
+# ================= Ruff Configuration =================
 
 [tool.ruff]
 target-version = "py312"
-line-length = 100
+line-length = 88
 fix = true
-src = ["src"]
-extend-exclude = [".pytest_cache", "*.egg-info"]
+src = ["src", "clients/python"]
 
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = ["COM812", "ISC001", "D203", "D213"]
 
-[tool.ruff.lint.isort]
-force-sort-within-sections = true
-known-first-party = [
-  "email_api",
-  "gmail_impl",
-  "chat_api",
-  "slack_impl",
-  "slack_service",
-  "slack_adapter",
-  "ai_api",
-  "openai_impl",
-  "ai_service",
-  "ai_adapter",
- "ai_generated_client",
- ]
+[tool.ruff.lint.per-file-ignores]
+"**/test_*.py" = [
+    "ANN001", "ARG002", "INP001", "PLC0415",
+    "PLR2004", "S101", "SLF001", "S603",
+]
+"main.py" = ["T201", "PLR2004"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
-# ================= MyPy =================
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+known-first-party = [
+    "email_api",
+    "gmail_impl",
+    "chat_api",
+    "slack_impl",
+    "slack_service",
+    "slack_adapter",
+    "ai_api",
+    "openai_impl",
+    "ai_service",
+    "ai_adapter",
+    "tickets_api",
+    "jira_impl",
+    "jira_service",
+    "jira_adapter",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+# ================= MyPy Configuration =================
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
-namespace_packages = true
 explicit_package_bases = true
+show_error_codes = true
+warn_unused_ignores = true
 
-files = [
-  "src/email_api/src",
-  "src/mail_client_adapter/src",
-  "src/chat_api/src",
-  "src/slack_impl/src",
-  "src/slack_service/src",
-  "src/slack_adapter/src",
-  "src/mail_client_service/src",
-  "src/ai_api/src",
-  "src/openai_impl/src",
-  "src/ai_service/src",
-  "src/ai_adapter/src",
-"src/ai_generated_client/src",
+mypy_path = [
+    "src",
+    "clients/python",
 ]
 
-mypy_path = ["src", "clients", "clients/python"]
+exclude = ["tests/", "src/.*/tests/"]
 
 [[tool.mypy.overrides]]
 module = [
-  "httpx.*",
-  "mail_client_service_client.*",
-  "slack_service_api_client.*",
+    "googleapiclient.*",
+    "google_auth_oauthlib.*",
+    "httpx.*",
 ]
 ignore_missing_imports = true
 
-[[tool.mypy.overrides]]
-module = ["tests", "ai_adapter.tests.*"]
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-
-# ================= Pytest =================
+# ================= Pytest Configuration =================
 
 [tool.pytest.ini_options]
-addopts = "-ra -q"
+minversion = "8.0"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "--import-mode=importlib",
+]
 testpaths = ["src", "tests"]
-pythonpath = ["src", "clients/python"]
+markers = [
+    "unit: marks tests as unit tests",
+    "integration: marks tests as integration tests",
+    "e2e: marks tests as end-to-end tests",
+]
+filterwarnings = [
+    "ignore:datetime.datetime.utcfromtimestamp\\(\\) is deprecated:DeprecationWarning",
+]
