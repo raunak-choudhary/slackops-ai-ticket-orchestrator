@@ -25,6 +25,8 @@ members = [
     "src/jira_service",
     "src/jira_generated_client",
     "src/jira_adapter",
+
+    "src/integration_app",
 ]
 
 # ================= Project Metadata =================

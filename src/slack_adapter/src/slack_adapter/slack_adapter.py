@@ -55,10 +55,7 @@ class SlackServiceClient(ChatInterface):
     """ChatInterface implementation backed by slack_service over HTTP."""
 
     def __init__(self) -> None:
-        base_url = os.getenv(
-            "SLACK_SERVICE_BASE_URL",
-            "http://localhost:8000",  # safe local default
-        )
+        base_url = os.environ["SLACK_SERVICE_BASE_URL"]
         self._client = Client(base_url=base_url)
 
     def send_message(self, channel_id: str, content: str) -> bool:
