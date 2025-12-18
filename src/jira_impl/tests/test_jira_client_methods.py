@@ -8,7 +8,6 @@ the underlying HTTP transport. No production code is modified.
 from unittest.mock import Mock, patch
 
 import pytest
-import httpx
 
 from jira_impl.jira_client import JiraClient, JiraIssue
 
