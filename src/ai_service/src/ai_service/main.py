@@ -9,24 +9,36 @@ This service:
 
 from __future__ import annotations
 
+import logging
+import os
+
 from fastapi import FastAPI
 
 # -------------------------
 # CRITICAL: Activate DI
 # -------------------------
 # Importing the implementation registers it with ai_api.get_client().
-# This must be explicit (TA requirement).
+# This module uses register-on-import semantics.
 import openai_impl  # noqa: F401
 
 from ai_service.routes import router
 
 
+def _configure_logging() -> None:
+    """Configure service logging."""
+    level = os.environ.get("LOG_LEVEL", "INFO").upper()
+    logging.basicConfig(level=level)
+    logging.getLogger(__name__).info("Logging configured | level=%s", level)
+
+
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
-    app = FastAPI(title="AI Service")
+    _configure_logging()
 
+    app = FastAPI(title="AI Service")
     app.include_router(router)
 
+    logging.getLogger(__name__).info("AI Service application created")
     return app
 
 

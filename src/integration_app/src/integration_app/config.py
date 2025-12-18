@@ -1,49 +1,33 @@
+"""
+Centralized configuration loader for the integration application.
+
+Validates required environment variables at startup so that
+misconfiguration fails fast and clearly.
+"""
+
+from __future__ import annotations
+
+import logging
 import os
-from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigError(RuntimeError):
-    """
-    Raised when required application configuration is missing.
-    """
-    pass
+    """Raised when required configuration is missing."""
 
 
-def _require(name: str) -> str:
-    """
-    Retrieve a required environment variable.
+def load_config() -> None:
+    """Load and validate required environment variables."""
+    required_vars = [
+        "SLACK_SERVICE_BASE_URL",
+        "AI_SERVICE_BASE_URL",
+        "OPENAI_API_KEY",
+    ]
 
-    Raises:
-        ConfigError: if the variable is missing or empty.
-    """
-    value = os.getenv(name)
-    if not value:
-        raise ConfigError(f"Missing required environment variable: {name}")
-    return value
+    for var in required_vars:
+        if not os.environ.get(var):
+            logger.critical("Missing required environment variable: %s", var)
+            raise ConfigError(f"Missing required environment variable: {var}")
 
-
-@dataclass(frozen=True)
-class AppConfig:
-    """
-    Application configuration.
-
-    NOTE:
-    At this stage, the integration app is scoped to Slack only.
-    AI and Jira configuration will be added back when those
-    integrations are introduced.
-    """
-
-    # Slack
-    slack_service_base_url: str
-
-
-def load_config() -> AppConfig:
-    """
-    Load and validate application configuration.
-
-    This function is intentionally fail-fast to ensure
-    misconfiguration is detected at startup.
-    """
-    return AppConfig(
-        slack_service_base_url=_require("SLACK_SERVICE_BASE_URL"),
-    )
+    logger.info("Integration app configuration loaded successfully")

@@ -1,56 +1,57 @@
+"""
+Main entry point for the HW3 integration application.
+
+This service:
+- Activates dependency injection for AI and Slack adapters
+- Exposes the Slack Events API endpoint
+- Coordinates cross-vertical integration logic
+"""
+
+from __future__ import annotations
+
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from fastapi.concurrency import run_in_threadpool
 
-from integration_app.slack_entry import SlackEventHandler
 from integration_app.config import load_config
+from integration_app.slack_entry import SlackEventHandler
+from slack_adapter.slack_adapter import SlackServiceClient
+
+# -------------------------
+# CRITICAL: Activate AI DI
+# -------------------------
+from ai_adapter.ai_adapter import register as register_ai_adapter
+
+register_ai_adapter()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="HW3 Integration App")
 
 
 @app.on_event("startup")
 def startup() -> None:
-    """
-    Application startup hook.
-
-    Loads and validates required environment configuration early so failures
-    are loud and deterministic, rather than surfacing later mid-request.
-    """
-    print("INTEGRATION APP STARTUP")
+    """Application startup hook."""
     load_config()
-    print("INTEGRATION APP CONFIG LOADED")
-
-
-@app.get("/health")
-def health() -> dict[str, str]:
-    """Health check endpoint."""
-    return {"status": "ok"}
+    logger.info("Integration app startup complete")
 
 
 @app.post("/slack/events")
 async def slack_events(request: Request) -> JSONResponse:
-    """
-    Slack Events API entry point.
-
-    Slack requires HTTP 200 responses even on internal failures. Errors must be
-    logged for observability, but the HTTP response should remain 200.
-    """
+    """Slack Events API endpoint."""
     payload = await request.json()
 
-    # Slack URL verification MUST return immediately
+    # Slack URL verification handshake
     if payload.get("type") == "url_verification":
         return JSONResponse(
             status_code=200,
             content={"challenge": payload["challenge"]},
         )
 
-    handler = SlackEventHandler()
+    slack_client = SlackServiceClient()
+    handler = SlackEventHandler(slack_client)
 
-    try:
-        # Run blocking work off the event loop
-        result = await run_in_threadpool(handler.handle_event, payload)
-        return JSONResponse(status_code=200, content=result)
-    except Exception as exc:
-        print("INTEGRATION APP ERROR: slack event handling failed:", repr(exc))
-        # Slack requires HTTP 200 even on failure
-        return JSONResponse(status_code=200, content={"ok": False})
+    result = handler.handle_event(payload)
+    return JSONResponse(status_code=200, content=result)

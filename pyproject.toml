@@ -1,31 +1,36 @@
-# ================= Workspace Configuration =================
+# ================= Root Workspace Configuration =================
 
 [tool.uv.workspace]
 members = [
+    # ---------------- HW1: Mail Client ----------------
     "src/email_api",
     "src/gmail_impl",
     "src/mail_client_service",
     "clients/python/mail_client_service_client",
     "src/mail_client_adapter",
 
+    # ---------------- HW2: Slack Chat Service ----------------
     "src/chat_api",
     "src/slack_impl",
     "src/slack_service",
     "src/slack_generated_client",
     "src/slack_adapter",
 
+    # ---------------- HW3: AI ----------------
     "src/ai_api",
     "src/openai_impl",
     "src/ai_service",
     "src/ai_generated_client",
     "src/ai_adapter",
 
+    # ---------------- HW3: Tickets (Jira) ----------------
     "src/tickets_api",
     "src/jira_impl",
     "src/jira_service",
     "src/jira_generated_client",
     "src/jira_adapter",
 
+    # ---------------- HW3: Integration App ----------------
     "src/integration_app",
 ]
 
@@ -67,10 +72,12 @@ jira-service = { workspace = true }
 jira-adapter = { workspace = true }
 jira-generated-client = { workspace = true }
 
+# ✅ THIS WAS MISSING (this is why import integration_app failed)
+integration-app = { workspace = true }
+
 # ================= Optional Dependency Groups =================
 
 [project.optional-dependencies]
-
 dev = [
     "pytest>=8.0.0",
     "pytest-cov>=6.0.0",
@@ -87,12 +94,18 @@ dev = [
 
 email = ["email-api>=0.1.0"]
 gmail = ["gmail-impl>=0.1.0"]
+
 chat = ["chat-api>=0.1.0"]
 slack = ["slack-impl>=0.1.0"]
+
 ai = ["ai-api>=0.1.0"]
 openai = ["openai-impl>=0.1.0"]
+
 tickets = ["tickets-api>=0.1.0"]
 jira = ["jira-impl>=0.1.0"]
+
+# (Optional but nice to have)
+integration = ["integration-app>=0.1.0"]
 
 # ================= Ruff Configuration =================
 
@@ -108,8 +121,14 @@ ignore = ["COM812", "ISC001", "D203", "D213"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/test_*.py" = [
-    "ANN001", "ARG002", "INP001", "PLC0415",
-    "PLR2004", "S101", "SLF001", "S603",
+    "ANN001",
+    "ARG002",
+    "INP001",
+    "PLC0415",
+    "PLR2004",
+    "S101",
+    "SLF001",
+    "S603",
 ]
 "main.py" = ["T201", "PLR2004"]
 
@@ -133,6 +152,7 @@ known-first-party = [
     "jira_impl",
     "jira_service",
     "jira_adapter",
+    "integration_app",
 ]
 
 [tool.ruff.format]
@@ -149,12 +169,10 @@ strict = true
 explicit_package_bases = true
 show_error_codes = true
 warn_unused_ignores = true
-
 mypy_path = [
     "src",
     "clients/python",
 ]
-
 exclude = ["tests/", "src/.*/tests/"]
 
 [[tool.mypy.overrides]]
