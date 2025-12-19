@@ -6,7 +6,7 @@ These tests validate the **full application flow using live services**, without 
 
 ---
 
-## 📌 Scope of E2E Tests
+##  Scope of E2E Tests
 
 The E2E tests cover **Slack + AI only**.
 
@@ -26,7 +26,7 @@ Slack Service (message history)
 
 ---
 
-## 📂 Folder Structure
+##  Folder Structure
 
 ```
 tests/
@@ -42,7 +42,7 @@ Each file contains **exactly one E2E behavior**, following best testing practice
 
 ---
 
-## 🧪 E2E Test Descriptions
+##  E2E Test Descriptions
 
 | File | Test Name | Description |
 |---|---|---|
@@ -54,7 +54,7 @@ Each file contains **exactly one E2E behavior**, following best testing practice
 
 ---
 
-## ⚙️ Prerequisites
+##  Prerequisites
 
 ### Services (must be running)
 
@@ -74,7 +74,7 @@ export OPENAI_API_KEY=sk-...
 
 ---
 
-## ▶️ Running E2E Tests
+## Running E2E Tests
 
 ### Run all E2E tests (from repo root)
 
@@ -90,7 +90,7 @@ uv run pytest tests/e2e/test_slack_ai_basic_flow.py -vv
 
 ---
 
-## ✅ Expected Output
+## Expected Output
 
 ```text
 collected 5 items
@@ -104,7 +104,7 @@ collected 5 items
 
 ---
 
-## 🧠 Architectural Note: Slack Socket Mode
+## Architectural Note: Slack Socket Mode
 
 Slack runs in **Socket Mode**, which cannot be triggered via HTTP in automated tests.
 
@@ -117,7 +117,7 @@ Instead of simulating Slack WebSocket events, these E2E tests validate the **sam
 
 ---
 
-## 🎓 Summary
+## Summary
 
 - All E2E tests are **runnable**
 - All E2E tests use **live services**

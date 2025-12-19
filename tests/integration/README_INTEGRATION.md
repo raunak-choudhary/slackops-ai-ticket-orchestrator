@@ -6,7 +6,7 @@ Integration tests validate that **multiple components work together correctly**,
 
 ---
 
-## 📌 Scope of Integration Tests
+## Scope of Integration Tests
 
 Integration tests cover interactions between the following components:
 
@@ -21,7 +21,7 @@ These tests sit **between unit tests and E2E tests** in the testing pyramid.
 
 ---
 
-## 🧱 What Integration Tests Validate
+##  What Integration Tests Validate
 
 Integration tests ensure that:
 
@@ -35,7 +35,7 @@ They do **not** validate full user flows across all services (that is covered by
 
 ---
 
-## 📂 Folder Structure
+##  Folder Structure
 
 ```
 tests/
@@ -51,7 +51,7 @@ Each file focuses on a **specific integration boundary**.
 
 ---
 
-## 🧪 Integration Test Descriptions
+##  Integration Test Descriptions
 
 | File | Test Name | Description |
 |---|---|---|
@@ -63,7 +63,7 @@ Each file focuses on a **specific integration boundary**.
 
 ---
 
-## ⚙️ Prerequisites
+##  Prerequisites
 
 ### Services (must be running)
 
@@ -83,7 +83,7 @@ export OPENAI_API_KEY=sk-...
 
 ---
 
-## ▶️ Running Integration Tests
+##  Running Integration Tests
 
 ### Run all integration tests (from repo root)
 
@@ -99,7 +99,7 @@ uv run pytest tests/integration/test_orchestrator_integration.py -vv
 
 ---
 
-## ✅ Expected Output
+## Expected Output
 
 ```text
 collected 5 items
@@ -112,7 +112,7 @@ collected 5 items
 
 ---
 
-## 🧠 Integration vs E2E
+##  Integration vs E2E
 
 | Integration Tests | E2E Tests |
 |---|---|
@@ -124,7 +124,7 @@ Both are required and complementary.
 
 ---
 
-## 🎓 Summary
+##  Summary
 
 - Integration tests validate **service-to-service correctness**
 - Each test targets a clear integration boundary
