@@ -1,58 +1,75 @@
-# slack_impl
-
-Slack implementation of the `chat_api` interface.
+# slack-impl
 
 ## Overview
+`slack-impl` provides a **direct Slack Web API–backed implementation** of the shared `chat_api.ChatInterface`.  
+It communicates with Slack’s HTTP APIs, handles OAuth utilities, and manages token storage, while keeping Slack-specific details isolated from the rest of the system.
 
-This package provides a concrete implementation of `ChatInterface` backed by the Slack Web API.
-It supports OAuth2 authentication, token persistence, and a clean dependency-injection pattern
-consistent with the project’s API-first architecture.
+This module is provider-specific and intentionally separated from adapters and orchestration logic.
 
-The implementation is designed to be used indirectly via `chat_api.get_client()` and should
-not be imported or instantiated directly by consumers.
+## Responsibilities
+- Implement `ChatInterface` using the Slack Web API
+- Represent Slack messages via the shared `Message` abstraction
+- Handle Slack OAuth URL construction and token exchange
+- Persist OAuth tokens locally for reuse
+- Sanitize and validate message content before sending
 
-## Features
+## Configuration
+For live Slack operations, the following environment variables are required:
+- `SLACK_API_BASE_URL`
+- `SLACK_BOT_TOKEN`
 
-- Implements `ChatInterface`
-- Slack Web API integration
-- OAuth2 authorization code flow
-- Persistent token storage
-- Deterministic offline behavior for tests
-- Strict typing with PEP 561 support
-
-## Usage
+If these are missing, the client operates in **offline mode**, enabling deterministic behavior for testing.
 
 ```python
-import chat_api
-import slack_impl
+from slack_impl.slack_client import SlackClient
 
-client = chat_api.get_client()
-client.send_message("C123", "hello world")
+client = SlackClient()  # reads configuration from environment
+```
+
+## How It Works
+The implementation is composed of three main parts:
+- **SlackClient** — implements `ChatInterface` using Slack HTTP endpoints
+- **OAuth helpers** — build authorization URLs and exchange OAuth codes
+- **Token store** — persist and reload OAuth tokens using SQLite
+
+```python
+client.send_message("C123", "Hello from Slack!")
 messages = client.get_messages("C123", limit=5)
 ```
 
-## Architecture Notes
+## Offline vs Online Mode
+- **Online mode**: enabled when base URL and token are present
+- **Offline mode**: enabled when configuration is missing
 
-- Public surface is limited to `ChatInterface`
-- Slack-specific logic is encapsulated within this package
-- Dependency injection is performed at import time
-- OAuth and token storage are internal implementation details
+Offline mode:
+- Avoids network calls
+- Returns deterministic stubbed responses
+- Simplifies unit testing without Slack credentials
 
-## Requirements
+## Dependency Injection
+- Importing `slack_impl` registers `SlackClient` with `chat_api.get_client()`
+- Application code resolves the active chat client via `chat_api.get_client()`
+- Slack-specific logic does not leak outside this module
 
-- Python >= 3.12
-- Slack OAuth credentials for online usage
+## Error Handling
+- Missing credentials raise `RuntimeError` when live operations are attempted
+- Slack API errors are converted into `RuntimeError` or `ConnectionError`
+- Provider internals are not exposed upstream
 
-## Development
+## Testing
+Tests verify:
+- Dependency injection registration
+- Online and offline behavior
+- Message send, fetch, and delete operations
+- OAuth helper correctness
+- Token storage persistence
+- Input sanitization
 
-Run checks from the repository root:
+All tests run without requiring live Slack credentials.
 
-```bash
-ruff check .
-mypy
-pytest
-```
-
-## License
-
-This project is intended for academic and educational use.
+## Non-Goals
+This module does not:
+- Handle Slack Events API payloads
+- Perform application-level routing or orchestration
+- Abstract Slack workflow concepts beyond chat operations
+- Guarantee delivery or message ordering

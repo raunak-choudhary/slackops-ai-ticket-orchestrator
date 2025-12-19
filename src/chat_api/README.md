@@ -1,52 +1,34 @@
-# Chat API Component
-
-Chat client interface component for dependency injection and modular architecture.
+# chat-api
 
 ## Overview
+`chat-api` defines the shared abstract contract for chat platforms.  
+It standardizes how messages are sent, retrieved, and deleted, while keeping the system independent of any specific chat provider (e.g., Slack, Discord, Teams).
 
-The `chat_api` component provides abstract interfaces for chat client implementations.
-It defines contracts without implementation details, enabling clean separation between
-chat providers and application logic.
+This module contains **interfaces only** and no concrete implementations.
 
-This component follows clean architecture principles and is designed to be used with
-dependency injection, allowing multiple chat provider implementations
-(e.g., Slack, Discord, Teams) to be swapped without changing user code.
-
-The package is intentionally minimal and focuses only on defining **what** a chat client
-must do, not **how** it does it.
-
-## Features
-
-- Abstract Base Class Design: Uses ABCs for explicit implementation contracts
-- Provider Agnostic: No platform-specific logic
-- Dependency Injection Ready: Implementations inject themselves via `get_client()`
-- Type-Safe Interfaces: Compatible with strict static type checking
-- Zero Runtime Dependencies: Pure interface definitions only
-
-## Usage
-
-### Basic Interface
-
-```python
-from chat_api import ChatInterface, Message
-
-def process_messages(client: ChatInterface) -> None:
-    messages = client.get_messages(channel_id="C123", limit=5)
-    for msg in messages:
-        print(msg.content)
-```
-
-### Using Dependency Injection
-
-```python
-import chat_api
-import slack_impl  # Registers Slack implementation via injection
-
-client = chat_api.get_client()
-client.send_message(channel_id="C123", content="Hello world!")
-```
+## Responsibilities
+- Define abstract representations for chat messages
+- Define a minimal chat client interface
+- Provide a dependency-injection hook for resolving a concrete chat client at runtime
 
 ## Interface Contract
+
+### Message
+`Message` represents a platform-agnostic chat message.  
+Implementations must wrap provider-specific message objects behind this interface.
+
+```python
+class Message(ABC):
+    @property
+    def id(self) -> str: ...
+    @property
+    def content(self) -> str: ...
+    @property
+    def sender_id(self) -> str: ...
+```
+
+### ChatInterface
+`ChatInterface` defines the required operations for interacting with a chat system.
 
 ```python
 class ChatInterface(ABC):
@@ -55,11 +37,37 @@ class ChatInterface(ABC):
     def delete_message(self, channel_id: str, message_id: str) -> bool: ...
 ```
 
+## Dependency Injection
+The module exposes `get_client()` as the injection point for chat implementations.
+
+```python
+import chat_api
+
+client = chat_api.get_client()
+client.send_message(channel_id="general", content="Hello!")
+```
+
+Concrete implementations (e.g., Slack adapters) are responsible for injecting themselves by replacing `get_client`.
+
+If no implementation is injected, calling `get_client()` raises `NotImplementedError`.
+
+## Guarantees
+- `Message` and `ChatInterface` cannot be instantiated directly
+- Any injected client must fully implement the chat interface
+- Application code remains unaware of provider-specific details
+
 ## Testing
+Tests verify:
+- Abstract base class enforcement
+- Presence of required interface methods
+- Correct dependency-injection behavior
+- Public API import stability
 
-This component is tested indirectly through integration tests in higher-level
-components. As a pure interface package, it contains minimal direct tests.
+Tests do not interact with real chat providers.
 
-## License
-
-MIT
+## Non-Goals
+This module does not:
+- Implement chat providers
+- Perform network or API calls
+- Handle authentication or configuration
+- Contain application or business logic

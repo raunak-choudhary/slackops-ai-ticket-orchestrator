@@ -1,114 +1,66 @@
-# AI API
+# ai-api
 
-This package defines the **OSS-standardized abstract interface** for AI systems used in the OSPSD project.
+## Overview
+`ai-api` defines the **shared contract** for AI services.  
+It standardizes how AI capabilities are invoked while keeping the system independent of any specific AI provider.
 
-It contains **interfaces only** and deliberately includes **no implementation logic**. All concrete behavior must be provided by other components via dependency injection.
+This module contains **interfaces only**—no implementations.
 
-This package is the **single source of truth** for how AI functionality is consumed by the rest of the system.
+## Responsibilities
+- Define the abstract `AIInterface`
+- Enforce a consistent method signature for AI interactions
+- Provide a dependency-injection hook for runtime client resolution
 
----
+## Interface Contract
+All AI implementations must subclass `AIInterface` and implement `generate_response`.
 
-## Purpose
+```python
+class AIInterface(ABC):
+    def generate_response(
+        self,
+        user_input: str,
+        system_prompt: str,
+        response_schema: dict | None = None,
+    ) -> str | dict:
+        ...
+```
 
-The AI API defines the minimal contract required for interacting with an AI system:
-
-- Accepting user input  
-- Accepting a system prompt  
-- Optionally requesting structured (schema-based) output  
-- Returning either a conversational response or structured data  
-
-The interface is intentionally small and stable to allow multiple AI providers and architectures to coexist without downstream changes.
-
----
-
-## Core Interface
-
-### AIInterface
-
-AIInterface is an **abstract base class** that all AI implementations must extend.
-
-It defines exactly one required method:
-
-generate_response(  
-    user_input: str,  
-    system_prompt: str,  
-    response_schema: dict | None = None,  
-) -> str | dict
-
-### Contract Rules (Enforced by Tests)
-
-- AIInterface **cannot be instantiated directly**
-- Any concrete implementation **must** implement `generate_response`
-- The method signature must match exactly
-- The return value must be:
-  - a string for conversational output, or
-  - a dictionary for structured output when a schema is provided
-
-Any deviation from this contract will cause tests to fail.
-
----
+### Response Modes
+- **Conversational**: returns a `str`
+- **Structured**: returns a `dict` matching the provided schema
 
 ## Dependency Injection
+The module exposes `get_client()` as a runtime injection point.
 
-This package exposes a `get_client()` function used to retrieve the active AI client.
+```python
+import ai_api
 
-### Behavior
+client = ai_api.get_client()
+response = client.generate_response(
+    user_input="Hello",
+    system_prompt="Be helpful",
+)
+```
 
-- By default, calling `get_client()` raises a RuntimeError
-- An implementation must explicitly register itself by overriding `get_client`
-- This prevents accidental usage without a configured AI backend
+Concrete implementations or adapters are responsible for registering themselves by overriding `get_client`.
 
-Registration is performed by:
-- a concrete implementation (for example, `openai_impl`), or
-- a service-backed adapter (for example, `ai_adapter`)
+## Guarantees
+- `AIInterface` cannot be instantiated directly
+- Any registered client must fully implement the interface
+- Callers remain unaware of provider-specific details
 
----
+## Testing
+Tests validate:
+- Abstractness of `AIInterface`
+- Enforcement of required methods
+- Correct dependency-injection behavior
+- Import stability of the public API
 
-## What This Package Does NOT Contain
+No tests in this module interact with real AI providers.
 
-This package intentionally excludes:
-
-- Concrete AI implementations  
-- HTTP or FastAPI code  
-- Environment variable access  
-- Provider-specific logic  
-- Response wrapper classes or extra abstractions  
-
-All such logic belongs in other components.
-
----
-
-## Test Coverage
-
-The following guarantees are enforced by tests:
-
-- The interface is abstract
-- Abstract methods are required
-- Dependency injection fails safely when not configured
-- Public imports are stable and intentional
-- Concrete implementations must comply with the OSS contract
-
-If any architectural boundary is violated, tests will fail.
-
----
-
-## Role in HW3 Architecture
-
-This package is **Component 1 of 5** in the AI vertical:
-
-1. ai_api — OSS interface (this package)  
-2. openai_impl — Concrete AI implementation  
-3. ai_service — FastAPI service wrapping the implementation  
-4. ai_generated_client — Auto-generated OpenAPI client  
-5. ai_adapter — Service-backed adapter implementing AIInterface  
-
-Each component has a single responsibility and must not cross boundaries.
-
----
-
-## Design Principles
-
-- OSS APIs are the **single source of truth**
-- Interfaces are **minimal and stable**
-- Dependency injection is **explicit and enforced**
-- Tests define and protect the architecture
+## Non-Goals
+This module does not:
+- Implement AI providers
+- Perform network requests
+- Manage configuration or environment variables
+- Contain application or business logic

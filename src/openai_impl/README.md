@@ -1,113 +1,89 @@
-# OpenAI Implementation (openai_impl)
+# openai-impl
 
-This package provides a **concrete OpenAI-backed implementation** of the OSS AI interface
-defined in the `ai_api` package.
+## Overview
+`openai-impl` provides an OpenAI-backed implementation of the shared `ai_api.AIInterface`.  
+It talks directly to the OpenAI SDK and exposes AI capabilities in a way that is fully compliant with the OSS AI contract.
 
-It is **Component 2 of 5** in the AI vertical and is responsible for:
-- Talking directly to the OpenAI SDK
-- Implementing the OSS `AIInterface`
-- Activating dependency injection for AI usage
+This module is provider-specific and intentionally isolated from the rest of the system.
 
-This package contains **no FastAPI code** and **no adapters**.
+## Responsibilities
+- Implement `AIInterface` using the OpenAI SDK
+- Support both conversational and structured (JSON-schema) responses
+- Validate presence of required OpenAI credentials
+- Sanitize provider errors before propagating them upstream
 
----
+## Configuration
+The OpenAI API key is required and must be provided via environment variable or constructor argument.
 
-## Purpose
+Required:
+- `OPENAI_API_KEY`
 
-The purpose of `openai_impl` is to provide a **direct provider implementation**
-of the AI API using OpenAI.
+```python
+from openai_impl.openai_client import OpenAIClient
 
-It translates the abstract AI contract into concrete OpenAI API calls while keeping:
-- Provider-specific logic isolated
-- Downstream components provider-agnostic
+client = OpenAIClient()  # reads OPENAI_API_KEY from env
+```
 
----
+Initialization fails fast if no API key is available.
 
 ## How It Works
+The implementation wraps the OpenAI Chat Completions API and maps responses into the return types defined by `AIInterface`.
 
-### 1. AI Client Implementation
+```python
+response = client.generate_response(
+    user_input="Hello",
+    system_prompt="Be helpful",
+)
+```
 
-The core logic lives in `openai_client.py`, which defines:
+If a response schema is provided, the client requests strict structured output and returns a dictionary.
 
-- `OpenAIClient`, a concrete implementation of `AIInterface`
-- Direct usage of the OpenAI Python SDK
-- Explicit environment variable validation
+## Structured Output
+Structured responses use OpenAI’s JSON schema support.
 
-The client:
-- Requires `OPENAI_API_KEY` at initialization
-- Raises a `RuntimeError` if the key is missing (TA-mandated behavior)
-- Supports both conversational and structured responses
+```python
+schema = {
+    "name": "intent",
+    "schema": {
+        "type": "object",
+        "properties": {"action": {"type": "string"}},
+        "required": ["action"],
+    },
+}
 
----
+result = client.generate_response(
+    user_input="Hi",
+    system_prompt="Extract intent",
+    response_schema=schema,
+)
+```
 
-### 2. Dependency Injection
+The returned value is a Python dictionary that conforms to the schema.
 
-Dependency injection is activated when the package is imported.
+## Dependency Injection
+- Importing `openai_impl` registers this implementation with `ai_api.get_client()`
+- Application code resolves the active AI client via `ai_api.get_client()`
+- No OpenAI-specific logic leaks outside this module
 
-In `__init__.py`, the package **monkey-patches** the AI API:
+## Error Handling
+- Missing credentials raise `RuntimeError`
+- Provider and SDK failures are sanitized into generic `RuntimeError`
+- Timeouts and invalid outputs are handled explicitly
 
-- `ai_api.get_client` is replaced
-- Calls to `get_client()` return an `OpenAIClient` instance
+Provider internals are never exposed to callers.
 
-This mirrors the pattern used in `slack_impl`.
+## Testing
+Tests verify:
+- Dependency injection registration on import
+- Conversational and structured response handling
+- Error sanitization and timeout behavior
+- Behavior without real OpenAI calls (SDK is fully mocked)
 
-No dependency injection occurs unless `openai_impl` is explicitly imported.
+No tests require a live OpenAI account.
 
----
-
-## Environment Variables
-
-This package requires the following environment variable:
-
-- `OPENAI_API_KEY` — OpenAI API key used for authentication
-
-Missing environment variables result in **hard failures**, not silent degradation.
-
----
-
-## What This Package Does NOT Do
-
-This package intentionally excludes:
-
-- FastAPI services
-- HTTP endpoints
-- Generated OpenAPI clients
-- Service-to-service communication
-- Adapters or workflow logic
-
-Those responsibilities belong to other components in the AI vertical.
-
----
-
-## Tests
-
-This package includes tests that enforce:
-
-- Correct dependency injection behavior
-- Required environment variable validation
-- Compliance with the OSS AI interface
-
-Tests do **not** make real OpenAI API calls and are safe for CI.
-
----
-
-## Role in HW3 Architecture
-
-`openai_impl` is **Component 2 of 5** in the AI vertical:
-
-1. ai_api — OSS interface
-2. openai_impl — Direct OpenAI implementation (this package)
-3. ai_service — FastAPI service wrapper
-4. ai_generated_client — OpenAPI-generated client
-5. ai_adapter — Service-backed adapter
-
-Each component has a single responsibility and must not violate architectural boundaries.
-
----
-
-## Design Principles
-
-- OSS APIs are the single source of truth
-- Provider logic is isolated
-- Dependency injection is explicit
-- Missing configuration fails fast
+## Non-Goals
+This module does not:
+- Implement AI routing or orchestration
+- Manage prompts beyond direct invocation
+- Handle retries, batching, or streaming
+- Expose OpenAI SDK objects to callers
