@@ -22,6 +22,7 @@ def load_config() -> None:
     required_vars = [
         "SLACK_SERVICE_BASE_URL",
         "AI_SERVICE_BASE_URL",
+        "JIRA_SERVICE_BASE_URL",
         "OPENAI_API_KEY",
     ]
 

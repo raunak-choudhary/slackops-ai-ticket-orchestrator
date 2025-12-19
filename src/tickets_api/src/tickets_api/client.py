@@ -7,73 +7,51 @@ from enum import StrEnum
 
 
 class TicketStatus(StrEnum):
-    """Enumeration of possible ticket statuses."""
-
     OPEN = "open"
     IN_PROGRESS = "in_progress"
     CLOSED = "closed"
 
 
 class Ticket(ABC):
-    """Abstract representation of a Ticket."""
+    @property
+    @abstractmethod
+    def id(self) -> str: ...
 
     @property
     @abstractmethod
-    def id(self) -> str:
-        """Unique identifier for the ticket."""
-        raise NotImplementedError
+    def title(self) -> str: ...
 
     @property
     @abstractmethod
-    def title(self) -> str:
-        """The title of the ticket."""
-        raise NotImplementedError
+    def description(self) -> str: ...
 
     @property
     @abstractmethod
-    def description(self) -> str:
-        """The detailed description of the ticket."""
-        raise NotImplementedError
+    def status(self) -> TicketStatus: ...
 
     @property
     @abstractmethod
-    def status(self) -> TicketStatus:
-        """The current status of the ticket."""
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def assignee(self) -> str | None:
-        """The ID of the user assigned to the ticket, if any."""
-        raise NotImplementedError
+    def assignee(self) -> str | None: ...
 
 
 class TicketInterface(ABC):
-    """The contract for Ticketing services."""
-
     @abstractmethod
     def create_ticket(
         self,
         title: str,
         description: str,
         assignee: str | None = None,
-    ) -> Ticket:
-        """Create a new ticket."""
-        raise NotImplementedError
+    ) -> Ticket: ...
 
     @abstractmethod
-    def get_ticket(self, ticket_id: str) -> Ticket | None:
-        """Retrieve a ticket by its ID."""
-        raise NotImplementedError
+    def get_ticket(self, ticket_id: str) -> Ticket | None: ...
 
     @abstractmethod
     def search_tickets(
         self,
         query: str | None = None,
         status: TicketStatus | None = None,
-    ) -> list[Ticket]:
-        """Search for tickets based on query and/or status."""
-        raise NotImplementedError
+    ) -> list[Ticket]: ...
 
     @abstractmethod
     def update_ticket(
@@ -81,21 +59,25 @@ class TicketInterface(ABC):
         ticket_id: str,
         status: TicketStatus | None = None,
         title: str | None = None,
-    ) -> Ticket:
-        """Update a ticket's details."""
-        raise NotImplementedError
+    ) -> Ticket: ...
 
     @abstractmethod
-    def delete_ticket(self, ticket_id: str) -> bool:
-        """Delete a ticket. Returns True if successful."""
-        raise NotImplementedError
+    def delete_ticket(self, ticket_id: str) -> bool: ...
+
+
+# -------------------------
+# GLOBAL DI BINDING
+# -------------------------
+
+_client: TicketInterface | None = None
+
+
+def bind_client(client: TicketInterface) -> None:
+    global _client
+    _client = client
 
 
 def get_client() -> TicketInterface:
-    """Dependency injection hook for the active TicketInterface implementation.
-
-    Implementation packages (e.g., jira_impl) must monkey-patch this function
-    to return their concrete TicketInterface implementation.
-    """
-    error_no_implementation = "No TicketInterface implementation registered."
-    raise NotImplementedError(error_no_implementation)
+    if _client is None:
+        raise RuntimeError("TicketInterface client not bound")
+    return _client

@@ -14,11 +14,6 @@ import os
 
 from fastapi import FastAPI
 
-# -------------------------
-# CRITICAL: Activate DI
-# -------------------------
-# Importing the implementation registers it with ai_api.get_client().
-# This module uses register-on-import semantics.
 import openai_impl  # noqa: F401
 
 from ai_service.routes import router
@@ -36,6 +31,11 @@ def create_app() -> FastAPI:
     _configure_logging()
 
     app = FastAPI(title="AI Service")
+
+    @app.get("/health")
+    def health() -> dict[str, str]:
+        return {"status": "ok"}
+
     app.include_router(router)
 
     logging.getLogger(__name__).info("AI Service application created")
