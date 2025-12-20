@@ -1,241 +1,79 @@
 version: 2.1
 
-executors:
-  py312:
+jobs:
+  quality-and-tests:
     docker:
       - image: cimg/python:3.12
 
-jobs:
-  bootstrap_env:
-    executor: py312
     steps:
       - checkout
+
       - run:
           name: Install uv
+          shell: /bin/bash -eo pipefail
           command: |
             python -m pip install --upgrade pip
             pip install uv
             uv --version
+
       - run:
-          name: Sync dependencies (all + dev)
+          name: Install dependencies
+          shell: /bin/bash -eo pipefail
           command: |
             uv sync --all-packages --dev
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .
-            - .venv
 
-  ruff_lint:
-    executor: py312
-    steps:
-      - attach_workspace:
-          at: .
       - run:
-          name: Install uv
+          name: Validate required environment variables
+          shell: /bin/bash -eo pipefail
           command: |
-            python -m pip install --upgrade pip
-            pip install uv
-            uv --version
+            required_vars=(
+              SLACK_BOT_TOKEN
+              SLACK_SIGNING_SECRET
+              SLACK_API_BASE_URL
+              SLACK_SERVICE_BASE_URL
+              SLACK_TEST_CHANNEL_ID
+              JIRA_API_TOKEN
+              JIRA_BASE_URL
+              JIRA_EMAIL
+              JIRA_PROJECT_KEY
+              JIRA_SERVICE_BASE_URL
+              OPENAI_API_KEY
+              GEMINI_API_KEY
+              GEMINI_MODEL
+              AI_SERVICE_BASE_URL
+            )
+
+            for var in "${required_vars[@]}"; do
+              if [ -z "${!var}" ]; then
+                echo "ERROR: Required environment variable $var is not set"
+                exit 1
+              fi
+            done
+
+            echo "All required environment variables are set"
+
       - run:
-          name: Ruff lint
+          name: Lint (Ruff)
+          shell: /bin/bash -eo pipefail
           command: |
             uv run ruff check .
 
-  mypy_strict_checks:
-    executor: py312
-    steps:
-      - attach_workspace:
-          at: .
       - run:
-          name: Install uv
-          command: |
-            python -m pip install --upgrade pip
-            pip install uv
-            uv --version
-      - run:
-          name: MyPy (strict, config-driven)
+          name: Static typing (MyPy)
+          shell: /bin/bash -eo pipefail
           command: |
             uv run mypy --config-file mypy.ini
 
-  unit_tests_pytest:
-    executor: py312
-    steps:
-      - attach_workspace:
-          at: .
       - run:
-          name: Install uv
+          name: "Tests (CI-safe: exclude live and e2e tests)"
+          shell: /bin/bash -eo pipefail
           command: |
-            python -m pip install --upgrade pip
-            pip install uv
-            uv --version
-      - run:
-          name: Run tests with coverage + JUnit
-          command: |
-            mkdir -p test-results
-            uv run pytest -q --cov=src --cov-report=xml --junitxml=test-results/junit.xml
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: coverage.xml
-      - persist_to_workspace:
-          root: .
-          paths:
-            - coverage.xml
-            - test-results
-
-  coverage_enforce_85:
-    executor: py312
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Enforce 85% coverage
-          command: |
-            python - \<< 'PY'
-            import os
-            import sys
-            import xml.etree.ElementTree as ET
-
-            path = "coverage.xml"
-            if not os.path.exists(path):
-                print("coverage.xml not found")
-                sys.exit(1)
-
-            tree = ET.parse(path)
-            root = tree.getroot()
-            cov = float(root.attrib.get("line-rate", "0")) * 100
-            print(f"Total coverage: {cov:.2f}%")
-            if cov < 85.0:
-                raise SystemExit(f"Coverage failure: total of {cov:.0f} is less than fail-under=85")
-            PY
-
-  package_import_smoke:
-    executor: py312
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Install uv
-          command: |
-            python -m pip install --upgrade pip
-            pip install uv
-            uv --version
-      - run:
-          name: Import smoke (auto-discovered top-level packages)
-          command: |
-            uv run python - \<< 'PY'
-            import sys
-            import pathlib
-            import importlib
-
-            root = pathlib.Path(".").resolve()
-            pkg_src_dirs = sorted(root.glob("src/*/src"))
-            for d in pkg_src_dirs:
-                p = str(d.resolve())
-                if p not in sys.path:
-                    sys.path.insert(0, p)
-
-            modules = []
-            for d in pkg_src_dirs:
-                for mod_dir in d.iterdir():
-                    if mod_dir.is_dir() and (mod_dir / "__init__.py").exists():
-                        modules.append(mod_dir.name)
-
-            print("Discovered packages:", modules)
-            failures = []
-            for m in modules:
-                try:
-                    importlib.import_module(m)
-                except Exception as exc:
-                    failures.append((m, repr(exc)))
-
-            if failures:
-                for m, err in failures:
-                    print(f"Failed to import {m}: {err}")
-                raise SystemExit(1)
-
-            print("All discovered packages import successfully.")
-            PY
-
-  report_summary:
-    executor: py312
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Summarize results (Ruff / MyPy / Pytest / Coverage)
-          command: |
-            set -e
-            echo "===== SUMMARY ====="
-            echo "• Ruff: ran in job ruff_lint"
-            echo "• MyPy: ran with mypy.ini in job mypy_strict_checks"
-            echo "• Pytests: junit -> test-results/junit.xml"
-            echo "• Coverage: coverage.xml (gate at 85%)"
-            echo "• Imports: package_import_smoke (auto-discovered)"
-            echo "==================="
-
-  deploy_health_check_200:
-    executor: py312
-    environment:
-      SERVICE_HEALTH_URL: "https://ospsd-hw2-final-demo.onrender.com/health"
-    steps:
-      - run:
-          name: Health check /health returns 200 with retries
-          command: |
-            URL="${SERVICE_HEALTH_URL}"
-            echo "Checking: $URL"
-            ATTEMPTS=12
-            SLEEP=5
-            CONNECT_TIMEOUT=10
-            READ_TIMEOUT=10
-            i=1
-            while [ "$i" -le "$ATTEMPTS" ]; do
-              CODE=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout "$CONNECT_TIMEOUT" --max-time "$READ_TIMEOUT" "$URL" || echo "000")
-              if [ "$CODE" = "200" ]; then
-                echo "HTTP 200 OK from $URL"
-                curl -sS "$URL" || true
-                exit 0
-              fi
-              echo "Attempt $i/$ATTEMPTS → got $CODE; sleeping ${SLEEP}s…"
-              i=$((i + 1))
-              sleep "$SLEEP"
-            done
-            echo "Health check FAILED after $ATTEMPTS attempts."
-            exit 1
+            uv run pytest -m "not e2e and not live" \
+              --cov=src \
+              --cov-report=term-missing
 
 workflows:
-  hw2_pipeline:
+  version: 2
+  quality-gates:
     jobs:
-      - bootstrap_env
-      - ruff_lint:
-          requires:
-            - bootstrap_env
-      - mypy_strict_checks:
-          requires:
-            - bootstrap_env
-      - unit_tests_pytest:
-          requires:
-            - bootstrap_env
-      - coverage_enforce_85:
-          requires:
-            - unit_tests_pytest
-      - package_import_smoke:
-          requires:
-            - bootstrap_env
-      - report_summary:
-          requires:
-            - ruff_lint
-            - mypy_strict_checks
-            - unit_tests_pytest
-            - coverage_enforce_85
-            - package_import_smoke
-      - deploy_health_check_200:
-          requires:
-            - report_summary
-          filters:
-            branches:
-              only:
-                - main
-                - feature/slack-client-and-ci-raunak
-                - hw2
+      - quality-and-tests

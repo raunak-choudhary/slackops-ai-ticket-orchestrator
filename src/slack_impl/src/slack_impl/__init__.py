@@ -1,19 +1,30 @@
 """
-Public surface for slack_impl.
+Slack implementation of the ChatInterface protocol.
 
-- SlackClient: concrete client that can talk to Slack Web API (when configured)
-- SQLiteTokenStore: DB-backed token store for OAuth credentials
-- OAuth helpers: build_authorization_url, exchange_code_for_tokens
+This module wires SlackClient into chat_api using
+explicit environment-based configuration.
 """
 
-from .slack_client import SlackClient
-from .token_store import SQLiteTokenStore, TokenBundle
-from .oauth import build_authorization_url, exchange_code_for_tokens
+import os
 
-__all__ = [
-    "SlackClient",
-    "SQLiteTokenStore",
-    "TokenBundle",
-    "build_authorization_url",
-    "exchange_code_for_tokens",
-]
+import chat_api
+from slack_impl.slack_client import SlackClient
+
+
+def _get_slack_client() -> SlackClient:
+    try:
+        base_url = os.environ["SLACK_API_BASE_URL"]
+        token = os.environ["SLACK_BOT_TOKEN"]
+    except KeyError as exc:
+        raise RuntimeError(
+            f"Missing required Slack environment variable: {exc}"
+        ) from exc
+
+    return SlackClient(
+        base_url=base_url,
+        token=token,
+    )
+
+
+# Dependency injection (FINAL, CORRECT)
+chat_api.get_client = _get_slack_client

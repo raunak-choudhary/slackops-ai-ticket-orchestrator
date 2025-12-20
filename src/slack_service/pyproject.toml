@@ -1,45 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "slack-service"
 version = "0.1.0"
-description = "FastAPI Slack service for OSPD HW2"
-readme = "README.md"
-requires-python = ">=3.10"
+description = "FastAPI service wrapping chat client for Slack"
+requires-python = ">=3.12"
 dependencies = [
-  "fastapi>=0.115.0",
-  "pydantic>=2.7.0",
-  "typing-extensions>=4.9.0",
-  # Needed by Starlette's SessionMiddleware
-  "itsdangerous>=2.1,<3.0",
+    "chat-api",
+    "slack-impl",
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.5.0",
 ]
 
-[build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
-
-# ✅ Tell setuptools we use a src/ layout and which packages to include
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["slack_service*"]
-
-# ✅ Ruff: move rules under `lint.*`
-# [tool.ruff]
-# line-length = 100
-# target-version = "py312"
-
-# [tool.ruff.lint]
-# select = ["E", "F", "I", "UP"]
-# ignore = []
-
-# [tool.mypy]
-# python_version = "3.12"
-# strict = true
-# warn_unused_configs = true
-# If you ever need to, you can toggle:
-# ignore_missing_imports = true
+[tool.hatch.build.targets.wheel]
+packages = ["src/slack_service"]
 
 [tool.pytest.ini_options]
-addopts = "-q"
-testpaths = ["slack_service/tests"]
+pythonpath = ["src"]

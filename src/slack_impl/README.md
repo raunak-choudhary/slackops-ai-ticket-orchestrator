@@ -1,113 +1,75 @@
-# slack_impl
+# slack-impl
 
-Concrete Slack implementation for HW2 (OSPSD Team 4).
+## Overview
+`slack-impl` provides a **direct Slack Web API–backed implementation** of the shared `chat_api.ChatInterface`.  
+It communicates with Slack’s HTTP APIs, handles OAuth utilities, and manages token storage, while keeping Slack-specific details isolated from the rest of the system.
 
-- **`SlackClient`** — concrete client implementing `slack_api.ChatClient`
-  - **Offline mode (default):** deterministic results, zero network
-  - **Online mode:** pass a Slack token to call Slack Web API
-- **`SQLiteTokenStore`** — DB-backed OAuth token store (SQLite)
-- **OAuth helpers** — `build_authorization_url`, `exchange_code_for_tokens`
+This module is provider-specific and intentionally separated from adapters and orchestration logic.
 
-> This package is laid out as a `src/` package. Install it in editable mode from the monorepo root.
+## Responsibilities
+- Implement `ChatInterface` using the Slack Web API
+- Represent Slack messages via the shared `Message` abstraction
+- Handle Slack OAuth URL construction and token exchange
+- Persist OAuth tokens locally for reuse
+- Sanitize and validate message content before sending
 
----
+## Configuration
+For live Slack operations, the following environment variables are required:
+- `SLACK_API_BASE_URL`
+- `SLACK_BOT_TOKEN`
 
-## Install (editable)
-
-```bash
-python -m pip install -e src/slack_impl
-```
-
-## Runtime env (for OAuth / online mode)
-
-Set these before using OAuth or live Slack calls:
-
-- `SLACK_CLIENT_ID`
-- `SLACK_CLIENT_SECRET`
-- `SLACK_REDIRECT_URI` (e.g., `http://localhost:8000/oauth/callback`)
-- `SLACK_SCOPES` (space-delimited, e.g., `chat:write channels:read`)
-
-For **online** API calls, provide a token (bot/user):
+If these are missing, the client operates in **offline mode**, enabling deterministic behavior for testing.
 
 ```python
-from slack_impl import SlackClient
+from slack_impl.slack_client import SlackClient
 
-client = SlackClient(default_access_token="xoxb-xxxxxxxx")  # enables online mode
-channels = client.list_channels()           # Slack conversations.list
-sent = client.post_message(channels[0].id, "Hello from HW2!")  # chat.postMessage
+client = SlackClient()  # reads configuration from environment
 ```
 
----
-
-## Offline (deterministic, test-friendly) example
+## How It Works
+The implementation is composed of three main parts:
+- **SlackClient** — implements `ChatInterface` using Slack HTTP endpoints
+- **OAuth helpers** — build authorization URLs and exchange OAuth codes
+- **Token store** — persist and reload OAuth tokens using SQLite
 
 ```python
-from slack_impl import SlackClient
-
-client = SlackClient()       # no token -> offline mode
-assert client.health() is True
-chs = client.list_channels() # -> [C001 "general", C002 "random"]
-msg = client.post_message("C001", "  hello   world ")
-print(msg)                   # ts is a stable, non-empty string
+client.send_message("C123", "Hello from Slack!")
+messages = client.get_messages("C123", limit=5)
 ```
 
----
+## Offline vs Online Mode
+- **Online mode**: enabled when base URL and token are present
+- **Offline mode**: enabled when configuration is missing
 
-## OAuth helpers (service will wire endpoints)
+Offline mode:
+- Avoids network calls
+- Returns deterministic stubbed responses
+- Simplifies unit testing without Slack credentials
 
-```python
-import secrets
-from slack_impl import (
-  build_authorization_url,
-  exchange_code_for_tokens,
-  SQLiteTokenStore, TokenBundle
-)
+## Dependency Injection
+- Importing `slack_impl` registers `SlackClient` with `chat_api.get_client()`
+- Application code resolves the active chat client via `chat_api.get_client()`
+- Slack-specific logic does not leak outside this module
 
-state = secrets.token_urlsafe(16)
-auth_url = build_authorization_url(state)   # send user here
+## Error Handling
+- Missing credentials raise `RuntimeError` when live operations are attempted
+- Slack API errors are converted into `RuntimeError` or `ConnectionError`
+- Provider internals are not exposed upstream
 
-# In your callback handler (after Slack redirects back with ?code=...):
-# tokens = await exchange_code_for_tokens(code)
-# SQLiteTokenStore().save(user_id, tokens)
-```
+## Testing
+Tests verify:
+- Dependency injection registration
+- Online and offline behavior
+- Message send, fetch, and delete operations
+- OAuth helper correctness
+- Token storage persistence
+- Input sanitization
 
----
+All tests run without requiring live Slack credentials.
 
-## Token store (SQLite)
-
-```python
-from slack_impl import SQLiteTokenStore, TokenBundle
-
-store = SQLiteTokenStore()  # ":memory:" by default
-bundle = TokenBundle(access_token="xoxb-abc", scope="chat:write")
-store.save("U123", bundle)
-assert store.has("U123") is True
-assert store.load("U123") == bundle
-store.delete("U123")
-```
-
----
-
-## Development
-
-Run gates from repo root:
-
-```bash
-python -m ruff check --fix src/slack_impl && python -m ruff check src/slack_impl
-python -m mypy src/slack_impl
-python -m pytest -q src/slack_impl/tests
-```
-
-**Notes**
-- Package data includes `py.typed` for PEP 561 typing.
-- Online mode uses `httpx` lazily; offline mode has no network dependency.
-
----
-
-## What’s implemented (HW2-aligned)
-
-- ✅ Concrete client fulfilling `slack_api.ChatClient`
-- ✅ Deterministic offline behavior for tests
-- ✅ Online Web API calls for `conversations.list` and `chat.postMessage` (when token provided)
-- ✅ OAuth helpers (authorize URL + token exchange)
-- ✅ DB-backed token storage (SQLite, `:memory:` supported)
+## Non-Goals
+This module does not:
+- Handle Slack Events API payloads
+- Perform application-level routing or orchestration
+- Abstract Slack workflow concepts beyond chat operations
+- Guarantee delivery or message ordering

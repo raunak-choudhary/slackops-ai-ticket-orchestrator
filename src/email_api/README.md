@@ -1,139 +1,63 @@
-# Email API Interface Component
-
-Protocol-based email client interface for dependency injection and modular architecture.
+# email-api
 
 ## Overview
+`email-api` provides a simple, provider-agnostic interface for working with email messages.  
+It defines a lightweight `Email` data model and an in-memory `Client` for basic email operations.
 
-The `email-api` component provides type-safe interfaces for email client implementations. It defines contracts without implementation details, enabling dependency injection and testable architectures.
+This module is intentionally minimal and is designed to be easy to replace with a real email service implementation.
 
-## Features
+## Responsibilities
+- Define a standard `Email` message representation
+- Provide a simple email client API
+- Support basic send, list, retrieve, and delete operations
+- Remain independent of any external email provider
 
-- **Protocol-Based Design**: Uses `typing.Protocol` for flexible implementation contracts
-- **Async-First**: Built for modern async Python applications
-- **Type Safety**: Full mypy strict mode compliance
-- **Immutable Data Models**: Thread-safe dataclass-based email and address models
-- **Zero Dependencies**: Pure interface definitions
+## Core Models
 
-## Installation
-
-```bash
-# From workspace root
-uv sync --extra email
-
-# With development dependencies
-uv sync --extra dev --extra email
-```
-
-## Usage
-
-### Basic Interface
+### Email
+`Email` represents a single email message with common fields.
 
 ```python
-from email_api import EmailClient, Email, EmailAddress
+from email_api import Email
 
-async def my_email_processor(client: EmailClient) -> None:
-    """Process emails using injected client implementation."""
-    async with client:
-        emails = await client.list_inbox_messages(limit=10)
-        for email in emails:
-            if email.has_content:
-                content = email.get_content()
-                print(f"From: {email.sender.email}")
-                print(f"Subject: {email.subject}")
-                print(f"Content: {content[:100]}...")
-```
-
-### Data Models
-
-```python
-from email_api import Email, EmailAddress
-from datetime import datetime, timezone
-
-# Email addresses
-sender = EmailAddress(email="user@example.com", name="User Name")
-
-# Email objects
 email = Email(
-    id="msg_123",
-    subject="Important Message",
-    sender=sender,
-    recipients=[EmailAddress(email="recipient@example.com")],
-    body_text="Plain text content",
-    body_html="<p>HTML content</p>",
-    timestamp=datetime.now(timezone.utc),
-    is_read=False
+    sender="alice@example.com",
+    recipient="bob@example.com",
+    subject="Hello",
+    body="Hi Bob!"
 )
-
-# Check content availability
-if email.has_content:
-    content = email.get_content()  # Prefers text over HTML
 ```
 
-### Exception Handling
+## Client API
+`Client` provides basic email operations using an in-memory store.
 
 ```python
-from email_api import EmailError, EmailConnectionError, EmailAuthenticationError
+from email_api import Client, Email
 
-try:
-    emails = await client.list_inbox_messages()
-except EmailAuthenticationError as e:
-    print(f"Authentication failed: {e}")
-except EmailConnectionError as e:
-    print(f"Connection error: {e}")
-except EmailError as e:
-    print(f"General email error: {e}")
+client = Client()
+client.send_email(email)
+
+emails = client.list_emails()
+first = client.get_email(0)
+client.delete_email(0)
 ```
 
-## Interface Contract
+## Behavior and Constraints
+- `send_email` raises `ValueError` if sender or recipient is missing
+- Emails are stored in memory only
+- Index-based access is used for retrieval and deletion
 
-```python
-class EmailClient(Protocol):
-    async def list_inbox_messages(self, limit: int = 10) -> list[Email]:
-        """List recent inbox messages."""
-        ...
-    
-    async def get_email_content(self, email_id: str) -> Email:
-        """Retrieve full email content by ID."""
-        ...
-    
-    async def close(self) -> None:
-        """Clean up resources and close connections."""
-        ...
-    
-    async def __aenter__(self) -> Self:
-        """Async context manager entry."""
-        ...
-    
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        """Async context manager exit."""
-        ...
-```
+## Testing and Usage
+This module is suitable for:
+- Local development
+- Testing workflows that require email-like behavior
+- Demonstrations without external dependencies
 
-## Testing
+It is **not** intended for production email delivery.
 
-```bash
-# Run component tests
-uv run pytest src/email_api/tests/
-
-# With coverage
-uv run pytest src/email_api/tests/ --cov=src/email_api/src/email_api
-
-# Type checking
-uv run mypy src/email_api/
-
-# Linting
-uv run ruff check src/email_api/
-```
-
-## Quality Standards
-
-- **Comprehensive Test Coverage**: Extensive unit test suite
-- **Strict Type Checking**: Full mypy strict mode compliance  
-- **Clean Code**: All ruff rules enabled with documented exceptions
-- **Async Context Management**: Proper resource handling patterns
-- **Immutable Data**: Thread-safe, predictable data models
-
----
-
-**Component**: Email API Interface  
-**License**: MIT
+## Non-Goals
+This module does not:
+- Send real emails
+- Persist messages to disk or database
+- Handle authentication, SMTP, or external APIs
+- Guarantee delivery or reliability

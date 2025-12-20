@@ -1,138 +1,71 @@
-# slack_adapter
+# slack-adapter
 
-Service-backed adapter that implements the `slack_api.ChatClient` contract and delegates
-all operations to the local FastAPI Slack microservice (`slack_service`) via HTTP.
+## Overview
+`slack-adapter` provides a concrete implementation of the shared `chat_api.ChatInterface` by delegating all chat operations to a Slack-backed FastAPI service via an auto-generated HTTP client.
 
-This package mirrors the structure and gates used in HW1/HW2 for consistency.
+It acts as a translation layer between the standardized chat interface and the Slack service.
 
----
+## Responsibilities
+- Implement `ChatInterface`
+- Delegate message operations to the Slack service over HTTP
+- Translate service responses into domain `Message` objects
+- Read required Slack configuration from environment variables
 
-## 📦 Package layout
+## Configuration
+The adapter requires the Slack service base URL to be set at runtime.
 
-```
-slack_adapter/
-  pyproject.toml
-  setup.py
-  README.md
-  src/slack_adapter/
-    __init__.py
-    adapter.py
-    py.typed
-  tests/
-    test_adapter_contract.py
-    test_adapter_client_cov.py
-```
-
-- **Public export:** `SlackServiceBackedClient` (re-exported at `slack_adapter` package root)
-- **Typed package:** `py.typed` included
-- **Single source of truth:** runtime code lives under `src/slack_adapter/`
-
----
-
-## ✅ Contract implemented
-
-The adapter fulfills `slack_api.ChatClient`:
-
-- `health() -> bool`
-- `list_channels() -> list[slack_api.Channel]`
-- `post_message(channel_id: str, text: str) -> slack_api.Message`
-
-> It **does not** call Slack directly. All work is delegated to `slack_service` REST endpoints.
-
----
-
-## 🚀 Quick start
-
-Install the three Slack packages in editable mode (order matters to satisfy imports):
-
-```bash
-python -m pip install -e src/slack_api
-python -m pip install -e src/slack_service
-python -m pip install -e src/slack_adapter
-```
-
-Use the adapter against a running service (or in tests, against the in‑process FastAPI app):
+Required environment variable:
+- `SLACK_SERVICE_BASE_URL`
 
 ```python
-from slack_adapter import SlackServiceBackedClient
-
-with SlackServiceBackedClient(base_url="http://localhost:8000") as client:
-    assert client.health()
-    channels = client.list_channels()
-    msg = client.post_message(channels[0].id, "hello from adapter")
-    print(msg.ts)
+import os
+os.environ["SLACK_SERVICE_BASE_URL"] = "http://localhost:8000"
 ```
 
----
+Initialization fails fast if the variable is missing.
 
-## 🌐 Service contract (expected endpoints)
+## How It Works
+The adapter uses the generated Slack service client to invoke message-related endpoints and converts service responses into `Message` objects.
 
-The adapter is tolerant to two JSON shapes for convenience:
+```python
+import chat_api
 
-### `GET /health`
-- **200 OK** → the service is healthy.
-
-### `GET /channels`
-- Either a bare list: `[{ "id": "C001", "name": "general" }, ... ]`
-- Or wrapped: `{ "channels": [ ... ] }`
-
-### `POST /messages` (JSON: `{ "channel_id": "...", "text": "..." }`)
-- Either a bare object: `{ "channel_id": "C001", "text": "hello", "ts": "..." }`
-- Or wrapped: `{ "message": { ... } }`
-
----
-
-## 🧪 Tests
-
-Two layers to keep it light and deterministic:
-
-1. **Contract/Import smoke** – `tests/test_adapter_contract.py`  
-   Ensures public exports exist and type annotations align with `slack_api`.
-
-2. **In‑memory integration** – `tests/test_adapter_client_cov.py`  
-   Uses an **ASGI-to-sync transport** to exercise the adapter **against the real FastAPI app** in‑process
-   (no network, no external Slack).
-
-Run gates (same as HW1/HW2 style):
-
-```bash
-python -m ruff check --fix src/slack_adapter
-python -m ruff check src/slack_adapter
-
-python -m mypy src/slack_adapter
-
-python -m pytest -q src/slack_adapter/tests
+client = chat_api.get_client()
+client.send_message("C123", "Hello from Slack adapter")
 ```
 
----
+The adapter itself does not depend on the Slack SDK or Slack event payloads.
 
-## ⚙️ Implementation notes
+## Supported Operations
+- `send_message`
+- `get_messages`
+- `delete_message`
+- `get_channel_members` (Slack-specific helper)
 
-- HTTP client: `httpx.Client` (sync). For in‑process tests, we wrap `httpx.ASGITransport` so the sync client can call the async FastAPI app.
-- Input/Output: adapter converts JSON payloads to `slack_api.Channel` / `slack_api.Message` using a helper that prefers `from_dict` if present, else `__init__(**kwargs)`.
-- Fail‑fast: unexpected payload shapes raise `ValueError`.
+Standard chat operations return provider-agnostic results.
 
----
+## Dependency Injection
+- Importing `slack_adapter` registers a Slack-backed chat client
+- Application code resolves the client via `chat_api.get_client()`
+- No Slack-specific logic leaks outside this module
 
-## 🧩 Troubleshooting
+## Error Handling
+- Missing configuration raises `RuntimeError`
+- Network or service failures raise `ConnectionError`
+- Empty or malformed service responses are handled defensively
 
-- **`ModuleNotFoundError: slack_service` in tests**  
-  Ensure `python -m pip install -e src/slack_service` before running adapter tests.
+## Testing
+Tests verify:
+- Dependency injection registration
+- Transformation of service responses into domain messages
+- Successful send and fetch operations
+- Failure behavior without real Slack calls
 
-- **`httpx.ASGITransport` sync errors**  
-  We use a tiny sync wrapper inside the tests to fully materialize async responses.
+All tests mock the Slack service client.
 
-- **Mypy duplicate-module errors**  
-  Keep the canonical inner layout only (`src/slack_adapter/src/slack_adapter`). Do not duplicate files at the outer level.
-
----
-
-## 📝 PR checklist (copy/paste for reviews)
-
-- [ ] Single `src/slack_adapter/src/slack_adapter` source of truth (no duplicates)
-- [ ] `py.typed` present
-- [ ] `ruff` clean
-- [ ] `mypy` clean
-- [ ] `pytest` all green locally
-- [ ] README updated (this file)
-- [ ] No Python/venv/CI changes compared to HW1/HW2
+## Non-Goals
+This module does not:
+- Talk directly to the Slack Web API
+- Handle Slack Events API payloads
+- Perform orchestration or routing
+- Manage Slack authentication or tokens

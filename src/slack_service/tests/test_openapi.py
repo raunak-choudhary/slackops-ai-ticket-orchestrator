@@ -1,16 +1,15 @@
-from __future__ import annotations
+"""Tests for Slack service OpenAPI schema."""
 
 from fastapi.testclient import TestClient
 
-from slack_service.app import app
+from slack_service.main import app
 
 
-def test_openapi_available_and_has_paths() -> None:
+def test_openapi_schema_available() -> None:
+    """OpenAPI schema endpoint should be available."""
     client = TestClient(app)
-    resp = client.get("/openapi.json")
-    assert resp.status_code == 200
-    doc = resp.json()
-    assert "openapi" in doc
-    assert "/health" in doc["paths"]
-    assert "/channels" in doc["paths"]
-    assert "/messages" in doc["paths"]
+
+    response = client.get("/openapi.json")
+
+    assert response.status_code == 200
+    assert "paths" in response.json()

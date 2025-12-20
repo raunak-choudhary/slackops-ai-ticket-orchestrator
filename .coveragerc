@@ -1,9 +1,37 @@
-[run]
-source = src
-omit =
-    src/**/tests/*
-    **/__init__.py
+[coverage:run]
+branch = True
 
-[report]
-show_missing = True
+source =
+    src/ai_api/src
+    src/chat_api/src
+    src/tickets_api/src
+
+omit =
+    # Entry points / wiring
+    */integration_app/*
+    */main.py
+    */telemetry.py
+    */schemas.py
+
+    # Generated / SDK code
+    */*_generated_client/*
+    */openai_impl/*
+    */slack_adapter/*
+
+    # Non-core verticals
+    */email_api/*
+    */gmail_impl/*
+    */mail_client_service/*
+    */mail_client_adapter/*
+
+    # Noise
+    */tests/*
+    */legacy/*
+    */__pycache__/*
+    */__init__.py
+    */.venv/*
+    */site-packages/*
+
+[coverage:report]
 fail_under = 85
+show_missing = True

@@ -1,64 +1,104 @@
-# Slack Service
+# slack-service
 
-This package exposes a **FastAPI-based Slack Chat Service** for Homework 2 of the Open Source Software Product Development course (OSPSD).  
-It serves as a microservice that wraps the core Slack implementation (`slack_impl`) and the abstract API contract (`slack_api`).
+## Overview
+`slack-service` is a FastAPI-based HTTP service that exposes chat operations backed by Slack.  
+It acts as a **pure HTTP adapter** on top of the shared `chat_api.ChatInterface`, translating HTTP requests into chat interface calls and returning provider-agnostic responses.
 
-## 📘 Overview
+This service contains **no Slack business logic**.
 
-The service provides REST endpoints that mirror the `ChatClient` interface defined in `slack_api`.  
-It integrates with the `SlackClient` from `slack_impl` using dependency injection and exposes standard JSON responses.
+## Responsibilities
+- Expose chat operations over HTTP
+- Activate Slack dependency injection via `slack_impl`
+- Translate HTTP requests into `ChatInterface` calls
+- Convert domain messages into HTTP-safe response models
+- Sanitize provider errors into stable HTTP responses
+- Publish OpenAPI documentation
 
-## 🧩 Key Features
+## Application Startup
+On startup, the service:
+- Creates a FastAPI application
+- Imports `slack_impl` to activate chat dependency injection
+- Registers all Slack service routes
 
-- `GET /health` — health check endpoint (returns `{ "ok": true }`)
-- `GET /channels` — returns two deterministic channels (`C001`, `C002`)
-- `POST /messages` — posts a message with `channel_id` and `text`, returning a JSON message object with a `ts`
-- `GET /openapi.json` — serves the auto-generated OpenAPI schema for client generation
-
-## 🧠 Dependencies
-
-- **fastapi >= 0.115.0**
-- **pydantic >= 2.7.0**
-- **typing-extensions >= 4.9.0**
-- Depends on local editable installs of:
-  - `slack_api`
-  - `slack_impl`
-
-## ⚙️ Development Setup
-
-From the repo root (not inside `src/`):
-
-```bash
-python -m pip install -e ./src/slack_api
-python -m pip install -e ./src/slack_impl
-python -m pip install -e ./src/slack_service
+```python
+import slack_impl  # activates chat_api.get_client()
 ```
 
-Then verify everything works:
+## HTTP Endpoints
 
-```bash
-python -m ruff check --fix src/slack_service
-python -m mypy src/slack_service
-python -m pytest -q src/slack_service/tests
+### Health Check
+`GET /health`
+
+```json
+{ "ok": true }
 ```
 
-## 🧪 Tests
+Used for liveness and readiness checks.
 
-Tests live under `src/slack_service/tests/` and include:
+### List Channel Messages
+`GET /channels/{channel_id}/messages?limit=10`
 
-| Test File | Purpose |
-|------------|----------|
-| `test_health.py` | Checks `/health` returns `{ok: true}` |
-| `test_channels.py` | Validates `/channels` returns two deterministic channels |
-| `test_post_message.py` | Verifies `/messages` correctly returns a timestamped message |
-| `test_openapi.py` | Ensures OpenAPI document exposes the expected paths |
+Returns the most recent messages in a channel.
 
-All tests should pass with:
+### Post Message
+`POST /channels/{channel_id}/messages`
 
-```bash
-pytest -q src/slack_service/tests
+```json
+{
+  "text": "hello"
+}
 ```
 
-## 🧾 License
+Posts a message to the given channel.
 
-This project is distributed under the **MIT License** as part of the NYU OSPSD course.
+### Delete Message
+`DELETE /channels/{channel_id}/messages/{message_id}`
+
+Deletes a message from a channel.
+
+### List Channel Members
+`GET /channels/{channel_id}/members`
+
+Returns a list of channel member identifiers.
+
+## Dependency Injection
+- Importing `slack_impl` registers `SlackClient` with `chat_api.get_client()`
+- Most routes resolve the active client via `chat_api.get_client()`
+- The members endpoint uses `SlackClient` directly for provider-specific access
+
+Slack-specific details do not leak outside this service boundary.
+
+## Error Handling
+- Authentication failures → HTTP `401`
+- Slack connectivity failures → HTTP `502`
+- Missing configuration → HTTP `500`
+- Unexpected errors → HTTP `500`
+
+Provider and SDK details are never exposed in responses.
+
+## Models
+Pydantic models define the HTTP surface:
+- `MessageOut`
+- `MessagesResponse`
+- `PostMessageIn`
+- `PostMessageResponse`
+- `MembersResponse`
+
+These models remain provider-agnostic.
+
+## Testing
+Tests verify:
+- Health and OpenAPI endpoints
+- Request/response model validation
+- Message list, post, and delete routes
+- Member listing behavior
+- Correct HTTP status mapping for failures
+
+All tests run without requiring live Slack credentials.
+
+## Non-Goals
+This service does not:
+- Process Slack Events API payloads
+- Perform OAuth flows
+- Contain Slack Web API logic
+- Perform application orchestration
