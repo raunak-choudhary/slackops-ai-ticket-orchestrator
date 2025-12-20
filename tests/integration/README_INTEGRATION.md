@@ -1,134 +1,77 @@
-# Integration Tests – Slack & AI
+# Integration Test Suite
 
-This document describes the **integration test suite** for the Slack + AI system in the **ospsd-team4-fall2025** project.
+This project includes a comprehensive **integration test suite** that validates configuration wiring, service orchestration, and real service interactions across Slack, AI, and Tickets.
 
-Integration tests validate that **multiple components work together correctly**, while still allowing controlled assumptions about external systems.
+The tests are intentionally split into **local integration tests** (no external services required) and **live integration tests** (require running services). This allows fast local development while still supporting full end‑to‑end validation.
 
 ---
 
-## Scope of Integration Tests
+## Integration Tests Overview
 
-Integration tests cover interactions between the following components:
+| Test File | Integration Flow Covered | Services Involved | Live Service Required |
+|---------|--------------------------|------------------|----------------------|
+| `test_config_and_di.py` | Configuration loading & dependency injection validation | Config loader | No |
+| `test_orchestrator_tickets_command.py` | Chat → Tickets (create, search, update) | Orchestrator, Tickets | No |
+| `test_slack_tickets_integration.py` | Slack → Tickets via Orchestrator | Slack, Orchestrator, Tickets | No |
+| `test_slack_event_handler.py` | Slack event ingestion and routing | Slack Adapter | No |
+| `test_orchestrator_integration.py` | Chat → AI → Slack | Orchestrator, AI, Slack | Yes |
+| `test_ai_service_integration.py` | Direct AI Service API (`/ai/generate`) | AI Service | Yes |
+| `test_slack_service_integration.py` | Direct Slack Service API (post/list messages) | Slack Service | Yes |
 
-- Integration App (Orchestrator)
-- Slack Adapter
+---
+
+## Running Integration Tests
+
+### Local Integration Tests (no running services required)
+
+These tests validate orchestration logic and internal integrations without making live HTTP calls.
+
+```bash
+uv run pytest -m "integration and not live"
+```
+
+---
+
+### Live Integration Tests (services must be running)
+
+These tests validate real HTTP interactions with deployed services.
+
+Required services:
 - Slack Service
-- AI API
 - AI Service
-- Dependency Injection & Configuration
-
-These tests sit **between unit tests and E2E tests** in the testing pyramid.
-
----
-
-##  What Integration Tests Validate
-
-Integration tests ensure that:
-
-- Environment configuration is correct
-- Dependency injection resolves properly
-- Services communicate over HTTP correctly
-- Orchestrator routes commands to the correct handlers
-- Slack and AI adapters integrate as expected
-
-They do **not** validate full user flows across all services (that is covered by E2E tests).
-
----
-
-##  Folder Structure
-
-```
-tests/
-└── integration/
-    ├── test_ai_service_integration.py
-    ├── test_config_and_di.py
-    ├── test_orchestrator_integration.py
-    ├── test_slack_event_handler.py
-    ├── test_slack_service_integration.py
-```
-
-Each file focuses on a **specific integration boundary**.
-
----
-
-##  Integration Test Descriptions
-
-| File | Test Name | Description |
-|---|---|---|
-| `test_ai_service_integration.py` | `test_ai_service_generate_endpoint_live` | Verifies AI Service `/ai/generate` endpoint using live AI |
-| `test_config_and_di.py` | `test_config_loads_without_error` | Ensures required environment variables and DI setup |
-| `test_orchestrator_integration.py` | `test_orchestrator_ai_command_executes` | Verifies orchestrator routes AI commands correctly |
-| `test_slack_event_handler.py` | `test_slack_event_handler_accepts_message_event` | Validates Slack event handling integration |
-| `test_slack_service_integration.py` | `test_slack_service_post_and_list_messages` | Confirms Slack Service HTTP APIs work correctly |
-
----
-
-##  Prerequisites
-
-### Services (must be running)
 
 ```bash
-uv run uvicorn ai_service.main:app --port 8002
-uv run uvicorn slack_service.main:app --port 8001
+uv run pytest -m live
 ```
 
-### Required Environment Variables
+---
+
+### Run All Integration Tests
+
+To run **all integration tests together**, ensure all required services are running and environment variables are set, then run:
 
 ```bash
-export AI_SERVICE_BASE_URL=http://localhost:8002
+uv run pytest
+```
+
+---
+
+## Required Environment Variables
+
+```bash
 export SLACK_SERVICE_BASE_URL=http://localhost:8001
-export SLACK_TEST_CHANNEL_ID=<REAL_SLACK_CHANNEL_ID>
-export OPENAI_API_KEY=sk-...
+export AI_SERVICE_BASE_URL=http://localhost:8002
+export SLACK_TEST_CHANNEL_ID=<your_slack_channel_id>
+export OPENAI_API_KEY=<your_openai_key>
 ```
 
 ---
 
-##  Running Integration Tests
+## Notes
 
-### Run all integration tests (from repo root)
+- No mocks or fake services are used.
+- Live integration tests perform real HTTP calls.
+- Service boundaries are respected via the Orchestrator.
+- Configuration issues are detected early through fail‑fast validation.
 
-```bash
-uv run pytest tests/integration -m integration -vv
-```
-
-### Run a single integration test file
-
-```bash
-uv run pytest tests/integration/test_orchestrator_integration.py -vv
-```
-
----
-
-## Expected Output
-
-```text
-collected 5 items
-5 passed in XX.XXs
-```
-
-- No skipped tests
-- Live services used where appropriate
-- Clean dependency injection
-
----
-
-##  Integration vs E2E
-
-| Integration Tests | E2E Tests |
-|---|---|
-| Validate component interactions | Validate full user workflows |
-| May assume running services | Exercise complete system |
-| Faster and more focused | Slower but more realistic |
-
-Both are required and complementary.
-
----
-
-##  Summary
-
-- Integration tests validate **service-to-service correctness**
-- Each test targets a clear integration boundary
-- Tests are runnable locally and suitable for CI
-- Combined with E2E tests, they provide full confidence in system behavior
-
-This integration test suite fully satisfies the project testing requirements.
+This structure ensures correctness during development while maintaining confidence in full system integration.

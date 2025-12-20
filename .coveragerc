@@ -1,30 +1,36 @@
 [coverage:run]
-source = src
 branch = True
 
+source =
+    src/ai_api/src
+    src/chat_api/src
+    src/tickets_api/src
+
 omit =
-    # -------------------------
-    # Generated OpenAPI clients
-    # -------------------------
-    src/slack_generated_client/**
-    src/ai_generated_client/**
-    src/jira_generated_client/**
+    # Entry points / wiring
+    */integration_app/*
+    */main.py
+    */telemetry.py
+    */schemas.py
 
-    # -------------------------
-    # Email / Gmail vertical (explicitly excluded)
-    # -------------------------
-    src/email_api/**
-    src/gmail_impl/**
-    src/mail_client_service/**
-    src/mail_client_adapter/**
+    # Generated / SDK code
+    */*_generated_client/*
+    */openai_impl/*
+    */slack_adapter/*
 
-    # -------------------------
-    # Environment noise
-    # -------------------------
+    # Non-core verticals
+    */email_api/*
+    */gmail_impl/*
+    */mail_client_service/*
+    */mail_client_adapter/*
+
+    # Noise
+    */tests/*
+    */legacy/*
+    */__pycache__/*
+    */__init__.py
     */.venv/*
     */site-packages/*
-    */__pycache__/*
-
 
 [coverage:report]
 fail_under = 85

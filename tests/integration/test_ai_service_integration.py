@@ -2,7 +2,7 @@ import os
 import pytest
 import requests
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.live]
 
 AI_SERVICE_BASE_URL = os.getenv("AI_SERVICE_BASE_URL")
 

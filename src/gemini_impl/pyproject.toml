@@ -1,0 +1,17 @@
+[project]
+name = "gemini-impl"
+version = "0.1.0"
+description = "Gemini AI provider implementation"
+readme = "README.md"
+requires-python = ">=3.11"
+
+dependencies = [
+    "ai-api",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+extend = "../../pyproject.toml"

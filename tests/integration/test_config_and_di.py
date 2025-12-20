@@ -1,8 +1,8 @@
 import pytest
-
 from integration_app.config import load_config
 
 pytestmark = pytest.mark.integration
+
 
 
 def test_config_loads_without_error():

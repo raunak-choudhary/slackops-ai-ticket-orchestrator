@@ -1,7 +1,7 @@
 import os
 import httpx
 import pytest
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.live]
 
 
 def test_slack_service_post_and_list_messages():
