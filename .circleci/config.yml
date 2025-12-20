@@ -5,38 +5,6 @@ jobs:
     docker:
       - image: cimg/python:3.12
 
-    environment:
-      # ----------------------------
-      # Jira configuration (dummy CI values)
-      # ----------------------------
-      JIRA_API_TOKEN: "ci-test-jira-token"
-      JIRA_BASE_URL: "https://example.atlassian.net"
-      JIRA_EMAIL: "ci-test@example.com"
-      JIRA_PROJECT_KEY: "CI"
-
-      # Jira Service Adapter
-      JIRA_SERVICE_BASE_URL: "http://jira-service-placeholder"
-
-      # ----------------------------
-      # Slack configuration (dummy CI values)
-      # ----------------------------
-      SLACK_BOT_TOKEN: "xoxb-ci-test-token"
-      SLACK_SIGNING_SECRET: "ci-test-signing-secret"
-      SLACK_SERVICE_BASE_URL: "http://localhost:8001"
-      SLACK_API_BASE_URL: "https://slack.com/api"
-      SLACK_TEST_CHANNEL_ID: "C0123456789"
-
-      # ----------------------------
-      # AI configuration
-      # ----------------------------
-      AI_SERVICE_BASE_URL: "http://localhost:8002"
-
-      OPENAI_API_KEY: "ci-test-openai-key"
-
-      # Gemini configuration
-      GEMINI_API_KEY: "ci-test-gemini-key"
-      GEMINI_MODEL: "gemini-1.5-pro"
-
     steps:
       - checkout
 
@@ -49,13 +17,43 @@ jobs:
             uv --version
 
       - run:
-          name: Install dependencies (uv sync)
+          name: Install dependencies
           shell: /bin/bash -eo pipefail
           command: |
             uv sync --all-packages --dev
 
       - run:
-          name: Linting (Ruff)
+          name: Validate required environment variables
+          shell: /bin/bash -eo pipefail
+          command: |
+            required_vars=(
+              SLACK_BOT_TOKEN
+              SLACK_SIGNING_SECRET
+              SLACK_API_BASE_URL
+              SLACK_SERVICE_BASE_URL
+              SLACK_TEST_CHANNEL_ID
+              JIRA_API_TOKEN
+              JIRA_BASE_URL
+              JIRA_EMAIL
+              JIRA_PROJECT_KEY
+              JIRA_SERVICE_BASE_URL
+              OPENAI_API_KEY
+              GEMINI_API_KEY
+              GEMINI_MODEL
+              AI_SERVICE_BASE_URL
+            )
+
+            for var in "${required_vars[@]}"; do
+              if [ -z "${!var}" ]; then
+                echo "ERROR: Required environment variable $var is not set"
+                exit 1
+              fi
+            done
+
+            echo "All required environment variables are set"
+
+      - run:
+          name: Lint (Ruff)
           shell: /bin/bash -eo pipefail
           command: |
             uv run ruff check .
