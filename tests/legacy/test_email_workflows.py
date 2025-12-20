@@ -3,11 +3,10 @@
 Tests execute main.py as a subprocess to simulate real user interactions.
 """
 
+import pytest
 from pathlib import Path
 import subprocess
 import sys
-
-
 
 @pytest.fixture
 def main_script() -> Path:

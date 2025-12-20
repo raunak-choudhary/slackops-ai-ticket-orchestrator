@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 
 import ai_api
-from ai_service.models import GenerateRequest, GenerateResponse, HealthResponse
+from ai_service.models import GenerateRequest, GenerateResponse
 
 logger = logging.getLogger(__name__)
 

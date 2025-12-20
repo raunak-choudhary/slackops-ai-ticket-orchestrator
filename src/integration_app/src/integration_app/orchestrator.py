@@ -279,8 +279,15 @@ class Orchestrator:
     @staticmethod
     def _strip_slack_mention(text: str) -> str:
         cleaned = text.strip()
+
+        # Slack internal mention format: <@U123ABC>
         if cleaned.startswith("<@") and ">" in cleaned:
-            cleaned = cleaned.split(">", 1)[1].strip()
+            return cleaned.split(">", 1)[1].strip()
+
+        # Plain-text bot mention format: @team4bot
+        if cleaned.lower().startswith("@team4bot"):
+            return cleaned[len("@team4bot"):].strip()
+
         return cleaned
 
     @staticmethod

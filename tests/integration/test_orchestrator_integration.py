@@ -2,11 +2,11 @@ import os
 import openai_impl  # noqa: F401
 
 import pytest
-pytestmark = pytest.mark.integration
 
 from integration_app.orchestrator import Orchestrator
 from slack_adapter.slack_adapter import SlackServiceClient
 
+pytestmark = pytest.mark.integration
 
 def test_orchestrator_ai_command_executes():
     """

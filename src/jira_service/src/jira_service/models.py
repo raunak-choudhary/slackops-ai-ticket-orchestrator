@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import List
-from uuid import uuid4
 
 from tickets_api.client import TicketStatus
 

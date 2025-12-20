@@ -1,0 +1,208 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  OSPSD HW3 - Single EC2 deployment with Integration, Slack, AI, and Jira services
+  (Free Tier, us-east-1)
+
+Parameters:
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: EC2 KeyPair for SSH access
+
+  AllowedSSHLocation:
+    Type: String
+    Default: YOUR_IP/32
+    Description: Your IP address for SSH access (x.x.x.x/32)
+
+Resources:
+
+  ############################################
+  # Security Group
+  ############################################
+  IntegrationSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH and Integration App access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref AllowedSSHLocation
+
+        - IpProtocol: tcp
+          FromPort: 8000
+          ToPort: 8000
+          CidrIp: 0.0.0.0/0
+
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+
+  ############################################
+  # IAM Role (CloudWatch Logs)
+  ############################################
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2Role
+
+  ############################################
+  # EC2 Instance
+  ############################################
+  IntegrationEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-0f403e3180720dd7e  # Amazon Linux 2023 (us-east-1)
+      KeyName: !Ref KeyPairName
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroupIds:
+        - !Ref IntegrationSecurityGroup
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          ############################################
+          # EC2 UserData Bootstrap Script
+          ############################################
+
+          exec > /var/log/user-data.log 2>&1
+          echo "===== BOOTSTRAP START ====="
+
+          yum update -y
+          yum install -y git python3
+
+          curl -Ls https://astral.sh/uv/install.sh | sh
+          export PATH="/root/.cargo/bin:$PATH"
+          echo 'export PATH="/root/.cargo/bin:$PATH"' >> /etc/profile
+
+          APP_DIR="/opt/ospsd"
+          mkdir -p $APP_DIR
+          cd /opt
+
+          git clone -b feature/ticket-component \
+            https://github.com/raunak-choudhary/ospsd-team4-fall2025.git \
+            ospsd
+
+          cat << 'EOF' >> /etc/environment
+          JIRA_API_TOKEN=****
+          JIRA_BASE_URL=https://ospsd-team4.atlassian.net
+          JIRA_EMAIL=****
+          JIRA_PROJECT_KEY=****
+          JIRA_SERVICE_BASE_URL=http://127.0.0.1:8003
+
+          SLACK_BOT_TOKEN=****
+          SLACK_SIGNING_SECRET=****
+          SLACK_API_BASE_URL=https://slack.com/api
+          SLACK_SERVICE_BASE_URL=http://127.0.0.1:8001
+
+          OPENAI_API_KEY=****
+          AI_SERVICE_BASE_URL=http://127.0.0.1:8002
+          EOF
+
+          cd $APP_DIR
+          /root/.cargo/bin/uv sync --all-packages --dev
+
+          cat << 'EOF' > /etc/systemd/system/integration-app.service
+          [Unit]
+          Description=OSPSD Integration App
+          After=network.target
+
+          [Service]
+          Type=simple
+          EnvironmentFile=/etc/environment
+          WorkingDirectory=/opt/ospsd
+          ExecStart=/root/.cargo/bin/uv run uvicorn integration_app.main:app --host 0.0.0.0 --port 8000
+          Restart=always
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          cat << 'EOF' > /etc/systemd/system/slack-service.service
+          [Unit]
+          Description=Slack Service
+          After=network.target
+
+          [Service]
+          Type=simple
+          EnvironmentFile=/etc/environment
+          WorkingDirectory=/opt/ospsd
+          ExecStart=/root/.cargo/bin/uv run uvicorn slack_service.main:app --host 127.0.0.1 --port 8001
+          Restart=always
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          cat << 'EOF' > /etc/systemd/system/ai-service.service
+          [Unit]
+          Description=AI Service
+          After=network.target
+
+          [Service]
+          Type=simple
+          EnvironmentFile=/etc/environment
+          WorkingDirectory=/opt/ospsd
+          ExecStart=/root/.cargo/bin/uv run uvicorn ai_service.main:app --host 127.0.0.1 --port 8002
+          Restart=always
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          cat << 'EOF' > /etc/systemd/system/jira-service.service
+          [Unit]
+          Description=Jira Service
+          After=network.target
+
+          [Service]
+          Type=simple
+          EnvironmentFile=/etc/environment
+          WorkingDirectory=/opt/ospsd
+          ExecStart=/root/.cargo/bin/uv run uvicorn jira_service.main:app --host 127.0.0.1 --port 8003
+          Restart=always
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          systemctl daemon-reexec
+          systemctl daemon-reload
+
+          systemctl enable integration-app
+          systemctl enable slack-service
+          systemctl enable ai-service
+          systemctl enable jira-service
+
+          systemctl start slack-service
+          systemctl start ai-service
+          systemctl start jira-service
+          systemctl start integration-app
+
+          echo "===== BOOTSTRAP COMPLETE ====="
+
+Outputs:
+  EC2PublicIP:
+    Description: Public IP of the EC2 instance
+    Value: !GetAtt IntegrationEC2Instance.PublicIp
+
+  IntegrationEndpoint:
+    Description: Integration App endpoint
+    Value: !Sub "http://${IntegrationEC2Instance.PublicIp}:8000"

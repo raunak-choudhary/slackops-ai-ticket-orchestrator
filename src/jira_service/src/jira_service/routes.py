@@ -1,24 +1,13 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, status
-
-from jira_service.models import create_ticket, list_tickets, Ticket
-from jira_service.models import TicketStatus
-from jira_service.models import Ticket as TicketModel
-from jira_service.models import TicketStatus as StatusEnum
-
-from jira_service.models import Ticket as InternalTicket
-from jira_service.models import TicketStatus
-from jira_service.models import create_ticket as create_ticket_internal
-from jira_service.models import list_tickets as list_tickets_internal
-
-from jira_service.models import Ticket as StoredTicket
-from jira_service.models import TicketStatus
-from jira_service.models import create_ticket
-from jira_service.models import list_tickets
-
 from pydantic import BaseModel
 
+from jira_service.models import (
+    TicketStatus,
+    create_ticket,
+    list_tickets,
+)
 
 router = APIRouter()
 
