@@ -1,42 +1,79 @@
 version: 2.1
 
 jobs:
-  test:
+  quality-and-tests:
     docker:
       - image: cimg/python:3.12
+
+    environment:
+      # ----------------------------
+      # Jira configuration (dummy CI values)
+      # ----------------------------
+      JIRA_API_TOKEN: "ci-test-jira-token"
+      JIRA_BASE_URL: "https://example.atlassian.net"
+      JIRA_EMAIL: "ci-test@example.com"
+      JIRA_PROJECT_KEY: "CI"
+
+      # Jira Service Adapter
+      JIRA_SERVICE_BASE_URL: "http://jira-service-placeholder"
+
+      # ----------------------------
+      # Slack configuration (dummy CI values)
+      # ----------------------------
+      SLACK_BOT_TOKEN: "xoxb-ci-test-token"
+      SLACK_SIGNING_SECRET: "ci-test-signing-secret"
+      SLACK_SERVICE_BASE_URL: "http://localhost:8001"
+      SLACK_API_BASE_URL: "https://slack.com/api"
+      SLACK_TEST_CHANNEL_ID: "C0123456789"
+
+      # ----------------------------
+      # AI configuration
+      # ----------------------------
+      AI_SERVICE_BASE_URL: "http://localhost:8002"
+
+      OPENAI_API_KEY: "ci-test-openai-key"
+
+      # Gemini configuration
+      GEMINI_API_KEY: "ci-test-gemini-key"
+      GEMINI_MODEL: "gemini-1.5-pro"
 
     steps:
       - checkout
 
       - run:
           name: Install uv
+          shell: /bin/bash -eo pipefail
           command: |
             python -m pip install --upgrade pip
             pip install uv
             uv --version
 
       - run:
-          name: Install dependencies
+          name: Install dependencies (uv sync)
+          shell: /bin/bash -eo pipefail
           command: |
             uv sync --all-packages --dev
 
       - run:
-          name: Ruff
+          name: Linting (Ruff)
+          shell: /bin/bash -eo pipefail
           command: |
             uv run ruff check .
 
       - run:
-          name: MyPy
+          name: Static typing (MyPy - strict)
+          shell: /bin/bash -eo pipefail
           command: |
             uv run mypy --config-file mypy.ini
 
       - run:
-          name: Pytest with coverage
+          name: Tests (Pytest with coverage)
+          shell: /bin/bash -eo pipefail
           command: |
             uv run pytest --cov=src --cov-report=term-missing
 
 workflows:
   version: 2
-  test:
+  quality-gates:
     jobs:
-      - test
+      - quality-and-tests

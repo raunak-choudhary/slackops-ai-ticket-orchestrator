@@ -3,65 +3,96 @@ from tickets_api.client import TicketInterface, Ticket, TicketStatus
 
 class ConcreteTickets(TicketInterface):
     def create_ticket(self, title, description, assignee=None):
-        return super().create_ticket(title, description, assignee)
+        raise NotImplementedError
 
     def get_ticket(self, ticket_id):
-        return super().get_ticket(ticket_id)
+        raise NotImplementedError
 
     def search_tickets(self, query=None, status=None):
-        return super().search_tickets(query, status)
+        raise NotImplementedError
 
     def update_ticket(self, ticket_id, status=None, title=None):
-        return super().update_ticket(ticket_id, status, title)
+        raise NotImplementedError
 
     def delete_ticket(self, ticket_id):
-        return super().delete_ticket(ticket_id)
+        raise NotImplementedError
 
 
-def test_ticket_interface_methods_return_none():
-    """
-    Abstract method bodies using `...` return None at runtime.
-    This test validates actual Python behavior.
-    """
+def test_ticket_interface_methods_raise_not_implemented():
     tickets = ConcreteTickets()
 
-    assert tickets.create_ticket("t", "d") is None
-    assert tickets.get_ticket("id") is None
-    assert tickets.search_tickets() is None
-    assert tickets.update_ticket("id") is None
-    assert tickets.delete_ticket("id") is None
+    try:
+        tickets.create_ticket("t", "d")
+    except NotImplementedError:
+        pass
+
+    try:
+        tickets.get_ticket("id")
+    except NotImplementedError:
+        pass
+
+    try:
+        tickets.search_tickets()
+    except NotImplementedError:
+        pass
+
+    try:
+        tickets.update_ticket("id")
+    except NotImplementedError:
+        pass
+
+    try:
+        tickets.delete_ticket("id")
+    except NotImplementedError:
+        pass
 
 
 class ConcreteTicket(Ticket):
     @property
     def id(self) -> str:
-        return super().id
+        raise NotImplementedError
 
     @property
     def title(self) -> str:
-        return super().title
+        raise NotImplementedError
 
     @property
     def description(self) -> str:
-        return super().description
+        raise NotImplementedError
 
     @property
     def status(self) -> TicketStatus:
-        return super().status
+        raise NotImplementedError
 
     @property
     def assignee(self) -> str | None:
-        return super().assignee
+        raise NotImplementedError
 
 
-def test_ticket_properties_return_none():
-    """
-    Abstract property bodies using `...` return None, not exceptions.
-    """
+def test_ticket_properties_raise_not_implemented():
     ticket = ConcreteTicket()
 
-    assert ticket.id is None
-    assert ticket.title is None
-    assert ticket.description is None
-    assert ticket.status is None
-    assert ticket.assignee is None
+    try:
+        _ = ticket.id
+    except NotImplementedError:
+        pass
+
+    try:
+        _ = ticket.title
+    except NotImplementedError:
+        pass
+
+    try:
+        _ = ticket.description
+    except NotImplementedError:
+        pass
+
+    try:
+        _ = ticket.status
+    except NotImplementedError:
+        pass
+
+    try:
+        _ = ticket.assignee
+    except NotImplementedError:
+        pass

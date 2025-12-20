@@ -1,3 +1,5 @@
+"""Gemini AIInterface provider implementation."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -8,11 +10,10 @@ from gemini_impl.config import GeminiConfig
 
 
 class GeminiProvider(AIInterface):
-    """
-    Gemini implementation of the shared AIInterface.
-    """
+    """Gemini implementation of the shared AIInterface."""
 
     def __init__(self) -> None:
+        """Initialize Gemini provider with configuration and client."""
         self._config = GeminiConfig()
         self._client = GeminiClient(api_key=self._config.api_key)
 
@@ -22,6 +23,7 @@ class GeminiProvider(AIInterface):
         system_prompt: str,
         response_schema: dict[str, Any] | None = None,
     ) -> str | dict[str, Any]:
+        """Generate a response using the Gemini backend."""
         return self._client.generate(
             prompt=user_input,
             system_prompt=system_prompt,
