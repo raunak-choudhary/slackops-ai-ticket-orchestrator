@@ -65,10 +65,11 @@ jobs:
             uv run mypy --config-file mypy.ini
 
       - run:
-          name: Tests (Pytest with coverage)
-          shell: /bin/bash -eo pipefail
+          name: Tests (CI-safe: exclude live and e2e tests)
           command: |
-            uv run pytest --cov=src --cov-report=term-missing
+            uv run pytest -m "not e2e and not live" \
+              --cov=src \
+              --cov-report=term-missing
 
 workflows:
   version: 2
