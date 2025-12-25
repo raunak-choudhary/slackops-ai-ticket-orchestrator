@@ -1,11 +1,6 @@
-# OSPSD Team 4 — Chat + AI + Tickets Integration Project
+# SlackOps: AI Ticket Orchestrator
 
-This repository contains a **provider-agnostic, interface-driven system** that connects a **Chat** interface to an **AI reasoning layer** and a **Ticketing system**. The goal is simple:
-
-> A user types a natural-language request in chat (e.g., “Create a ticket for fixing the login bug”).  
-> The system routes the text to AI, the AI returns a structured action, the Ticketing layer executes it, and Chat replies with the result.
-
-If you follow this README step-by-step, you should be able to **set up the project locally**, **run the full stack**, and **run unit / integration / end-to-end tests**.
+**SlackOps: AI Ticket Orchestrator** is a Slack-first automation platform that transforms natural-language requests into structured AI-driven decisions and executes them reliably against ticketing systems. The system routes chat input through an AI reasoning layer, validates and performs ticket operations via standardized interfaces, and responds back in Slack—demonstrating production-grade orchestration, testing, observability, and infrastructure practices. This project was built following the engineering guidelines of the **Open Source and Professional Software Development (OSPSD)** course, with a strong emphasis on modular design, correctness, and operational readiness.
 
 ---
 
@@ -546,4 +541,3 @@ If you are new:
 2. Read `DESIGN.md` to understand why it’s designed that way.
 3. Use this README to run the system and tests.
 4. Use `CONTRIBUTING.md` before opening a PR.
-
