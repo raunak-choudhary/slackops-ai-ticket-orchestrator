@@ -1,6 +1,6 @@
 # SlackOps: AI Ticket Orchestrator
 
-**SlackOps: AI Ticket Orchestrator** is a Slack-first automation platform that transforms natural-language requests into structured AI-driven decisions and executes them reliably against ticketing systems. The system routes chat input through an AI reasoning layer, validates and performs ticket operations via standardized interfaces, and responds back in Slack—demonstrating production-grade orchestration, testing, observability, and infrastructure practices. This project was built following the engineering guidelines of the **Open Source and Professional Software Development (OSPSD)** course, with a strong emphasis on modular design, correctness, and operational readiness.
+**SlackOps: AI Ticket Orchestrator** is a Slack-first automation platform that transforms natural-language requests into structured AI-driven decisions and executes them reliably against ticketing systems. The system routes chat input through an AI reasoning layer, validates and performs ticket operations via standardized interfaces, and responds back in Slack, demonstrating production-grade orchestration, testing, observability, and infrastructure practices. This project was built following the engineering guidelines of the **Open Source and Professional Software Development (OSPSD)** course, with a strong emphasis on modular design, correctness, and operational readiness.
 
 ---
 
